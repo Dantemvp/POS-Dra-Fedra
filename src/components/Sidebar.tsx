@@ -16,7 +16,7 @@ const NAV: NavItem[] = [
   { href: "/inventario", label: "Inventario", roles: ["admin", "farmacia"], ready: true },
   { href: "/ventas", label: "Punto de venta", roles: ["admin", "farmacia"], ready: true },
   { href: "/caja", label: "Caja y reportes", roles: ["admin", "farmacia"], ready: true },
-  { href: "/pacientes", label: "Pacientes", roles: ["admin", "doctora", "asistente"], ready: false },
+  { href: "/pacientes", label: "Pacientes", roles: ["admin", "doctora", "asistente"], ready: true },
   { href: "/agenda", label: "Agenda", roles: ["admin", "doctora", "asistente"], ready: false },
   { href: "/recetas", label: "Recetas", roles: ["admin", "doctora"], ready: false },
 ];
