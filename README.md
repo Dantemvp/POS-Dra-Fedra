@@ -19,8 +19,22 @@ integrado: farmacia + consultorio, sobre una base de datos normalizada y segura.
 - [x] Migraciones validadas con PGlite (aplican sin error)
 - [x] Proyecto Supabase en la nube — `kxtznwgdpvbtlsedmjap` (Fedra POS)
 - [x] **Migraciones aplicadas en remoto** (`supabase db push` OK; historial Local=Remote)
-- [ ] Scaffold Next.js
+- [x] Scaffold Next.js 16 + Supabase SSR + login/middleware + shell por rol
+- [x] **Fase 1 (farmacia) completa y verificada end-to-end:**
+  - [x] Entrega 1 — Inventario (productos, lotes/caducidad, entradas, alerta stock mínimo)
+  - [x] Entrega 2 — Punto de venta (RPC atómica, FIFO, ticket imprimible)
+  - [x] Entrega 3 — Caja + reportes + Libro de Control COFEPRIS (export CSV)
+- [ ] Fase 2 (consultorio): pacientes, HC configurable, recetas PDF, agenda + WhatsApp
 - [ ] Migración de datos desde Google Sheets (catálogo + 509 pacientes)
+- [ ] Pendiente menor: renombrar `middleware.ts` → `proxy.ts` (Next 16)
+
+## Cómo correr en local
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
+Primer usuario: créalo en Supabase Dashboard → Authentication → Add user (Auto Confirm).
+La primera cuenta queda como `admin` automáticamente.
 
 ## Roles (RLS)
 | Rol | Acceso |
