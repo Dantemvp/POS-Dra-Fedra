@@ -14,7 +14,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   { href: "/dashboard", label: "Inicio", roles: ["admin", "farmacia", "doctora", "asistente"], ready: true },
   { href: "/inventario", label: "Inventario", roles: ["admin", "farmacia"], ready: true },
-  { href: "/ventas", label: "Punto de venta", roles: ["admin", "farmacia"], ready: false },
+  { href: "/ventas", label: "Punto de venta", roles: ["admin", "farmacia"], ready: true },
   { href: "/caja", label: "Caja y reportes", roles: ["admin", "farmacia"], ready: false },
   { href: "/pacientes", label: "Pacientes", roles: ["admin", "doctora", "asistente"], ready: false },
   { href: "/agenda", label: "Agenda", roles: ["admin", "doctora", "asistente"], ready: false },
