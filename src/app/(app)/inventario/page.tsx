@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import FormsInventario from "./Forms";
 
@@ -81,7 +82,9 @@ export default async function InventarioPage() {
             {conStock.map((p) => (
               <tr key={p.id} className="hover:bg-zinc-50">
                 <td className="px-4 py-3 font-medium text-zinc-900">
-                  {p.nombre}
+                  <Link href={`/inventario/${p.id}`} className="hover:underline">
+                    {p.nombre}
+                  </Link>
                   {p.es_controlado && (
                     <span className="ml-2 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-purple-700">
                       controlado

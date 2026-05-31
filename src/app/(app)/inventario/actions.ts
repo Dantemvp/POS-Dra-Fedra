@@ -81,3 +81,48 @@ export async function registrarEntrada(
   revalidatePath("/inventario");
   return { ok: true };
 }
+
+// Registrar metadatos de un archivo ya subido al Storage
+export async function registrarArchivo(
+  productoId: string,
+  path: string,
+  nombre: string,
+  tipo: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let uid: string | null = null;
+  if (user) {
+    const { data } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("auth_uid", user.id)
+      .single();
+    uid = data?.id ?? null;
+  }
+  const { error } = await supabase.from("producto_archivos").insert({
+    producto_id: productoId,
+    path,
+    nombre,
+    tipo,
+    subido_por: uid,
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/inventario/${productoId}`);
+  return { ok: true };
+}
+
+export async function eliminarArchivo(
+  id: string,
+  path: string,
+  productoId: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  await supabase.storage.from("archivos").remove([path]);
+  const { error } = await supabase.from("producto_archivos").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/inventario/${productoId}`);
+  return { ok: true };
+}
