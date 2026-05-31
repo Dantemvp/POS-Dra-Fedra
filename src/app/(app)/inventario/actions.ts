@@ -28,6 +28,7 @@ export async function crearProducto(
     es_controlado: esControlado,
     fraccion_cofepris: fraccion,
     requiere_receta: requiereReceta,
+    codigo_barras: String(formData.get("codigo_barras") ?? "").trim() || null,
   });
 
   if (error) return { ok: false, error: error.message };

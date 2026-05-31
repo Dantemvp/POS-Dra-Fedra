@@ -81,6 +81,10 @@ function NuevoProducto() {
           <label className={label}>Nombre del producto *</label>
           <input name="nombre" required className={input} placeholder="Ej. Victoza 6 mg/mL" />
         </div>
+        <div className="sm:col-span-2">
+          <label className={label}>Código de barras / SKU</label>
+          <input name="codigo_barras" className={input} placeholder="Escanea o escribe el código" />
+        </div>
         <div>
           <label className={label}>Precio de venta</label>
           <input name="precio_venta" type="number" step="0.01" min="0" className={input} placeholder="0.00" />

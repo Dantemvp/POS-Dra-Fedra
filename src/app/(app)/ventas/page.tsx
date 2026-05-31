@@ -7,6 +7,7 @@ type ProductoRow = {
   nombre: string;
   precio_venta: number;
   requiere_receta: boolean;
+  codigo_barras: string | null;
   lotes: Lote[];
 };
 
@@ -14,7 +15,9 @@ export default async function VentasPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("productos")
-    .select("id, nombre, precio_venta, requiere_receta, lotes(cantidad_actual)")
+    .select(
+      "id, nombre, precio_venta, requiere_receta, codigo_barras, lotes(cantidad_actual)",
+    )
     .eq("activo", true)
     .order("nombre");
 
@@ -23,6 +26,7 @@ export default async function VentasPage() {
     nombre: p.nombre,
     precio: Number(p.precio_venta),
     requiere_receta: p.requiere_receta,
+    codigo_barras: p.codigo_barras,
     stock: (p.lotes ?? []).reduce((s, l) => s + Number(l.cantidad_actual ?? 0), 0),
   }));
 
