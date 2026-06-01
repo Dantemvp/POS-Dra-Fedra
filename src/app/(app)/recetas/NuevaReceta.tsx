@@ -14,6 +14,15 @@ const filaVacia: ItemReceta = {
   indicaciones: "",
 };
 
+const METRICAS: [string, string][] = [
+  ["peso", "Peso (kg)"],
+  ["estatura", "Estatura (m)"],
+  ["imc", "IMC"],
+  ["cintura", "Cintura (cm)"],
+  ["peso_ideal", "Peso máximo ideal (kg)"],
+  ["peso_sugerido", "Peso sugerido (kg)"],
+];
+
 export default function NuevaReceta({
   pacientes,
 }: {
@@ -24,6 +33,7 @@ export default function NuevaReceta({
   const [pacienteId, setPacienteId] = useState("");
   const [fase, setFase] = useState("");
   const [items, setItems] = useState<ItemReceta[]>([{ ...filaVacia }]);
+  const [metricas, setMetricas] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -38,6 +48,7 @@ export default function NuevaReceta({
         pacienteId,
         fase ? Number(fase) : null,
         items,
+        metricas,
       );
       if (!res.ok) {
         setMsg(res.error ?? "Error.");
@@ -90,6 +101,28 @@ export default function NuevaReceta({
               </option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <p className="mb-2 text-xs font-medium uppercase text-zinc-500">
+          Control de peso (opcional)
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {METRICAS.map(([key, label]) => (
+            <div key={key}>
+              <label className="mb-1 block text-xs font-medium text-zinc-600">
+                {label}
+              </label>
+              <input
+                className={input}
+                value={metricas[key] ?? ""}
+                onChange={(e) =>
+                  setMetricas((p) => ({ ...p, [key]: e.target.value }))
+                }
+              />
+            </div>
+          ))}
         </div>
       </div>
 

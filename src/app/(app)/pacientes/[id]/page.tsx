@@ -45,7 +45,7 @@ export default async function PacienteDetalle({
   const { data: tiposData } = await supabase
     .from("tipos_historia")
     .select(
-      "id, nombre, campos_historia(id, etiqueta, tipo_dato, opciones, orden, requerido)",
+      "id, nombre, campos_historia(id, etiqueta, tipo_dato, opciones, orden, requerido, seccion)",
     )
     .eq("activo", true)
     .order("nombre");

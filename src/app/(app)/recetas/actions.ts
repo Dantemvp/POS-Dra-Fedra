@@ -16,6 +16,7 @@ export async function crearReceta(
   pacienteId: string,
   fase: number | null,
   items: ItemReceta[],
+  metricas: Record<string, string> = {},
 ): Promise<Result> {
   const supabase = await createClient();
 
@@ -24,9 +25,18 @@ export async function crearReceta(
   if (limpios.length === 0)
     return { ok: false, error: "Agrega al menos un medicamento." };
 
+  const metricasLimpias = Object.fromEntries(
+    Object.entries(metricas).filter(([, v]) => v !== "" && v != null),
+  );
+
   const { data: receta, error } = await supabase
     .from("recetas")
-    .insert({ paciente_id: pacienteId, fase, estado: "emitida" })
+    .insert({
+      paciente_id: pacienteId,
+      fase,
+      estado: "emitida",
+      metricas: Object.keys(metricasLimpias).length ? metricasLimpias : null,
+    })
     .select("id")
     .single();
 

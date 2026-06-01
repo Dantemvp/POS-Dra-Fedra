@@ -13,8 +13,18 @@ type Receta = {
   folio: number;
   fecha: string;
   fase: number | null;
+  metricas: Record<string, string> | null;
   pacientes: { nombre: string; apellidos: string | null; fecha_nac: string | null } | null;
   receta_items: Item[];
+};
+
+const METRICAS_LABEL: Record<string, string> = {
+  peso: "Peso",
+  estatura: "Estatura",
+  imc: "IMC",
+  cintura: "Cintura",
+  peso_ideal: "Peso máximo ideal",
+  peso_sugerido: "Peso sugerido",
 };
 
 export default async function RecetaPrint({
@@ -28,7 +38,7 @@ export default async function RecetaPrint({
   const { data } = await supabase
     .from("recetas")
     .select(
-      "folio, fecha, fase, pacientes(nombre, apellidos, fecha_nac), receta_items(medicamento, dosis, duracion_dias, indicaciones)",
+      "folio, fecha, fase, metricas, pacientes(nombre, apellidos, fecha_nac), receta_items(medicamento, dosis, duracion_dias, indicaciones)",
     )
     .eq("id", id)
     .single();
@@ -79,6 +89,22 @@ export default async function RecetaPrint({
         </div>
         {r.fase && (
           <p className="mt-1 text-sm text-zinc-600">Fase {r.fase} del tratamiento</p>
+        )}
+
+        {r.metricas && Object.keys(r.metricas).length > 0 && (
+          <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+            {Object.entries(r.metricas).map(([k, v]) => (
+              <div
+                key={k}
+                className="rounded border border-zinc-200 px-2 py-1"
+              >
+                <span className="block text-[10px] uppercase text-zinc-400">
+                  {METRICAS_LABEL[k] ?? k}
+                </span>
+                <span className="font-medium text-zinc-800">{v}</span>
+              </div>
+            ))}
+          </div>
         )}
 
         <div className="my-4 border-t border-zinc-300" />

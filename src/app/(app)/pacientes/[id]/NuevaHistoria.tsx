@@ -10,6 +10,7 @@ export type Campo = {
   opciones: string[] | null;
   orden: number;
   requerido: boolean;
+  seccion?: string | null;
 };
 export type Tipo = {
   id: string;
@@ -91,56 +92,73 @@ export default function NuevaHistoria({
 
       {tipo && (
         <div className="space-y-3">
-          {tipo.campos_historia.map((c) => (
-            <div key={c.id}>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
-                {c.etiqueta} {c.requerido && <span className="text-red-500">*</span>}
-              </label>
-              {c.tipo_dato === "booleano" ? (
-                <label className="flex items-center gap-2 text-sm text-zinc-700">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(valores[c.id])}
-                    onChange={(e) => setCampo(c.id, e.target.checked)}
-                  />
-                  Sí
+          {tipo.campos_historia.map((c, idx) => {
+            const prev = tipo.campos_historia[idx - 1];
+            const nuevaSeccion = c.seccion && c.seccion !== prev?.seccion;
+            return (
+              <div key={c.id}>
+                {nuevaSeccion && (
+                  <h4 className="mb-2 mt-5 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    {c.seccion}
+                  </h4>
+                )}
+                <label className="mb-1 block text-xs font-medium text-zinc-600">
+                  {c.etiqueta}{" "}
+                  {c.requerido && <span className="text-red-500">*</span>}
                 </label>
-              ) : c.tipo_dato === "opciones" ? (
-                <select
-                  className={input}
-                  value={String(valores[c.id] ?? "")}
-                  onChange={(e) => setCampo(c.id, e.target.value)}
-                >
-                  <option value="">—</option>
-                  {(c.opciones ?? []).map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  className={input}
-                  type={
-                    c.tipo_dato === "numero"
-                      ? "number"
-                      : c.tipo_dato === "fecha"
-                        ? "date"
-                        : "text"
-                  }
-                  value={String(valores[c.id] ?? "")}
-                  onChange={(e) =>
-                    setCampo(
-                      c.id,
+                {c.tipo_dato === "booleano" ? (
+                  <label className="flex items-center gap-2 text-sm text-zinc-700">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(valores[c.id])}
+                      onChange={(e) => setCampo(c.id, e.target.checked)}
+                    />
+                    Sí
+                  </label>
+                ) : c.tipo_dato === "textarea" ? (
+                  <textarea
+                    className={`${input} min-h-20`}
+                    rows={3}
+                    value={String(valores[c.id] ?? "")}
+                    onChange={(e) => setCampo(c.id, e.target.value)}
+                  />
+                ) : c.tipo_dato === "opciones" ? (
+                  <select
+                    className={input}
+                    value={String(valores[c.id] ?? "")}
+                    onChange={(e) => setCampo(c.id, e.target.value)}
+                  >
+                    <option value="">—</option>
+                    {(c.opciones ?? []).map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className={input}
+                    type={
                       c.tipo_dato === "numero"
-                        ? Number(e.target.value)
-                        : e.target.value,
-                    )
-                  }
-                />
-              )}
-            </div>
-          ))}
+                        ? "number"
+                        : c.tipo_dato === "fecha"
+                          ? "date"
+                          : "text"
+                    }
+                    value={String(valores[c.id] ?? "")}
+                    onChange={(e) =>
+                      setCampo(
+                        c.id,
+                        c.tipo_dato === "numero"
+                          ? Number(e.target.value)
+                          : e.target.value,
+                      )
+                    }
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
