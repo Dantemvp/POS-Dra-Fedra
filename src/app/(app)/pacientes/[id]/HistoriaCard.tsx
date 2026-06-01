@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { actualizarHistoria } from "../actions";
+import { actualizarHistoria, eliminarHistoria } from "../actions";
 
 export default function HistoriaCard({
   historiaId,
@@ -11,6 +11,7 @@ export default function HistoriaCard({
   fecha,
   datos,
   labels,
+  esAdmin,
 }: {
   historiaId: string;
   pacienteId: string;
@@ -18,12 +19,27 @@ export default function HistoriaCard({
   fecha: string;
   datos: Record<string, unknown>;
   labels: Record<string, string>;
+  esAdmin: boolean;
 }) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
+  const [confirmar, setConfirmar] = useState(false);
   const [valores, setValores] = useState<Record<string, unknown>>(datos);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  function borrar() {
+    setError(null);
+    startTransition(async () => {
+      const res = await eliminarHistoria(historiaId, pacienteId);
+      if (!res.ok) {
+        setError(res.error ?? "Error al eliminar.");
+        setConfirmar(false);
+        return;
+      }
+      router.refresh();
+    });
+  }
 
   const entradas = Object.entries(datos);
 
@@ -47,15 +63,42 @@ export default function HistoriaCard({
         <div className="flex items-center gap-3">
           <span className="text-xs text-zinc-400">{fecha}</span>
           {!editando ? (
-            <button
-              onClick={() => {
-                setValores(datos);
-                setEditando(true);
-              }}
-              className="rounded-lg px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
-            >
-              Editar
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setValores(datos);
+                  setEditando(true);
+                }}
+                className="rounded-lg px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Editar
+              </button>
+              {esAdmin && !confirmar && (
+                <button
+                  onClick={() => setConfirmar(true)}
+                  className="rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                >
+                  Eliminar
+                </button>
+              )}
+              {esAdmin && confirmar && (
+                <span className="flex items-center gap-1">
+                  <button
+                    onClick={borrar}
+                    disabled={pending}
+                    className="rounded-lg bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {pending ? "Eliminando…" : "Sí, eliminar"}
+                  </button>
+                  <button
+                    onClick={() => setConfirmar(false)}
+                    className="rounded-lg px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100"
+                  >
+                    No
+                  </button>
+                </span>
+              )}
+            </div>
           ) : (
             <div className="flex gap-1">
               <button

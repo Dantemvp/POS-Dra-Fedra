@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
 import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
 import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
@@ -29,6 +30,8 @@ export default async function PacienteDetalle({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const usuario = await getUsuarioActual();
+  const esAdmin = usuario?.rol === "admin";
 
   const { data: paciente } = await supabase
     .from("pacientes")
@@ -113,6 +116,7 @@ export default async function PacienteDetalle({
             fecha={new Date(h.fecha).toLocaleString("es-MX")}
             datos={h.datos ?? {}}
             labels={Object.fromEntries(etiquetas)}
+            esAdmin={esAdmin}
           />
         ))}
       </div>

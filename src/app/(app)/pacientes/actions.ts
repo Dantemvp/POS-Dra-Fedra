@@ -83,6 +83,35 @@ export async function actualizarHistoria(
   return { ok: true };
 }
 
+// Elimina una historia clínica. SOLO admin (acción destructiva).
+export async function eliminarHistoria(
+  historiaId: string,
+  pacienteId: string,
+): Promise<Result> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sin sesión." };
+
+  const { data: u } = await supabase
+    .from("usuarios")
+    .select("rol")
+    .eq("auth_uid", user.id)
+    .single();
+  if (u?.rol !== "admin")
+    return { ok: false, error: "Solo el administrador puede eliminar." };
+
+  const { error } = await supabase
+    .from("historias_clinicas")
+    .delete()
+    .eq("id", historiaId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/pacientes/${pacienteId}`);
+  return { ok: true };
+}
+
 export type InBodyDatos = Record<string, number | string | null>;
 
 // Lee una foto de reporte InBody (ya subida al Storage) con OpenAI visión
