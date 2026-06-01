@@ -49,13 +49,19 @@ export default async function RecetaPrint({
       {/* Área imprimible — tamaño media carta */}
       <div className="print-area mx-auto bg-white p-8 ring-1 ring-zinc-200">
         <div className="text-center">
-          <h1 className="text-lg font-bold text-zinc-900">Dra. Fedra Aldama</h1>
-          <p className="text-xs text-zinc-500">
-            Medicina estética y control de peso
+          <h1 className="text-lg font-bold tracking-wide text-zinc-900">
+            DRA. FEDRA YARISSA ALDAMA CASTRO
+          </h1>
+          <p className="text-xs text-zinc-600">
+            Médico Cirujano — Universidad Autónoma de Guadalajara
           </p>
-          <p className="text-[10px] text-zinc-400">
-            Cédula profesional: ________ · Folio #{r.folio}
+          <p className="text-[10px] text-zinc-500">
+            Céd. Prof. 11015233 · S.S.A. 20982
           </p>
+          <p className="text-[10px] text-zinc-500">
+            Blvd Río Fuerte 2677, Viñedos, Los Mochis, Sin. · Tel. 668 146 35 02
+          </p>
+          <p className="mt-1 text-[10px] text-zinc-400">Folio #{r.folio}</p>
         </div>
 
         <div className="my-4 border-t border-zinc-300" />
