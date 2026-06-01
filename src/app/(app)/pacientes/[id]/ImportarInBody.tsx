@@ -120,7 +120,7 @@ export default function ImportarInBody({
 
       {fase === "procesando" && (
         <p className="mt-4 text-sm text-zinc-500">
-          Leyendo el reporte con IA… (unos segundos)
+          Leyendo y verificando el reporte… (puede tardar unos segundos)
         </p>
       )}
 
@@ -132,8 +132,8 @@ export default function ImportarInBody({
 
       {fase === "revision" && (
         <div className="mt-4">
-          <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            Revisa los datos antes de guardar. La IA propone; tú confirmas.
+          <p className="mb-3 rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
+            Datos leídos del reporte. Puedes editar cualquier campo antes de guardar.
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {CAMPOS.map(([key, label, unit]) => (

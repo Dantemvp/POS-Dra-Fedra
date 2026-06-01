@@ -67,6 +67,22 @@ export async function crearHistoria(
   return { ok: true };
 }
 
+// Actualiza los datos de una historia clínica ya guardada (edición).
+export async function actualizarHistoria(
+  historiaId: string,
+  datos: Record<string, unknown>,
+  pacienteId: string,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("historias_clinicas")
+    .update({ datos })
+    .eq("id", historiaId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/pacientes/${pacienteId}`);
+  return { ok: true };
+}
+
 export type InBodyDatos = Record<string, number | string | null>;
 
 // Lee una foto de reporte InBody (ya subida al Storage) con OpenAI visión
@@ -93,11 +109,24 @@ export async function extraerInBody(
   const mime = blob.type || "image/jpeg";
   const dataUrl = `data:${mime};base64,${buffer.toString("base64")}`;
 
-  const prompt = `Extrae los datos de este reporte InBody. Devuelve SOLO un objeto JSON con estas claves (número decimal; usa null si no aparece):
-{"peso_kg":null,"masa_muscular_kg":null,"grasa_corporal_kg":null,"grasa_pct":null,"imc":null,"grasa_visceral":null,"tmb_kcal":null,"agua_total_l":null,"proteinas_kg":null,"minerales_kg":null,"masa_libre_grasa_kg":null,"relacion_cintura_cadera":null,"grado_obesidad_pct":null,"altura_cm":null,"edad":null,"puntuacion_inbody":null,"fecha_prueba":null}
-masa_muscular_kg = "Masa de Músculo Esquelético (MME)". fecha_prueba como texto tal cual aparece. No inventes valores.`;
+  const claves = `{"grasa_visceral_linea":null,"peso_kg":null,"masa_muscular_kg":null,"grasa_corporal_kg":null,"grasa_pct":null,"imc":null,"grasa_visceral":null,"tmb_kcal":null,"agua_total_l":null,"proteinas_kg":null,"minerales_kg":null,"masa_libre_grasa_kg":null,"relacion_cintura_cadera":null,"grado_obesidad_pct":null,"altura_cm":null,"edad":null,"puntuacion_inbody":null,"fecha_prueba":null}`;
 
-  try {
+  const reglas = `Reglas estrictas:
+- REGLA CLAVE DE RANGOS: muchos valores aparecen con formato "VALOR ( min~max )", por ejemplo "7 ( 1~9 )". El dato correcto es SIEMPRE el número que está a la IZQUIERDA del paréntesis (el 7), NUNCA el mínimo ni el máximo de adentro del paréntesis (1 ni 9). Esto aplica a TODAS las métricas.
+- "grasa_visceral_linea": transcribe textualmente la línea completa del "Nivel de Grasa Visceral" tal como se ve (incluyendo el paréntesis). Ejemplo: "7 ( 1~9 )".
+- "grasa_visceral": el número a la IZQUIERDA del paréntesis en esa línea (en el ejemplo, 7). NUNCA pongas el máximo del rango.
+- masa_muscular_kg = "Masa de Músculo Esquelético (MME)".
+- grasa_pct = "PGC / Porcentaje de Grasa Corporal".
+- Usa punto decimal. fecha_prueba como texto tal cual aparece. Si un dato no aparece, usa null. No inventes valores.`;
+
+  const img = {
+    type: "image_url",
+    image_url: { url: dataUrl, detail: "high" },
+  };
+
+  async function llamar(
+    messages: unknown[],
+  ): Promise<{ ok: boolean; content?: string; error?: string }> {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -106,17 +135,9 @@ masa_muscular_kg = "Masa de Músculo Esquelético (MME)". fecha_prueba como text
       },
       body: JSON.stringify({
         model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
-          },
-        ],
+        messages,
         response_format: { type: "json_object" },
-        max_tokens: 700,
+        max_tokens: 800,
         temperature: 0,
       }),
     });
@@ -125,7 +146,41 @@ masa_muscular_kg = "Masa de Músculo Esquelético (MME)". fecha_prueba como text
       return { ok: false, error: j?.error?.message ?? "Error de OpenAI." };
     const content = j?.choices?.[0]?.message?.content;
     if (!content) return { ok: false, error: "Respuesta vacía de la IA." };
-    return { ok: true, datos: JSON.parse(content) as InBodyDatos };
+    return { ok: true, content };
+  }
+
+  try {
+    // Pasada 1: extracción
+    const p1 = await llamar([
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Extrae los datos de este reporte InBody. Devuelve SOLO JSON con estas claves:\n${claves}\n${reglas}`,
+          },
+          img,
+        ],
+      },
+    ]);
+    if (!p1.ok) return { ok: false, error: p1.error };
+
+    // Pasada 2: corroboración — vuelve a mirar la imagen y corrige errores
+    const p2 = await llamar([
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Se extrajeron estos datos de la imagen del InBody:\n${p1.content}\nVuelve a revisar la imagen con cuidado, número por número, y CORRIGE cualquier valor equivocado (especialmente si se confundió un valor medido con su rango de referencia).\n${reglas}\nDevuelve SOLO el JSON final ya corregido.`,
+          },
+          img,
+        ],
+      },
+    ]);
+
+    const final = p2.ok && p2.content ? p2.content : p1.content!;
+    return { ok: true, datos: JSON.parse(final) as InBodyDatos };
   } catch (e) {
     return { ok: false, error: String(e).slice(0, 160) };
   }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
 import ImportarInBody from "./ImportarInBody";
+import HistoriaCard from "./HistoriaCard";
 
 type Paciente = {
   id: string;
@@ -104,26 +105,15 @@ export default async function PacienteDetalle({
           </p>
         )}
         {historias.map((h) => (
-          <div key={h.id} className="rounded-xl bg-white p-5 ring-1 ring-zinc-200">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="font-medium text-zinc-900">
-                {h.tipos_historia?.nombre ?? "Historia"}
-              </span>
-              <span className="text-xs text-zinc-400">
-                {new Date(h.fecha).toLocaleString("es-MX")}
-              </span>
-            </div>
-            <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-              {Object.entries(h.datos ?? {}).map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-2 border-b border-zinc-50 py-1">
-                  <dt className="text-zinc-500">{etiquetas.get(k) ?? k}</dt>
-                  <dd className="text-right font-medium text-zinc-800">
-                    {typeof v === "boolean" ? (v ? "Sí" : "No") : String(v || "—")}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+          <HistoriaCard
+            key={h.id}
+            historiaId={h.id}
+            pacienteId={p.id}
+            titulo={h.tipos_historia?.nombre ?? "Historia"}
+            fecha={new Date(h.fecha).toLocaleString("es-MX")}
+            datos={h.datos ?? {}}
+            labels={Object.fromEntries(etiquetas)}
+          />
         ))}
       </div>
     </div>
