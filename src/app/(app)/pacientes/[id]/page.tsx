@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
+import ImportarInBody from "./ImportarInBody";
 
 type Paciente = {
   id: string;
@@ -85,6 +86,11 @@ export default async function PacienteDetalle({
           {p.fecha_nac && <span>Nac.: {p.fecha_nac}</span>}
         </div>
       </div>
+
+      <ImportarInBody
+        pacienteId={p.id}
+        inbodyTipoId={tipos.find((t) => t.nombre === "InBody")?.id ?? null}
+      />
 
       <NuevaHistoria pacienteId={p.id} tipos={tipos} />
 

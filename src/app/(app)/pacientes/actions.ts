@@ -66,3 +66,67 @@ export async function crearHistoria(
   revalidatePath(`/pacientes/${pacienteId}`);
   return { ok: true };
 }
+
+export type InBodyDatos = Record<string, number | string | null>;
+
+// Lee una foto de reporte InBody (ya subida al Storage) con OpenAI visión
+// y devuelve las métricas extraídas. El usuario confirma antes de guardar.
+export async function extraerInBody(
+  path: string,
+): Promise<{ ok: boolean; error?: string; datos?: InBodyDatos }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sin sesión." };
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return { ok: false, error: "Falta configurar OPENAI_API_KEY." };
+
+  // Descargar la imagen y enviarla en base64 (más robusto que una URL)
+  const { data: blob, error: dlErr } = await supabase.storage
+    .from("archivos")
+    .download(path);
+  if (dlErr || !blob)
+    return { ok: false, error: "No se pudo leer la imagen." };
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  const mime = blob.type || "image/jpeg";
+  const dataUrl = `data:${mime};base64,${buffer.toString("base64")}`;
+
+  const prompt = `Extrae los datos de este reporte InBody. Devuelve SOLO un objeto JSON con estas claves (número decimal; usa null si no aparece):
+{"peso_kg":null,"masa_muscular_kg":null,"grasa_corporal_kg":null,"grasa_pct":null,"imc":null,"grasa_visceral":null,"tmb_kcal":null,"agua_total_l":null,"proteinas_kg":null,"minerales_kg":null,"masa_libre_grasa_kg":null,"relacion_cintura_cadera":null,"grado_obesidad_pct":null,"altura_cm":null,"edad":null,"puntuacion_inbody":null,"fecha_prueba":null}
+masa_muscular_kg = "Masa de Músculo Esquelético (MME)". fecha_prueba como texto tal cual aparece. No inventes valores.`;
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: dataUrl } },
+            ],
+          },
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 700,
+        temperature: 0,
+      }),
+    });
+    const j = await res.json();
+    if (!res.ok)
+      return { ok: false, error: j?.error?.message ?? "Error de OpenAI." };
+    const content = j?.choices?.[0]?.message?.content;
+    if (!content) return { ok: false, error: "Respuesta vacía de la IA." };
+    return { ok: true, datos: JSON.parse(content) as InBodyDatos };
+  } catch (e) {
+    return { ok: false, error: String(e).slice(0, 160) };
+  }
+}
