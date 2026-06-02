@@ -1,8 +1,34 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { crearReceta, type ItemReceta } from "./actions";
+import { useRef, useState, useTransition } from "react";
+import { crearReceta, ultimoInBody, type ItemReceta } from "./actions";
+import { extraerInBody } from "../pacientes/actions";
+import { createClient } from "@/lib/supabase/client";
+
+// InBody guardado (claves legibles) -> métricas de la receta
+function mapInBodyGuardado(d: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (d["Peso (kg)"] != null) out.peso = String(d["Peso (kg)"]);
+  if (d["IMC"] != null) out.imc = String(d["IMC"]);
+  if (d["Altura (cm)"] != null) {
+    const cm = Number(d["Altura (cm)"]);
+    if (!isNaN(cm)) out.estatura = (cm / 100).toFixed(2);
+  }
+  return out;
+}
+
+// InBody recién extraído (claves crudas) -> métricas de la receta
+function mapInBodyCrudo(d: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (d.peso_kg != null) out.peso = String(d.peso_kg);
+  if (d.imc != null) out.imc = String(d.imc);
+  if (d.altura_cm != null) {
+    const cm = Number(d.altura_cm);
+    if (!isNaN(cm)) out.estatura = (cm / 100).toFixed(2);
+  }
+  return out;
+}
 
 const input =
   "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900";
@@ -34,6 +60,62 @@ export default function NuevaReceta({
   const [fase, setFase] = useState("");
   const [items, setItems] = useState<ItemReceta[]>([{ ...filaVacia }]);
   const [metricas, setMetricas] = useState<Record<string, string>>({});
+  const [inbodyMsg, setInbodyMsg] = useState<string | null>(null);
+  const [inbodyLoading, setInbodyLoading] = useState(false);
+  const inbodyInputRef = useRef<HTMLInputElement>(null);
+
+  function cargarUltimoInBody() {
+    if (!pacienteId) {
+      setInbodyMsg("Selecciona un paciente primero.");
+      return;
+    }
+    setInbodyMsg(null);
+    startTransition(async () => {
+      const res = await ultimoInBody(pacienteId);
+      if (!res.ok || !res.datos) {
+        setInbodyMsg(res.error ?? "Sin datos.");
+        return;
+      }
+      setMetricas((p) => ({ ...p, ...mapInBodyGuardado(res.datos!) }));
+      setInbodyMsg(
+        "Cargado del último InBody" +
+          (res.fecha
+            ? " (" + new Date(res.fecha).toLocaleDateString("es-MX") + ")"
+            : "") +
+          ".",
+      );
+    });
+  }
+
+  async function subirInBody(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!pacienteId) {
+      setInbodyMsg("Selecciona un paciente primero.");
+      return;
+    }
+    setInbodyMsg(null);
+    setInbodyLoading(true);
+    const supabase = createClient();
+    const path = `inbody/${pacienteId}/${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage
+      .from("archivos")
+      .upload(path, file);
+    if (inbodyInputRef.current) inbodyInputRef.current.value = "";
+    if (upErr) {
+      setInbodyMsg(upErr.message);
+      setInbodyLoading(false);
+      return;
+    }
+    const res = await extraerInBody(path);
+    setInbodyLoading(false);
+    if (!res.ok || !res.datos) {
+      setInbodyMsg(res.error ?? "No se pudo leer el InBody.");
+      return;
+    }
+    setMetricas((p) => ({ ...p, ...mapInBodyCrudo(res.datos!) }));
+    setInbodyMsg("Datos cargados desde la foto del InBody.");
+  }
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -105,9 +187,30 @@ export default function NuevaReceta({
       </div>
 
       <div className="mt-4">
-        <p className="mb-2 text-xs font-medium uppercase text-zinc-500">
-          Control de peso (opcional)
-        </p>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <p className="text-xs font-medium uppercase text-zinc-500">
+            Control de peso (opcional)
+          </p>
+          <button
+            type="button"
+            onClick={cargarUltimoInBody}
+            className="rounded-md border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            Cargar último InBody
+          </button>
+          <label className="cursor-pointer rounded-md border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+            {inbodyLoading ? "Leyendo…" : "Subir InBody (foto)"}
+            <input
+              ref={inbodyInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={subirInBody}
+              disabled={inbodyLoading}
+            />
+          </label>
+        </div>
+        {inbodyMsg && <p className="mb-2 text-xs text-zinc-500">{inbodyMsg}</p>}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {METRICAS.map(([key, label]) => (
             <div key={key}>

@@ -12,6 +12,36 @@ export type ItemReceta = {
 
 export type Result = { ok: boolean; error?: string; id?: string };
 
+// Devuelve los datos del último InBody guardado del paciente (para pre-cargar receta).
+export async function ultimoInBody(
+  pacienteId: string,
+): Promise<{ ok: boolean; datos?: Record<string, unknown>; fecha?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data: tipo } = await supabase
+    .from("tipos_historia")
+    .select("id")
+    .eq("nombre", "InBody")
+    .maybeSingle();
+  if (!tipo) return { ok: false, error: "No existe el tipo InBody." };
+
+  const { data } = await supabase
+    .from("historias_clinicas")
+    .select("datos, fecha")
+    .eq("paciente_id", pacienteId)
+    .eq("tipo_historia_id", tipo.id)
+    .order("fecha", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data)
+    return { ok: false, error: "Este paciente no tiene un InBody guardado." };
+  return {
+    ok: true,
+    datos: data.datos as Record<string, unknown>,
+    fecha: data.fecha as string,
+  };
+}
+
 export async function crearReceta(
   pacienteId: string,
   fase: number | null,
