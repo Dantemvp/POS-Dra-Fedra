@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { actualizarHistoria, eliminarHistoria } from "../actions";
@@ -64,6 +65,12 @@ export default function HistoriaCard({
           <span className="text-xs text-zinc-400">{fecha}</span>
           {!editando ? (
             <div className="flex items-center gap-1">
+              <Link
+                href={`/pacientes/historia/${historiaId}`}
+                className="rounded-lg px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+              >
+                Imprimir
+              </Link>
               <button
                 onClick={() => {
                   setValores(datos);
