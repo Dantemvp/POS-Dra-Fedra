@@ -127,3 +127,32 @@ export async function eliminarArchivo(
   revalidatePath(`/inventario/${productoId}`);
   return { ok: true };
 }
+
+// Editar un producto existente
+export async function actualizarProducto(
+  productoId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  if (!nombre) return { ok: false, error: "El nombre es obligatorio." };
+
+  const { error } = await supabase
+    .from("productos")
+    .update({
+      nombre,
+      precio_venta: Number(formData.get("precio_venta") ?? 0) || 0,
+      stock_minimo: Number(formData.get("stock_minimo") ?? 0) || 0,
+      es_controlado: formData.get("es_controlado") === "on",
+      requiere_receta: formData.get("requiere_receta") === "on",
+      fraccion_cofepris: String(formData.get("fraccion_cofepris") ?? "na"),
+      codigo_barras: String(formData.get("codigo_barras") ?? "").trim() || null,
+    })
+    .eq("id", productoId);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/inventario/${productoId}`);
+  revalidatePath("/inventario");
+  return { ok: true };
+}

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import CorteButton from "./CorteButton";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
+import CancelarVentaBtn from "./CancelarVentaBtn";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -104,6 +105,7 @@ export default async function CajaPage() {
                 <th className="px-4 py-3">Hora</th>
                 <th className="px-4 py-3">Método</th>
                 <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -130,6 +132,9 @@ export default async function CajaPage() {
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-zinc-900">
                     {money(Number(v.total))}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <CancelarVentaBtn ventaId={v.id} />
                   </td>
                 </tr>
               ))}

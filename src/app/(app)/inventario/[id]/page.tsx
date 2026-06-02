@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Archivos, { type ArchivoVista } from "./Archivos";
+import EditarProducto from "./EditarProducto";
 
 type Producto = {
   id: string;
@@ -9,7 +10,9 @@ type Producto = {
   precio_venta: number;
   stock_minimo: number;
   es_controlado: boolean;
+  requiere_receta: boolean;
   fraccion_cofepris: string;
+  codigo_barras: string | null;
   lotes: { cantidad_actual: number }[];
 };
 type Archivo = {
@@ -31,7 +34,7 @@ export default async function ProductoDetalle({
   const { data } = await supabase
     .from("productos")
     .select(
-      "id, nombre, precio_venta, stock_minimo, es_controlado, fraccion_cofepris, lotes(cantidad_actual)",
+      "id, nombre, precio_venta, stock_minimo, es_controlado, requiere_receta, fraccion_cofepris, codigo_barras, lotes(cantidad_actual)",
     )
     .eq("id", id)
     .single();
@@ -89,6 +92,21 @@ export default async function ProductoDetalle({
             <span>Fracción {p.fraccion_cofepris}</span>
           )}
         </div>
+      </div>
+
+      <div className="mb-6">
+        <EditarProducto
+          producto={{
+            id: p.id,
+            nombre: p.nombre,
+            precio_venta: Number(p.precio_venta),
+            stock_minimo: Number(p.stock_minimo),
+            es_controlado: p.es_controlado,
+            requiere_receta: p.requiere_receta,
+            fraccion_cofepris: p.fraccion_cofepris,
+            codigo_barras: p.codigo_barras,
+          }}
+        />
       </div>
 
       <Archivos productoId={p.id} archivos={archivos} />
