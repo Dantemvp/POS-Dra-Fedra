@@ -2,9 +2,34 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUsuarioActual } from "@/lib/auth";
+import { etiquetaDiaCorta } from "@/lib/tz";
 import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
 import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
+import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
+
+// Saca un número de un valor JSON (soporta "72.5", "72,5", "72 kg").
+function aNumero(v: unknown): number | null {
+  if (v == null) return null;
+  const m = String(v).replace(",", ".").match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0]);
+  return isNaN(n) ? null : n;
+}
+
+// Busca en las respuestas la primera clave que cumple el predicado.
+function elegir(
+  datos: Record<string, unknown>,
+  pred: (clave: string) => boolean,
+): number | null {
+  for (const [k, v] of Object.entries(datos)) {
+    if (pred(k.toLowerCase())) {
+      const n = aNumero(v);
+      if (n != null) return n;
+    }
+  }
+  return null;
+}
 
 type Paciente = {
   id: string;
@@ -70,6 +95,35 @@ export default async function PacienteDetalle({
 
   const historias = (histData ?? []) as unknown as Historia[];
 
+  // Progreso de peso: extrae métricas de las historias (InBody/control de peso),
+  // de la más antigua a la más reciente, para graficar la evolución.
+  const puntos: PuntoProgreso[] = [...historias]
+    .reverse()
+    .map((h) => {
+      const d = h.datos ?? {};
+      return {
+        fecha: etiquetaDiaCorta(h.fecha),
+        peso: elegir(
+          d,
+          (k) =>
+            k.includes("peso") &&
+            !k.includes("ideal") &&
+            !k.includes("sugerido") &&
+            !k.includes("perdido"),
+        ),
+        imc: elegir(d, (k) => k.includes("imc")),
+        grasa: elegir(
+          d,
+          (k) => k.includes("grasa corporal") || (k.includes("grasa") && k.includes("%")),
+        ),
+        cintura: elegir(
+          d,
+          (k) => k.includes("cintura") && !k.includes("cadera") && !k.includes("relaci"),
+        ),
+      };
+    })
+    .filter((p) => p.peso != null || p.imc != null || p.grasa != null || p.cintura != null);
+
   return (
     <div className="mx-auto max-w-3xl">
       <Link
@@ -90,6 +144,8 @@ export default async function PacienteDetalle({
           {p.fecha_nac && <span>Nac.: {p.fecha_nac}</span>}
         </div>
       </div>
+
+      {puntos.length > 0 && <ProgresoPeso puntos={puntos} />}
 
       <ImportarInBody
         pacienteId={p.id}
