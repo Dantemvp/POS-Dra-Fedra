@@ -2,11 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { OFFSET_SINALOA, limiteConfirmacion } from "./confirmacion";
 
 export type Result = { ok: boolean; error?: string; id?: string };
-
-// Sinaloa no tiene horario de verano: UTC-7 todo el año.
-const OFFSET_SINALOA = "-07:00";
 
 async function usuarioId(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
@@ -43,6 +41,7 @@ export async function crearCita(
       paciente_id: pacienteId,
       doctora_id: uid,
       fecha_hora: fechaHora,
+      limite_confirmacion: limiteConfirmacion(fechaHora),
       notas: String(formData.get("notas") ?? "").trim() || null,
     })
     .select("id")

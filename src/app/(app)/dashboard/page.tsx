@@ -1,6 +1,11 @@
+import Link from "next/link";
 import { getUsuarioActual } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { VentasDiaChart, MetodoChart, TopProductosChart } from "./Charts";
+import {
+  confirmacionVencida,
+  necesitaConfirmar,
+} from "../agenda/confirmacion";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -27,9 +32,12 @@ export default async function DashboardPage() {
   let totalDia = 0;
   let ventasDiaCount = 0;
   let totalSemana = 0;
-  let stockBajo: { nombre: string; stock: number; minimo: number }[] = [];
-  let porCaducar: { nombre: string; lote: string | null; caducidad: string }[] =
-    [];
+  const stockBajo: { nombre: string; stock: number; minimo: number }[] = [];
+  const porCaducar: {
+    nombre: string;
+    lote: string | null;
+    caducidad: string;
+  }[] = [];
 
   if (verFarmacia) {
     const inicioHoy = new Date();
@@ -122,6 +130,8 @@ export default async function DashboardPage() {
   // ---- Datos de consultorio ----
   let totalPacientes = 0;
   let pacientesNuevosMes = 0;
+  let citasPorConfirmar = 0;
+  let citasVencidas = 0;
   if (verClinica) {
     const { count } = await supabase
       .from("pacientes")
@@ -136,6 +146,30 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .gte("creado_en", inicioMes.toISOString());
     pacientesNuevosMes = nuevos ?? 0;
+
+    // Citas próximas pendientes de confirmar (y cuántas ya pasaron su límite).
+    const ahora = new Date();
+    const { data: citas } = await supabase
+      .from("citas")
+      .select("estado, fecha_hora, limite_confirmacion")
+      .eq("estado", "agendada")
+      .gte("fecha_hora", ahora.toISOString());
+    for (const c of (citas ?? []) as {
+      estado: string;
+      fecha_hora: string;
+      limite_confirmacion: string | null;
+    }[]) {
+      if (necesitaConfirmar(c.estado)) citasPorConfirmar += 1;
+      if (
+        confirmacionVencida(
+          c.estado,
+          c.fecha_hora,
+          c.limite_confirmacion,
+          ahora,
+        )
+      )
+        citasVencidas += 1;
+    }
   }
 
   return (
@@ -217,9 +251,42 @@ export default async function DashboardPage() {
       )}
 
       {verClinica && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Kpi label="Pacientes totales" value={String(totalPacientes)} />
-          <Kpi label="Nuevos este mes" value={String(pacientesNuevosMes)} />
+        <div className="space-y-4">
+          {citasPorConfirmar > 0 && (
+            <Link
+              href="/agenda"
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ring-1 transition hover:brightness-95 ${
+                citasVencidas > 0
+                  ? "bg-red-50 text-red-800 ring-red-200"
+                  : "bg-amber-50 text-amber-800 ring-amber-200"
+              }`}
+            >
+              <span className="text-lg leading-none">
+                {citasVencidas > 0 ? "⚠️" : "🔔"}
+              </span>
+              <span>
+                <strong>{citasPorConfirmar}</strong> cita
+                {citasPorConfirmar === 1 ? "" : "s"} por confirmar
+                {citasVencidas > 0 && (
+                  <>
+                    {" "}
+                    — <strong>{citasVencidas}</strong> ya pasó
+                    {citasVencidas === 1 ? "" : "ron"} su fecha límite
+                  </>
+                )}
+                . Ir a la agenda →
+              </span>
+            </Link>
+          )}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Kpi label="Pacientes totales" value={String(totalPacientes)} />
+            <Kpi label="Nuevos este mes" value={String(pacientesNuevosMes)} />
+            <Kpi
+              label="Citas por confirmar"
+              value={String(citasPorConfirmar)}
+              alerta={citasPorConfirmar > 0}
+            />
+          </div>
         </div>
       )}
     </div>

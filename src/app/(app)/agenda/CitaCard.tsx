@@ -36,7 +36,13 @@ function waNumero(tel: string | null): string | null {
   return d;
 }
 
-export default function CitaCard({ cita }: { cita: Cita }) {
+export default function CitaCard({
+  cita,
+  vencida = false,
+}: {
+  cita: Cita;
+  vencida?: boolean;
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const p = cita.paciente;
@@ -70,7 +76,13 @@ export default function CitaCard({ cita }: { cita: Cita }) {
     cita.estado === "cancelada";
 
   return (
-    <div className="rounded-xl bg-white p-4 ring-1 ring-zinc-200">
+    <div
+      className={`rounded-xl bg-white p-4 ring-1 ${
+        vencida
+          ? "border-l-4 border-red-500 ring-red-200"
+          : "ring-zinc-200"
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -84,6 +96,11 @@ export default function CitaCard({ cita }: { cita: Cita }) {
             </span>
             {cita.recordatorio_enviado && (
               <span className="text-[10px] text-zinc-400">recordado ✓</span>
+            )}
+            {vencida && (
+              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium uppercase text-red-700">
+                confirmación vencida
+              </span>
             )}
           </div>
           <p className="mt-1 truncate text-sm text-zinc-700">{nombre}</p>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import NuevaCita from "./NuevaCita";
 import CitaCard from "./CitaCard";
+import { confirmacionVencida, necesitaConfirmar } from "./confirmacion";
 
 export type Cita = {
   id: string;
@@ -8,6 +9,7 @@ export type Cita = {
   estado: "agendada" | "confirmada" | "cancelada" | "cedida" | "atendida";
   notas: string | null;
   recordatorio_enviado: boolean;
+  limite_confirmacion: string | null;
   paciente: {
     id: string;
     nombre: string;
@@ -55,7 +57,7 @@ export default async function AgendaPage() {
     supabase
       .from("citas")
       .select(
-        "id, fecha_hora, estado, notas, recordatorio_enviado, paciente:pacientes(id, nombre, apellidos, telefono_wpp)",
+        "id, fecha_hora, estado, notas, recordatorio_enviado, limite_confirmacion, paciente:pacientes(id, nombre, apellidos, telefono_wpp)",
       )
       .gte("fecha_hora", desde)
       .neq("estado", "cancelada")
@@ -68,6 +70,13 @@ export default async function AgendaPage() {
 
   const citas = (citasData ?? []) as unknown as Cita[];
   const pacientes = (pacData ?? []) as PacienteOpcion[];
+
+  // Estado de confirmación
+  const ahora = new Date();
+  const vencida = (c: Cita) =>
+    confirmacionVencida(c.estado, c.fecha_hora, c.limite_confirmacion, ahora);
+  const porConfirmar = citas.filter((c) => necesitaConfirmar(c.estado)).length;
+  const vencidas = citas.filter(vencida).length;
 
   // Agrupar por día
   const grupos = new Map<string, Cita[]>();
@@ -85,6 +94,32 @@ export default async function AgendaPage() {
         {citas.length === 1 ? "" : "s"}
       </p>
 
+      {porConfirmar > 0 && (
+        <div
+          className={`mb-6 flex items-center gap-3 rounded-xl px-4 py-3 text-sm ring-1 ${
+            vencidas > 0
+              ? "bg-red-50 text-red-800 ring-red-200"
+              : "bg-amber-50 text-amber-800 ring-amber-200"
+          }`}
+        >
+          <span className="text-lg leading-none">
+            {vencidas > 0 ? "⚠️" : "🔔"}
+          </span>
+          <span>
+            <strong>{porConfirmar}</strong> cita
+            {porConfirmar === 1 ? "" : "s"} por confirmar
+            {vencidas > 0 && (
+              <>
+                {" "}
+                — <strong>{vencidas}</strong> ya pasó
+                {vencidas === 1 ? "" : "ron"} su fecha límite. Manda el
+                recordatorio por WhatsApp.
+              </>
+            )}
+          </span>
+        </div>
+      )}
+
       <NuevaCita pacientes={pacientes} />
 
       {grupos.size === 0 ? (
@@ -100,7 +135,7 @@ export default async function AgendaPage() {
               </h2>
               <div className="space-y-2">
                 {lista.map((c) => (
-                  <CitaCard key={c.id} cita={c} />
+                  <CitaCard key={c.id} cita={c} vencida={vencida(c)} />
                 ))}
               </div>
             </section>
