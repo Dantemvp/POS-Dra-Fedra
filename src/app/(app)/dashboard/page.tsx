@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getUsuarioActual } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { inicioDiaSinaloa, etiquetaDiaCorta } from "@/lib/tz";
+import { inicioDiaSinaloa, etiquetaDiaCorta, horaSinaloa } from "@/lib/tz";
 import { VentasDiaChart, MetodoChart, TopProductosChart } from "./Charts";
 import {
   confirmacionVencida,
@@ -131,6 +131,12 @@ export default async function DashboardPage() {
   let pacientesNuevosMes = 0;
   let citasPorConfirmar = 0;
   let citasVencidas = 0;
+  let citasHoy: {
+    id: string;
+    fecha_hora: string;
+    estado: string;
+    paciente: { nombre: string; apellidos: string | null } | null;
+  }[] = [];
   if (verClinica) {
     const { count } = await supabase
       .from("pacientes")
@@ -169,6 +175,20 @@ export default async function DashboardPage() {
       )
         citasVencidas += 1;
     }
+
+    // Citas de hoy (de inicio del día de Sinaloa al inicio del siguiente).
+    const inicioHoyCl = inicioDiaSinaloa();
+    const finHoyCl = new Date(inicioHoyCl.getTime() + 86_400_000);
+    const { data: hoy } = await supabase
+      .from("citas")
+      .select(
+        "id, fecha_hora, estado, paciente:pacientes(nombre, apellidos)",
+      )
+      .gte("fecha_hora", inicioHoyCl.toISOString())
+      .lt("fecha_hora", finHoyCl.toISOString())
+      .neq("estado", "cancelada")
+      .order("fecha_hora");
+    citasHoy = (hoy ?? []) as unknown as typeof citasHoy;
   }
 
   return (
@@ -280,12 +300,50 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Kpi label="Pacientes totales" value={String(totalPacientes)} />
             <Kpi label="Nuevos este mes" value={String(pacientesNuevosMes)} />
+            <Kpi label="Citas de hoy" value={String(citasHoy.length)} />
             <Kpi
               label="Citas por confirmar"
               value={String(citasPorConfirmar)}
               alerta={citasPorConfirmar > 0}
             />
           </div>
+
+          <Panel titulo="Citas de hoy">
+            {citasHoy.length === 0 ? (
+              <p className="text-sm text-zinc-400">No hay citas para hoy.</p>
+            ) : (
+              <ul className="divide-y divide-zinc-100">
+                {citasHoy.map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex items-center justify-between py-2 text-sm"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="font-medium tabular-nums text-zinc-900">
+                        {horaSinaloa(c.fecha_hora)}
+                      </span>
+                      <span className="text-zinc-700">
+                        {c.paciente
+                          ? `${c.paciente.nombre} ${c.paciente.apellidos ?? ""}`
+                          : "—"}
+                      </span>
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase ${
+                        c.estado === "confirmada"
+                          ? "bg-green-100 text-green-700"
+                          : c.estado === "agendada"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-zinc-200 text-zinc-600"
+                      }`}
+                    >
+                      {c.estado}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
         </div>
       )}
     </div>
