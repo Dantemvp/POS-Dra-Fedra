@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getUsuarioActual } from "@/lib/auth";
 import Sidebar from "@/components/Sidebar";
 import LogoutButton from "@/components/LogoutButton";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function AppLayout({
   children,
@@ -19,6 +20,7 @@ export default async function AppLayout({
           <div />
           <div className="flex items-center gap-3">
             <span className="text-sm text-zinc-700">{usuario.nombre}</span>
+            <ThemeToggle />
             <LogoutButton />
           </div>
         </header>

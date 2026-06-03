@@ -1,22 +1,53 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Paleta de marca Dra. Fedra (taupe/crema/arena) — para gráficas y acentos */
+  --brand-taupe: #b19b7d;
+  --brand-rose: #c8a4a0;
+  --brand-cocoa: #8c7a63;
+  --brand-sand: #cbb89c;
+  --brand-warmgray: #9a8c7a;
+  --brand-cream: #f2eeec;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-taupe: var(--brand-taupe);
+  --color-brand-rose: var(--brand-rose);
+  --color-brand-cocoa: var(--brand-cocoa);
+  --color-brand-sand: var(--brand-sand);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/*
+  Tema oscuro: el sistema usa una sola rampa de grises (zinc) para texto y
+  superficies. En Tailwind v4 las utilities referencian var(--color-*), así que
+  invertimos esa rampa (con tinte cálido de la marca) bajo .dark y toda la app
+  cambia sin tocar cada componente. Es manual (clase .dark), no por preferencia
+  del sistema operativo (eso causaba texto claro sobre fondo blanco).
+*/
+.dark {
+  color-scheme: dark;
+  --background: #141312;
+  --foreground: #f2eeec;
+
+  --color-white: #1d1b18; /* superficie de tarjeta */
+  --color-zinc-50: #1d1b18;
+  --color-zinc-100: #141312; /* fondo de la app */
+  --color-zinc-200: #34302b; /* bordes / rings */
+  --color-zinc-300: #403a33; /* bordes de inputs */
+  --color-zinc-400: #8f867b; /* texto tenue */
+  --color-zinc-500: #a89e92; /* texto secundario */
+  --color-zinc-600: #c2b8aa;
+  --color-zinc-700: #d8cec1;
+  --color-zinc-800: #e8e0d5;
+  --color-zinc-900: #f2eeec; /* texto principal / títulos */
 }
 
 body {

@@ -51,23 +51,29 @@ export default function ProgresoPeso({ puntos }: { puntos: PuntoProgreso[] }) {
             data={conPeso}
             margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
-            <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: "#71717a" }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(140,130,120,0.25)" />
+            <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: "#928a80" }} />
             <YAxis
-              tick={{ fontSize: 11, fill: "#71717a" }}
+              tick={{ fontSize: 11, fill: "#928a80" }}
               width={40}
               domain={["dataMin - 2", "dataMax + 2"]}
             />
             <Tooltip
               formatter={(v) => [`${v} kg`, "Peso"]}
-              contentStyle={{ fontSize: 12, borderRadius: 8 }}
+              contentStyle={{
+                fontSize: 12,
+                borderRadius: 8,
+                background: "var(--color-white)",
+                border: "1px solid var(--color-zinc-200)",
+                color: "var(--color-zinc-900)",
+              }}
             />
             <Line
               type="monotone"
               dataKey="peso"
-              stroke="#18181b"
+              stroke="#b19b7d"
               strokeWidth={2}
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: "#b19b7d" }}
             />
           </LineChart>
         </ResponsiveContainer>

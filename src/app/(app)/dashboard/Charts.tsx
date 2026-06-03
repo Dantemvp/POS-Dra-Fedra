@@ -15,7 +15,22 @@ import {
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
-const COLORS = ["#18181b", "#52525b", "#a1a1aa", "#d4d4d8", "#71717a"];
+// Paleta de marca Dra. Fedra: taupe, rosé nude, cocoa, arena, gris cálido.
+const COLORS = ["#b19b7d", "#c8a4a0", "#8c7a63", "#cbb89c", "#9a8c7a"];
+const TAUPE = "#b19b7d";
+
+// Ejes/cursor: colores fijos legibles en claro y oscuro (Recharts aplica fill
+// como atributo SVG, donde var(--...) no resuelve). El tooltip sí usa estilo
+// de div, así que ahí sí adaptamos al tema con variables.
+const AXIS = "#928a80";
+const CURSOR = "rgba(177,155,125,0.14)";
+const tooltipStyle = {
+  fontSize: 12,
+  borderRadius: 8,
+  background: "var(--color-white)",
+  border: "1px solid var(--color-zinc-200)",
+  color: "var(--color-zinc-900)",
+};
 
 export function VentasDiaChart({
   data,
@@ -25,13 +40,14 @@ export function VentasDiaChart({
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
-        <XAxis dataKey="dia" tick={{ fontSize: 11, fill: "#71717a" }} />
-        <YAxis tick={{ fontSize: 11, fill: "#71717a" }} width={48} />
+        <XAxis dataKey="dia" tick={{ fontSize: 11, fill: AXIS }} />
+        <YAxis tick={{ fontSize: 11, fill: AXIS }} width={48} />
         <Tooltip
           formatter={(v) => money(Number(v))}
-          contentStyle={{ fontSize: 12, borderRadius: 8 }}
+          contentStyle={tooltipStyle}
+          cursor={{ fill: CURSOR }}
         />
-        <Bar dataKey="total" fill="#18181b" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" fill={TAUPE} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -62,10 +78,7 @@ export function MetodoChart({
                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip
-              formatter={(v) => money(Number(v))}
-              contentStyle={{ fontSize: 12, borderRadius: 8 }}
-            />
+            <Tooltip formatter={(v) => money(Number(v))} contentStyle={tooltipStyle} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -110,15 +123,22 @@ export function TopProductosChart({
         layout="vertical"
         margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
       >
-        <XAxis type="number" tick={{ fontSize: 11, fill: "#71717a" }} />
+        <XAxis type="number" tick={{ fontSize: 11, fill: AXIS }} />
         <YAxis
           type="category"
           dataKey="nombre"
           width={120}
-          tick={{ fontSize: 11, fill: "#3f3f46" }}
+          tick={{ fontSize: 11, fill: AXIS }}
         />
-        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-        <Bar dataKey="cantidad" fill="#18181b" radius={[0, 4, 4, 0]} />
+        <Tooltip
+          contentStyle={tooltipStyle}
+          cursor={{ fill: CURSOR }}
+        />
+        <Bar dataKey="cantidad" fill={TAUPE} radius={[0, 4, 4, 0]}>
+          {data.map((_, i) => (
+            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+          ))}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
