@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
@@ -90,7 +89,13 @@ export default async function HistoriaPrint({
       <div className="print-area mx-auto bg-white p-10 ring-1 ring-zinc-200">
         {/* Encabezado branded */}
         <div className="flex items-start justify-between border-b-2 border-[#b8aa9c] pb-4">
-          <Image src="/logo.png" alt="Dra. Fedra Aldama" width={240} height={38} priority />
+          {/* <img> plano (no next/image): se imprime de forma confiable. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="Dra. Fedra Aldama"
+            style={{ width: 240, height: "auto" }}
+          />
           <div className="text-right text-[10px] leading-snug text-zinc-600">
             <p className="font-semibold text-zinc-800">
               Dra. Fedra Yarissa Aldama Castro
