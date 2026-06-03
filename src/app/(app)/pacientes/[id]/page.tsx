@@ -118,6 +118,16 @@ export default async function PacienteDetalle({
 
   const historias = (histData ?? []) as unknown as Historia[];
 
+  // Fase actual del tratamiento (de la última receta).
+  const { data: ultRecetaArr } = await supabase
+    .from("recetas")
+    .select("fase, fecha")
+    .eq("paciente_id", id)
+    .not("fase", "is", null)
+    .order("fecha", { ascending: false })
+    .limit(1);
+  const faseActual = (ultRecetaArr?.[0]?.fase as number | null) ?? null;
+
   // Progreso de peso: extrae métricas de las historias (InBody/control de peso),
   // de la más antigua a la más reciente, para graficar la evolución.
   const puntos: PuntoProgreso[] = [...historias]
@@ -158,9 +168,16 @@ export default async function PacienteDetalle({
 
       <div className="mt-2 mb-6 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-zinc-900">
-            {p.nombre} {p.apellidos ?? ""}
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold text-zinc-900">
+              {p.nombre} {p.apellidos ?? ""}
+            </h1>
+            {faseActual != null && (
+              <span className="rounded-full bg-[#efe7db] px-3 py-1 text-xs font-semibold text-[#8c7a63]">
+                Fase {faseActual}
+              </span>
+            )}
+          </div>
           {waLink(p.telefono_wpp) && (
             <a
               href={waLink(p.telefono_wpp)!}

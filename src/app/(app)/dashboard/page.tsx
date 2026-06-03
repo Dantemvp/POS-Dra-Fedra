@@ -135,8 +135,11 @@ export default async function DashboardPage() {
     id: string;
     fecha_hora: string;
     estado: string;
-    paciente: { nombre: string; apellidos: string | null } | null;
+    paciente: { id: string; nombre: string; apellidos: string | null } | null;
   }[] = [];
+  // paciente_id -> { fase actual, último peso } tomado de su última receta
+  const infoPac: Record<string, { fase: number | null; peso: string | null }> =
+    {};
   if (verClinica) {
     const { count } = await supabase
       .from("pacientes")
@@ -182,18 +185,44 @@ export default async function DashboardPage() {
     const { data: hoy } = await supabase
       .from("citas")
       .select(
-        "id, fecha_hora, estado, paciente:pacientes(nombre, apellidos)",
+        "id, fecha_hora, estado, paciente:pacientes(id, nombre, apellidos)",
       )
       .gte("fecha_hora", inicioHoyCl.toISOString())
       .lt("fecha_hora", finHoyCl.toISOString())
       .neq("estado", "cancelada")
       .order("fecha_hora");
     citasHoy = (hoy ?? []) as unknown as typeof citasHoy;
+
+    // Fase actual + último peso de los pacientes de hoy (de su última receta).
+    const ids = [
+      ...new Set(
+        citasHoy.map((c) => c.paciente?.id).filter((x): x is string => !!x),
+      ),
+    ];
+    if (ids.length > 0) {
+      const { data: recs } = await supabase
+        .from("recetas")
+        .select("paciente_id, fase, metricas, fecha")
+        .in("paciente_id", ids)
+        .order("fecha", { ascending: false });
+      for (const r of (recs ?? []) as {
+        paciente_id: string;
+        fase: number | null;
+        metricas: Record<string, string> | null;
+        fecha: string;
+      }[]) {
+        if (!infoPac[r.paciente_id])
+          infoPac[r.paciente_id] = {
+            fase: r.fase ?? null,
+            peso: r.metricas?.peso ?? null,
+          };
+      }
+    }
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
-      <div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-8">
+      <div className="order-1">
         <h1 className="text-2xl font-semibold text-zinc-900">
           Hola, {usuario?.nombre}
         </h1>
@@ -201,7 +230,7 @@ export default async function DashboardPage() {
       </div>
 
       {verFarmacia && (
-        <>
+        <div className="order-3 flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Kpi label="Ventas de hoy" value={String(ventasDiaCount)} />
             <Kpi label="Total de hoy" value={money(totalDia)} />
@@ -266,11 +295,11 @@ export default async function DashboardPage() {
               </div>
             </Panel>
           </div>
-        </>
+        </div>
       )}
 
       {verClinica && (
-        <div className="space-y-4">
+        <div className="order-2 space-y-4">
           {citasPorConfirmar > 0 && (
             <Link
               href="/agenda"
@@ -297,6 +326,78 @@ export default async function DashboardPage() {
               </span>
             </Link>
           )}
+
+          {/* Pacientes del día — clic para abrir el expediente */}
+          <div className="rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-medium text-zinc-900">
+                Pacientes de hoy
+              </h2>
+              <Link
+                href="/agenda"
+                className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+              >
+                Ver agenda →
+              </Link>
+            </div>
+            {citasHoy.length === 0 ? (
+              <p className="py-6 text-center text-sm text-zinc-400">
+                No hay pacientes agendados para hoy.
+              </p>
+            ) : (
+              <ul className="divide-y divide-zinc-100">
+                {citasHoy.map((c) => {
+                  const info = c.paciente ? infoPac[c.paciente.id] : undefined;
+                  return (
+                    <li key={c.id}>
+                      <Link
+                        href={
+                          c.paciente ? `/pacientes/${c.paciente.id}` : "#"
+                        }
+                        className="-mx-2 flex items-center justify-between rounded-lg px-2 py-2.5 text-sm transition hover:bg-zinc-50"
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="w-12 shrink-0 font-medium tabular-nums text-zinc-900">
+                            {horaSinaloa(c.fecha_hora)}
+                          </span>
+                          <span className="truncate font-medium text-zinc-800">
+                            {c.paciente
+                              ? `${c.paciente.nombre} ${c.paciente.apellidos ?? ""}`
+                              : "—"}
+                          </span>
+                          {info?.fase != null && (
+                            <span className="shrink-0 rounded-full bg-[#efe7db] px-2 py-0.5 text-[10px] font-medium text-[#8c7a63]">
+                              Fase {info.fase}
+                            </span>
+                          )}
+                          {info?.peso && (
+                            <span className="shrink-0 text-xs text-zinc-400">
+                              {info.peso} kg
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase ${
+                              c.estado === "confirmada"
+                                ? "bg-green-100 text-green-700"
+                                : c.estado === "agendada"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-zinc-200 text-zinc-600"
+                            }`}
+                          >
+                            {c.estado}
+                          </span>
+                          <span className="text-zinc-300">›</span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Kpi label="Pacientes totales" value={String(totalPacientes)} />
             <Kpi label="Nuevos este mes" value={String(pacientesNuevosMes)} />
@@ -307,43 +408,6 @@ export default async function DashboardPage() {
               alerta={citasPorConfirmar > 0}
             />
           </div>
-
-          <Panel titulo="Citas de hoy">
-            {citasHoy.length === 0 ? (
-              <p className="text-sm text-zinc-400">No hay citas para hoy.</p>
-            ) : (
-              <ul className="divide-y divide-zinc-100">
-                {citasHoy.map((c) => (
-                  <li
-                    key={c.id}
-                    className="flex items-center justify-between py-2 text-sm"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="font-medium tabular-nums text-zinc-900">
-                        {horaSinaloa(c.fecha_hora)}
-                      </span>
-                      <span className="text-zinc-700">
-                        {c.paciente
-                          ? `${c.paciente.nombre} ${c.paciente.apellidos ?? ""}`
-                          : "—"}
-                      </span>
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase ${
-                        c.estado === "confirmada"
-                          ? "bg-green-100 text-green-700"
-                          : c.estado === "agendada"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-zinc-200 text-zinc-600"
-                      }`}
-                    >
-                      {c.estado}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
         </div>
       )}
     </div>
