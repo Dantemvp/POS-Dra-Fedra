@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getUsuarioActual } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { inicioDiaSinaloa, etiquetaDiaCorta } from "@/lib/tz";
 import { VentasDiaChart, MetodoChart, TopProductosChart } from "./Charts";
 import {
   confirmacionVencida,
@@ -40,10 +41,9 @@ export default async function DashboardPage() {
   }[] = [];
 
   if (verFarmacia) {
-    const inicioHoy = new Date();
-    inicioHoy.setHours(0, 0, 0, 0);
-    const desde14 = new Date(inicioHoy);
-    desde14.setDate(desde14.getDate() - 13);
+    // Fronteras de día EN SINALOA (no en UTC del servidor).
+    const inicioHoy = inicioDiaSinaloa();
+    const desde14 = new Date(inicioHoy.getTime() - 13 * 86_400_000);
 
     const { data: ventas } = await supabase
       .from("ventas")
@@ -53,14 +53,13 @@ export default async function DashboardPage() {
 
     const dias = new Map<string, number>();
     for (let i = 0; i < 14; i++) {
-      const d = new Date(desde14);
-      d.setDate(d.getDate() + i);
-      dias.set(d.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit" }), 0);
+      const d = new Date(desde14.getTime() + i * 86_400_000);
+      dias.set(etiquetaDiaCorta(d), 0);
     }
     const metodoMap = new Map<string, number>();
     for (const v of ventas ?? []) {
       const f = new Date(v.fecha as string);
-      const key = f.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit" });
+      const key = etiquetaDiaCorta(f);
       if (dias.has(key)) dias.set(key, dias.get(key)! + Number(v.total));
       const m = (v.metodo_pago as string) ?? "otro";
       metodoMap.set(m, (metodoMap.get(m) ?? 0) + Number(v.total));

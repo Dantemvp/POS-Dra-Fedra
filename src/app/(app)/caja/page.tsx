@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { inicioDiaSinaloa, horaSinaloa } from "@/lib/tz";
 import CorteButton from "./CorteButton";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
 import CancelarVentaBtn from "./CancelarVentaBtn";
@@ -22,9 +23,8 @@ type Mov = {
 export default async function CajaPage() {
   const supabase = await createClient();
 
-  const inicioHoy = new Date();
-  inicioHoy.setHours(0, 0, 0, 0);
-  const desde = inicioHoy.toISOString();
+  // Inicio del día EN SINALOA (no en UTC del servidor) para el corte correcto.
+  const desde = inicioDiaSinaloa().toISOString();
 
   const { data: ventasData } = await supabase
     .from("ventas")
@@ -122,10 +122,7 @@ export default async function CajaPage() {
                     #{v.folio}
                   </td>
                   <td className="px-4 py-3 text-zinc-600">
-                    {new Date(v.fecha).toLocaleTimeString("es-MX", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {horaSinaloa(v.fecha)}
                   </td>
                   <td className="px-4 py-3 capitalize text-zinc-600">
                     {v.metodo_pago ?? "—"}

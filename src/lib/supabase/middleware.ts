@@ -1,6 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Roles permitidos por prefijo de ruta. Si una ruta protegida no aparece aquí,
+// queda permitida para cualquier usuario autenticado (ej. /dashboard).
+const RUTAS_ROL: { prefijo: string; roles: string[] }[] = [
+  { prefijo: "/inventario", roles: ["admin", "farmacia"] },
+  { prefijo: "/compras", roles: ["admin", "farmacia"] },
+  { prefijo: "/ventas", roles: ["admin", "farmacia"] },
+  { prefijo: "/caja", roles: ["admin", "farmacia"] },
+  { prefijo: "/pacientes", roles: ["admin", "doctora", "asistente"] },
+  { prefijo: "/agenda", roles: ["admin", "doctora", "asistente"] },
+  { prefijo: "/recetas", roles: ["admin", "doctora"] },
+];
+
 // Refresca la sesión y protege rutas. Redirige a /login si no hay usuario.
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -43,6 +55,25 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  // Control de acceso por rol: si la ruta exige roles y el usuario no los tiene,
+  // lo mandamos al dashboard (no debe ver módulos de otra área).
+  if (user) {
+    const regla = RUTAS_ROL.find((r) => path.startsWith(r.prefijo));
+    if (regla) {
+      const { data: fila } = await supabase
+        .from("usuarios")
+        .select("rol")
+        .eq("auth_uid", user.id)
+        .single();
+      const rol = fila?.rol as string | undefined;
+      if (!rol || !regla.roles.includes(rol)) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   return supabaseResponse;
