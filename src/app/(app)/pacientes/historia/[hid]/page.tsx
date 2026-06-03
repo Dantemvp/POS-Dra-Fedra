@@ -73,9 +73,32 @@ export default async function HistoriaPrint({
     .map(([k, v]) => [k, valor(v)]);
   if (extra.length > 0) secciones.push({ nombre: "Datos", filas: extra });
 
+  const fechaTxt = new Date(h.fecha).toLocaleDateString("es-MX");
+
   return (
     <div className="mx-auto max-w-3xl">
-      <style>{`@media print { @page { size: letter; margin: 0; } }`}</style>
+      <style>{`
+        @media print {
+          @page { size: letter; margin: 0; }
+          html, body { margin: 0 !important; }
+        }
+        /* Fondo membretado: en pantalla cubre la hoja; al imprimir es fixed y
+           se repite en CADA página. */
+        .hc-bg { position: absolute; inset: 0; z-index: 0; }
+        .hc-bg img { width: 100%; height: 100%; object-fit: fill; }
+        .hc-table { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
+        .hc-table > * > tr > td { padding-left: 9%; padding-right: 9%; vertical-align: top; }
+        .hc-head-sp { height: 150px; }
+        .hc-foot-sp { height: 120px; }
+        @media screen {
+          .hc-print { position: relative; overflow: hidden; aspect-ratio: 1700 / 2200; }
+        }
+        @media print {
+          .hc-bg { position: fixed; }
+          .hc-head-sp { height: 36mm; }
+          .hc-foot-sp { height: 30mm; }
+        }
+      `}</style>
 
       <div className="mb-4 flex items-center justify-between no-print">
         <Link
@@ -87,85 +110,98 @@ export default async function HistoriaPrint({
         <PrintButton />
       </div>
 
-      {/* Hoja membretada oficial de fondo (logo, firma y contacto ya vienen
-          en la imagen). El contenido del historial se inserta encima en la
-          zona blanca central. La imag. es tamaño carta (1700x2200). */}
-      <div
-        className="print-area relative mx-auto bg-white ring-1 ring-zinc-200"
-        style={{ aspectRatio: "1700 / 2200" }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/membrete-hc.png"
-          alt=""
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "fill",
-          }}
-        />
-
-        {/* Contenido del historial, dentro del área segura (debajo del logo,
-            arriba de la firma, lejos de las esquinas decorativas). */}
-        <div
-          style={{
-            position: "absolute",
-            top: "15%",
-            left: "9%",
-            right: "9%",
-            containerType: "inline-size",
-          }}
-        >
-          <div className="text-center">
-            <h1 className="text-base font-semibold tracking-wide text-zinc-900">
-              HISTORIA CLÍNICA
-            </h1>
-            <p className="text-[11px] text-zinc-500">
-              {h.tipos_historia?.nombre ?? ""}
-            </p>
-          </div>
-
-          <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-0.5 text-[11px] text-zinc-700">
-            <span>
-              <span className="text-zinc-400">Paciente: </span>
-              {p ? `${p.nombre} ${p.apellidos ?? ""}` : "—"}
-            </span>
-            {p?.sexo && <span>Sexo: {p.sexo}</span>}
-            {p?.fecha_nac && <span>Nac.: {p.fecha_nac}</span>}
-            <span>
-              <span className="text-zinc-400">Fecha: </span>
-              {new Date(h.fecha).toLocaleDateString("es-MX")}
-            </span>
-          </div>
-
-          <div className="mt-3 space-y-3">
-            {secciones.map((s) => (
-              <section key={s.nombre} className="break-inside-avoid">
-                <h2 className="mb-1 border-b border-[#cbbfae] pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#9a8c7a]">
-                  {s.nombre}
-                </h2>
-                <dl className="grid grid-cols-1 gap-x-8 gap-y-0.5 text-[11px] sm:grid-cols-2">
-                  {s.filas.map(([k, v], i) => (
-                    <div
-                      key={i}
-                      className="flex justify-between gap-3 border-b border-zinc-100 py-0.5"
-                    >
-                      <dt className="text-zinc-500">{k}</dt>
-                      <dd className="text-right font-medium text-zinc-800">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ))}
-            {secciones.length === 0 && (
-              <p className="text-sm text-zinc-400">
-                Esta historia no tiene datos.
-              </p>
-            )}
-          </div>
+      {/* Documento paginado sobre la hoja membretada. El fondo (logo, esquinas,
+          contacto) se repite en cada página; thead/tfoot reservan ese espacio
+          en TODAS las páginas para que el contenido nunca lo pise. La firma va
+          al final del contenido. */}
+      <div className="print-area hc-print mx-auto bg-white ring-1 ring-zinc-200">
+        <div className="hc-bg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/membrete-bg.png" alt="" />
         </div>
+
+        <table className="hc-table">
+          <thead>
+            <tr>
+              <td>
+                <div className="hc-head-sp" />
+              </td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div className="text-center">
+                  <h1 className="text-base font-semibold tracking-wide text-zinc-900">
+                    HISTORIA CLÍNICA
+                  </h1>
+                  <p className="text-[11px] text-zinc-500">
+                    {h.tipos_historia?.nombre ?? ""}
+                  </p>
+                </div>
+
+                <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-0.5 text-[11px] text-zinc-700">
+                  <span>
+                    <span className="text-zinc-400">Paciente: </span>
+                    {p ? `${p.nombre} ${p.apellidos ?? ""}` : "—"}
+                  </span>
+                  {p?.sexo && <span>Sexo: {p.sexo}</span>}
+                  {p?.fecha_nac && <span>Nac.: {p.fecha_nac}</span>}
+                  <span>
+                    <span className="text-zinc-400">Fecha: </span>
+                    {fechaTxt}
+                  </span>
+                </div>
+
+                <div className="mt-3 space-y-3">
+                  {secciones.map((s) => (
+                    <section key={s.nombre} className="break-inside-avoid">
+                      <h2 className="mb-1 border-b border-[#cbbfae] pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#9a8c7a]">
+                        {s.nombre}
+                      </h2>
+                      <dl className="grid grid-cols-1 gap-x-8 gap-y-0.5 text-[11px] sm:grid-cols-2">
+                        {s.filas.map(([k, v], i) => (
+                          <div
+                            key={i}
+                            className="flex justify-between gap-3 border-b border-zinc-100 py-0.5"
+                          >
+                            <dt className="text-zinc-500">{k}</dt>
+                            <dd className="text-right font-medium text-zinc-800">
+                              {v}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  ))}
+                  {secciones.length === 0 && (
+                    <p className="text-sm text-zinc-400">
+                      Esta historia no tiene datos.
+                    </p>
+                  )}
+                </div>
+
+                {/* Firma (una sola vez, al final) */}
+                <div className="mt-12 break-inside-avoid text-center">
+                  <div className="mx-auto w-60 border-t border-zinc-500" />
+                  <p className="mt-1 text-[11px] font-semibold text-zinc-800">
+                    Dra. Fedra Yarissa Aldama Castro
+                  </p>
+                  <p className="text-[10px] text-zinc-500">
+                    Médico Cirujano · Céd. Prof. 11015233 · S.S.A. 20982
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>
+                <div className="hc-foot-sp" />
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   );
