@@ -79,25 +79,13 @@ export default async function HistoriaPrint({
     <div className="mx-auto max-w-3xl">
       <style>{`
         @media print {
-          @page { size: letter; margin: 0; }
-          html, body { margin: 0 !important; }
+          @page { size: letter; margin: 12mm 14mm; }
+          html, body { margin: 0 !important; background: #fff !important; }
+          main { padding: 0 !important; }
+          .hc-doc, .hc-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-        /* Fondo membretado: en pantalla cubre la hoja; al imprimir es fixed y
-           se repite en CADA página. */
-        .hc-bg { position: absolute; inset: 0; z-index: 0; }
-        .hc-bg img { width: 100%; height: 100%; object-fit: fill; }
-        .hc-table { width: 100%; border-collapse: collapse; position: relative; z-index: 1; }
-        .hc-table > * > tr > td { padding-left: 9%; padding-right: 9%; vertical-align: top; }
-        .hc-head-sp { height: 150px; }
-        .hc-foot-sp { height: 120px; }
-        @media screen {
-          .hc-print { position: relative; overflow: hidden; aspect-ratio: 1700 / 2200; }
-        }
-        @media print {
-          .hc-bg { position: fixed; }
-          .hc-head-sp { height: 36mm; }
-          .hc-foot-sp { height: 30mm; }
-        }
+        .hc-table { width: 100%; border-collapse: collapse; }
+        .hc-table td { vertical-align: top; }
       `}</style>
 
       <div className="mb-4 flex items-center justify-between no-print">
@@ -110,21 +98,35 @@ export default async function HistoriaPrint({
         <PrintButton />
       </div>
 
-      {/* Documento paginado sobre la hoja membretada. El fondo (logo, esquinas,
-          contacto) se repite en cada página; thead/tfoot reservan ese espacio
-          en TODAS las páginas para que el contenido nunca lo pise. La firma va
-          al final del contenido. */}
-      <div className="print-area hc-print mx-auto bg-white ring-1 ring-zinc-200">
-        <div className="hc-bg">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/membrete-bg.png" alt="" />
-        </div>
-
+      {/* Documento paginado: el encabezado (logo + datos) y el pie (contacto)
+          son thead/tfoot, que el navegador REPITE en cada hoja al imprimir.
+          El contenido fluye en medio y cruza de página como un Word; la firma
+          va una sola vez al final. */}
+      <div className="hc-doc mx-auto max-w-3xl bg-white p-8 ring-1 ring-zinc-200 print:p-0 print:ring-0">
         <table className="hc-table">
           <thead>
             <tr>
               <td>
-                <div className="hc-head-sp" />
+                {/* Membrete (se repite en cada página) */}
+                <div
+                  className="flex items-start justify-between border-b-2 pb-3"
+                  style={{ borderColor: "#b8aa9c" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/logo.png"
+                    alt="Dra. Fedra Aldama"
+                    style={{ width: 210, height: "auto" }}
+                  />
+                  <div className="text-right text-[10px] leading-snug text-zinc-600">
+                    <p className="font-semibold text-zinc-800">
+                      Dra. Fedra Yarissa Aldama Castro
+                    </p>
+                    <p>Médico Cirujano — U. Autónoma de Guadalajara</p>
+                    <p>Céd. Prof. 11015233 · S.S.A. 20982</p>
+                  </div>
+                </div>
+                <div style={{ height: "10px" }} />
               </td>
             </tr>
           </thead>
@@ -197,7 +199,14 @@ export default async function HistoriaPrint({
           <tfoot>
             <tr>
               <td>
-                <div className="hc-foot-sp" />
+                {/* Pie (se repite en cada página) */}
+                <div
+                  className="mt-3 border-t pt-1 text-center text-[9px] text-zinc-500"
+                  style={{ borderColor: "#cbbfae" }}
+                >
+                  Tel. 668 146 35 02 · Blvd Río Fuerte 2677, Viñedos · Los
+                  Mochis, Sin.
+                </div>
               </td>
             </tr>
           </tfoot>

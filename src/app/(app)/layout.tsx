@@ -16,7 +16,7 @@ export default async function AppLayout({
     <div className="flex min-h-screen bg-zinc-100">
       <Sidebar rol={usuario.rol} />
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-3">
+        <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-3 print:hidden">
           <div />
           <div className="flex items-center gap-3">
             <span className="text-sm text-zinc-700">{usuario.nombre}</span>

@@ -27,7 +27,7 @@ export default function Sidebar({ rol }: { rol: Rol }) {
   const items = NAV.filter((i) => i.roles.includes(rol));
 
   return (
-    <aside className="flex w-56 flex-col border-r border-zinc-200 bg-white">
+    <aside className="flex w-56 flex-col border-r border-zinc-200 bg-white print:hidden">
       <div className="border-b border-zinc-200 px-5 py-4">
         <p className="text-sm font-semibold text-zinc-900">Dra. Fedra Aldama</p>
         <p className="text-xs text-zinc-500 capitalize">{rol}</p>
