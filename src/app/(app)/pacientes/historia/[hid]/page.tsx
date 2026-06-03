@@ -82,7 +82,10 @@ export default async function HistoriaPrint({
           @page { size: letter; margin: 12mm 14mm; }
           html, body { margin: 0 !important; background: #fff !important; }
           main { padding: 0 !important; }
-          .hc-doc, .hc-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          /* globals.css oculta todo salvo .print-area; este documento usa
+             paginación con tabla (no .print-area), así que lo revelamos aquí. */
+          body * { visibility: hidden; }
+          .hc-doc, .hc-doc * { visibility: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
         .hc-table { width: 100%; border-collapse: collapse; }
         .hc-table td { vertical-align: top; }
