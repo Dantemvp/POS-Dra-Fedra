@@ -39,6 +39,9 @@ body {
     left: 0;
     top: 0;
     width: 100%;
+    /* Forzar impresión de colores/fondos (recetario, membrete). */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .no-print {
     display: none !important;

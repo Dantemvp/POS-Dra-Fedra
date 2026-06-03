@@ -69,7 +69,7 @@ export default function HistoriaCard({
                 href={`/pacientes/historia/${historiaId}`}
                 className="rounded-lg px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
               >
-                Imprimir
+                Imprimir con membrete
               </Link>
               <button
                 onClick={() => {

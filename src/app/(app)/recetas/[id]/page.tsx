@@ -82,12 +82,25 @@ export default async function RecetaPrint({
         className="print-area relative mx-auto w-full bg-white text-zinc-900"
         style={{
           aspectRatio: "2000 / 1294",
-          backgroundImage: "url(/recetario.png)",
-          backgroundSize: "100% 100%",
-          backgroundRepeat: "no-repeat",
           containerType: "inline-size",
         }}
       >
+        {/* Recetario de fondo como <img>: las imágenes SÍ se imprimen aunque
+            el usuario no marque "Gráficos en segundo plano" (a diferencia de
+            background-image de CSS, que el navegador omite al imprimir). */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/recetario.png"
+          alt=""
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "fill",
+          }}
+        />
+
         {/* Nombre / Edad / Fecha (texto JUSTO ARRIBA de la línea) */}
         <span style={{ position: "absolute", left: "10%", top: "18.2%", fontSize: "1.6cqw" }}>
           {nombre}
