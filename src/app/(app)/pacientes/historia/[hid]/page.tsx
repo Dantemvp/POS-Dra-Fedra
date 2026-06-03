@@ -19,6 +19,7 @@ type Historia = {
 
 function valor(v: unknown): string {
   if (typeof v === "boolean") return v ? "Sí" : "No";
+  if (Array.isArray(v)) return v.join(", ");
   return String(v ?? "").trim();
 }
 

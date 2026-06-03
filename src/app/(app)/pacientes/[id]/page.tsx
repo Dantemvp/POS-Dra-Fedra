@@ -102,8 +102,13 @@ export default async function PacienteDetalle({
 
   // Mapa campoId -> etiqueta (para mostrar las respuestas guardadas)
   const etiquetas = new Map<string, string>();
+  // Mapa campoId -> definición (tipo + opciones) para editar con el control correcto
+  const defs: Record<string, { tipo_dato: string; opciones: string[] | null }> = {};
   for (const t of tipos)
-    for (const c of t.campos_historia) etiquetas.set(c.id, c.etiqueta);
+    for (const c of t.campos_historia) {
+      etiquetas.set(c.id, c.etiqueta);
+      defs[c.id] = { tipo_dato: c.tipo_dato, opciones: c.opciones ?? null };
+    }
 
   const { data: histData } = await supabase
     .from("historias_clinicas")
@@ -202,6 +207,7 @@ export default async function PacienteDetalle({
             fecha={new Date(h.fecha).toLocaleString("es-MX")}
             datos={h.datos ?? {}}
             labels={Object.fromEntries(etiquetas)}
+            defs={defs}
             esAdmin={esAdmin}
           />
         ))}

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { actualizarHistoria, eliminarHistoria } from "../actions";
 
+type Def = { tipo_dato: string; opciones: string[] | null };
+
 export default function HistoriaCard({
   historiaId,
   pacienteId,
@@ -12,6 +14,7 @@ export default function HistoriaCard({
   fecha,
   datos,
   labels,
+  defs = {},
   esAdmin,
 }: {
   historiaId: string;
@@ -20,6 +23,7 @@ export default function HistoriaCard({
   fecha: string;
   datos: Record<string, unknown>;
   labels: Record<string, string>;
+  defs?: Record<string, Def>;
   esAdmin: boolean;
 }) {
   const router = useRouter();
@@ -144,40 +148,116 @@ export default function HistoriaCard({
             >
               <dt className="text-zinc-500">{labels[k] ?? k}</dt>
               <dd className="text-right font-medium text-zinc-800">
-                {typeof v === "boolean" ? (v ? "Sí" : "No") : String(v || "—")}
+                {typeof v === "boolean"
+                  ? v
+                    ? "Sí"
+                    : "No"
+                  : Array.isArray(v)
+                    ? v.length
+                      ? v.join(", ")
+                      : "—"
+                    : String(v || "—")}
               </dd>
             </div>
           ))}
         </dl>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {entradas.map(([k, v]) => (
-            <div key={k}>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
-                {labels[k] ?? k}
-              </label>
-              {typeof v === "boolean" ? (
-                <label className="flex items-center gap-2 text-sm text-zinc-700">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(valores[k])}
+          {entradas.map(([k, v]) => {
+            const def = defs[k];
+            const tipo =
+              def?.tipo_dato ?? (typeof v === "boolean" ? "booleano" : "texto");
+            const inputCls =
+              "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900";
+            return (
+              <div key={k}>
+                <label className="mb-1 block text-xs font-medium text-zinc-600">
+                  {labels[k] ?? k}
+                </label>
+                {tipo === "booleano" ? (
+                  <label className="flex items-center gap-2 text-sm text-zinc-700">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(valores[k])}
+                      onChange={(e) =>
+                        setValores((p) => ({ ...p, [k]: e.target.checked }))
+                      }
+                    />
+                    Sí
+                  </label>
+                ) : tipo === "multi" ? (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                    {(def?.opciones ?? []).map((o) => {
+                      const arr = Array.isArray(valores[k])
+                        ? (valores[k] as string[])
+                        : [];
+                      return (
+                        <label
+                          key={o}
+                          className="flex items-center gap-1.5 text-sm text-zinc-700"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={arr.includes(o)}
+                            onChange={(e) =>
+                              setValores((p) => ({
+                                ...p,
+                                [k]: e.target.checked
+                                  ? [...arr, o]
+                                  : arr.filter((x) => x !== o),
+                              }))
+                            }
+                          />
+                          {o}
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : tipo === "opciones" ? (
+                  <select
+                    className={inputCls}
+                    value={String(valores[k] ?? "")}
                     onChange={(e) =>
-                      setValores((p) => ({ ...p, [k]: e.target.checked }))
+                      setValores((p) => ({ ...p, [k]: e.target.value }))
+                    }
+                  >
+                    <option value="">—</option>
+                    {(def?.opciones ?? []).map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                ) : tipo === "textarea" ? (
+                  <textarea
+                    rows={3}
+                    className={`${inputCls} min-h-20`}
+                    value={String(valores[k] ?? "")}
+                    onChange={(e) =>
+                      setValores((p) => ({ ...p, [k]: e.target.value }))
                     }
                   />
-                  Sí
-                </label>
-              ) : (
-                <input
-                  value={String(valores[k] ?? "")}
-                  onChange={(e) =>
-                    setValores((p) => ({ ...p, [k]: e.target.value }))
-                  }
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
-                />
-              )}
-            </div>
-          ))}
+                ) : (
+                  <input
+                    type={
+                      tipo === "numero" ? "number" : tipo === "fecha" ? "date" : "text"
+                    }
+                    value={String(valores[k] ?? "")}
+                    onChange={(e) =>
+                      setValores((p) => ({
+                        ...p,
+                        [k]:
+                          tipo === "numero"
+                            ? Number(e.target.value)
+                            : e.target.value,
+                      }))
+                    }
+                    className={inputCls}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

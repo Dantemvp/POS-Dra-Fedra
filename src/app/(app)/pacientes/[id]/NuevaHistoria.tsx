@@ -135,6 +135,34 @@ export default function NuevaHistoria({
                       </option>
                     ))}
                   </select>
+                ) : c.tipo_dato === "multi" ? (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                    {(c.opciones ?? []).map((o) => {
+                      const arr = Array.isArray(valores[c.id])
+                        ? (valores[c.id] as string[])
+                        : [];
+                      return (
+                        <label
+                          key={o}
+                          className="flex items-center gap-1.5 text-sm text-zinc-700"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={arr.includes(o)}
+                            onChange={(e) =>
+                              setCampo(
+                                c.id,
+                                e.target.checked
+                                  ? [...arr, o]
+                                  : arr.filter((x) => x !== o),
+                              )
+                            }
+                          />
+                          {o}
+                        </label>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <input
                     className={input}
