@@ -112,6 +112,19 @@ export async function eliminarHistoria(
   return { ok: true };
 }
 
+// URL firmada para ver un documento guardado (ej. foto del InBody).
+export async function urlDocumento(
+  path: string,
+): Promise<{ ok: boolean; url?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from("archivos")
+    .createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl)
+    return { ok: false, error: error?.message ?? "No disponible." };
+  return { ok: true, url: data.signedUrl };
+}
+
 export type InBodyDatos = Record<string, number | string | null>;
 
 // Lee una foto de reporte InBody (ya subida al Storage) con OpenAI visión

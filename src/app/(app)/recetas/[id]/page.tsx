@@ -88,14 +88,14 @@ export default async function RecetaPrint({
           containerType: "inline-size",
         }}
       >
-        {/* Nombre / Edad / Fecha */}
-        <span style={{ position: "absolute", left: "10%", top: "20.4%", fontSize: "1.6cqw" }}>
+        {/* Nombre / Edad / Fecha (texto JUSTO ARRIBA de la línea) */}
+        <span style={{ position: "absolute", left: "10%", top: "18.2%", fontSize: "1.6cqw" }}>
           {nombre}
         </span>
-        <span style={{ position: "absolute", left: "50%", top: "20.4%", fontSize: "1.6cqw" }}>
+        <span style={{ position: "absolute", left: "50%", top: "18.2%", fontSize: "1.6cqw" }}>
           {edad}
         </span>
-        <span style={{ position: "absolute", left: "71%", top: "20.4%", fontSize: "1.6cqw" }}>
+        <span style={{ position: "absolute", left: "71%", top: "18.2%", fontSize: "1.6cqw" }}>
           {fecha}
         </span>
 

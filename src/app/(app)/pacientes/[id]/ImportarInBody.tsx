@@ -3,7 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { extraerInBody, crearHistoria, type InBodyDatos } from "../actions";
+import {
+  extraerInBody,
+  crearHistoria,
+  urlDocumento,
+  type InBodyDatos,
+} from "../actions";
 
 // clave de IA -> etiqueta legible + unidad
 const CAMPOS: [keyof InBodyDatos & string, string, string][] = [
@@ -36,6 +41,7 @@ export default function ImportarInBody({
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [fase, setFase] = useState<"idle" | "procesando" | "revision">("idle");
+  const [docUrl, setDocUrl] = useState<string | null>(null);
   const [valores, setValores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -57,6 +63,9 @@ export default function ImportarInBody({
       setFase("idle");
       return;
     }
+    // URL firmada para mostrar la foto y poder cotejarla contra lo que leyó la IA.
+    const doc = await urlDocumento(path);
+    setDocUrl(doc.ok ? (doc.url ?? null) : null);
 
     const res = await extraerInBody(path);
     if (!res.ok || !res.datos) {
@@ -91,6 +100,7 @@ export default function ImportarInBody({
       }
       setFase("idle");
       setValores({});
+      setDocUrl(null);
       router.refresh();
     });
   }
@@ -133,8 +143,23 @@ export default function ImportarInBody({
       {fase === "revision" && (
         <div className="mt-4">
           <p className="mb-3 rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
-            Datos leídos del reporte. Puedes editar cualquier campo antes de guardar.
+            Datos leídos del reporte. Coteja contra la foto y edita cualquier campo antes de guardar.
           </p>
+          {docUrl && (
+            <a
+              href={docUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-3 block overflow-hidden rounded-lg ring-1 ring-zinc-200"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={docUrl}
+                alt="Reporte InBody"
+                className="max-h-72 w-full bg-zinc-50 object-contain"
+              />
+            </a>
+          )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {CAMPOS.map(([key, label, unit]) => (
               <div key={key}>
@@ -162,6 +187,7 @@ export default function ImportarInBody({
               onClick={() => {
                 setFase("idle");
                 setError(null);
+                setDocUrl(null);
               }}
               className="rounded-lg px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100"
             >
