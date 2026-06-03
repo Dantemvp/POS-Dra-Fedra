@@ -8,6 +8,24 @@ import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
 import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
 
+// Edad en años a partir de la fecha de nacimiento.
+function edadDe(fnac: string | null): string | null {
+  if (!fnac) return null;
+  const d = new Date(fnac);
+  if (isNaN(d.getTime())) return null;
+  const años = Math.floor((Date.now() - d.getTime()) / 31_557_600_000);
+  return años >= 0 && años < 130 ? `${años} años` : null;
+}
+
+// Limpia el teléfono a formato wa.me (México = 52).
+function waLink(tel: string | null): string | null {
+  if (!tel) return null;
+  let d = tel.replace(/\D/g, "");
+  if (!d) return null;
+  if (d.length === 10) d = "52" + d;
+  return `https://wa.me/${d}`;
+}
+
 // Saca un número de un valor JSON (soporta "72.5", "72,5", "72 kg").
 function aNumero(v: unknown): number | null {
   if (v == null) return null;
@@ -134,14 +152,26 @@ export default async function PacienteDetalle({
       </Link>
 
       <div className="mt-2 mb-6 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
-        <h1 className="text-2xl font-semibold text-zinc-900">
-          {p.nombre} {p.apellidos ?? ""}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold text-zinc-900">
+            {p.nombre} {p.apellidos ?? ""}
+          </h1>
+          {waLink(p.telefono_wpp) && (
+            <a
+              href={waLink(p.telefono_wpp)!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+            >
+              WhatsApp
+            </a>
+          )}
+        </div>
         <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-600">
           {p.telefono_wpp && <span>WhatsApp: {p.telefono_wpp}</span>}
           {p.email && <span>{p.email}</span>}
           {p.sexo && <span>Sexo: {p.sexo}</span>}
-          {p.fecha_nac && <span>Nac.: {p.fecha_nac}</span>}
+          {edadDe(p.fecha_nac) && <span>{edadDe(p.fecha_nac)}</span>}
         </div>
       </div>
 
