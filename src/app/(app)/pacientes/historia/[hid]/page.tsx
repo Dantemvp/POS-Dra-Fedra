@@ -75,7 +75,7 @@ export default async function HistoriaPrint({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <style>{`@media print { @page { size: letter; margin: 14mm; } }`}</style>
+      <style>{`@media print { @page { size: letter; margin: 0; } }`}</style>
 
       <div className="mb-4 flex items-center justify-between no-print">
         <Link
@@ -87,31 +87,47 @@ export default async function HistoriaPrint({
         <PrintButton />
       </div>
 
-      <div className="print-area mx-auto bg-white p-10 ring-1 ring-zinc-200">
-        {/* Encabezado branded */}
-        <div className="flex items-start justify-between border-b-2 border-[#b8aa9c] pb-4">
-          {/* <img> plano (no next/image): se imprime de forma confiable. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.png"
-            alt="Dra. Fedra Aldama"
-            style={{ width: 240, height: "auto" }}
-          />
-          <div className="text-right text-[10px] leading-snug text-zinc-600">
-            <p className="font-semibold text-zinc-800">
-              Dra. Fedra Yarissa Aldama Castro
-            </p>
-            <p>Médico Cirujano — U. Autónoma de Guadalajara</p>
-            <p>Céd. Prof. 11015233 · S.S.A. 20982</p>
-          </div>
-        </div>
+      {/* Hoja membretada oficial de fondo (logo, firma y contacto ya vienen
+          en la imagen). El contenido del historial se inserta encima en la
+          zona blanca central. La imag. es tamaño carta (1700x2200). */}
+      <div
+        className="print-area relative mx-auto bg-white ring-1 ring-zinc-200"
+        style={{ aspectRatio: "1700 / 2200" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/membrete-hc.png"
+          alt=""
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "fill",
+          }}
+        />
 
-        {/* Título + paciente */}
-        <div className="mt-5">
-          <h1 className="text-lg font-semibold text-zinc-900">
-            Historia clínica — {h.tipos_historia?.nombre ?? ""}
-          </h1>
-          <div className="mt-1 flex flex-wrap gap-x-6 gap-y-0.5 text-sm text-zinc-600">
+        {/* Contenido del historial, dentro del área segura (debajo del logo,
+            arriba de la firma, lejos de las esquinas decorativas). */}
+        <div
+          style={{
+            position: "absolute",
+            top: "15%",
+            left: "9%",
+            right: "9%",
+            containerType: "inline-size",
+          }}
+        >
+          <div className="text-center">
+            <h1 className="text-base font-semibold tracking-wide text-zinc-900">
+              HISTORIA CLÍNICA
+            </h1>
+            <p className="text-[11px] text-zinc-500">
+              {h.tipos_historia?.nombre ?? ""}
+            </p>
+          </div>
+
+          <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-0.5 text-[11px] text-zinc-700">
             <span>
               <span className="text-zinc-400">Paciente: </span>
               {p ? `${p.nombre} ${p.apellidos ?? ""}` : "—"}
@@ -123,40 +139,31 @@ export default async function HistoriaPrint({
               {new Date(h.fecha).toLocaleDateString("es-MX")}
             </span>
           </div>
-        </div>
 
-        {/* Secciones */}
-        <div className="mt-5 space-y-5">
-          {secciones.map((s) => (
-            <section key={s.nombre}>
-              <h2 className="mb-2 border-b border-zinc-200 pb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                {s.nombre}
-              </h2>
-              <dl className="grid grid-cols-1 gap-x-8 gap-y-1.5 text-sm sm:grid-cols-2">
-                {s.filas.map(([k, v], i) => (
-                  <div key={i} className="flex justify-between gap-3 border-b border-zinc-50 py-0.5">
-                    <dt className="text-zinc-500">{k}</dt>
-                    <dd className="text-right font-medium text-zinc-800">{v}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          ))}
-          {secciones.length === 0 && (
-            <p className="text-sm text-zinc-400">Esta historia no tiene datos.</p>
-          )}
-        </div>
-
-        {/* Pie: firma + contacto */}
-        <div className="mt-12 flex items-end justify-between">
-          <div className="text-[10px] leading-snug text-zinc-500">
-            <p>Tel. 668 146 35 02</p>
-            <p>Blvd Río Fuerte 2677, Viñedos</p>
-            <p>Los Mochis, Sin.</p>
-          </div>
-          <div className="text-center">
-            <div className="mx-auto w-56 border-t border-zinc-400" />
-            <p className="mt-1 text-xs text-zinc-600">Dra. Fedra Aldama</p>
+          <div className="mt-3 space-y-3">
+            {secciones.map((s) => (
+              <section key={s.nombre} className="break-inside-avoid">
+                <h2 className="mb-1 border-b border-[#cbbfae] pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#9a8c7a]">
+                  {s.nombre}
+                </h2>
+                <dl className="grid grid-cols-1 gap-x-8 gap-y-0.5 text-[11px] sm:grid-cols-2">
+                  {s.filas.map(([k, v], i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between gap-3 border-b border-zinc-100 py-0.5"
+                    >
+                      <dt className="text-zinc-500">{k}</dt>
+                      <dd className="text-right font-medium text-zinc-800">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ))}
+            {secciones.length === 0 && (
+              <p className="text-sm text-zinc-400">
+                Esta historia no tiene datos.
+              </p>
+            )}
           </div>
         </div>
       </div>
