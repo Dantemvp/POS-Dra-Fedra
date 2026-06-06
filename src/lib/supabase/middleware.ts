@@ -11,6 +11,8 @@ const RUTAS_ROL: { prefijo: string; roles: string[] }[] = [
   { prefijo: "/pacientes", roles: ["admin", "doctora", "asistente"] },
   { prefijo: "/agenda", roles: ["admin", "doctora", "asistente"] },
   { prefijo: "/recetas", roles: ["admin", "doctora"] },
+  { prefijo: "/cobros", roles: ["admin", "doctora", "asistente"] },
+  { prefijo: "/servicios", roles: ["admin", "doctora"] },
 ];
 
 // Refresca la sesión y protege rutas. Redirige a /login si no hay usuario.

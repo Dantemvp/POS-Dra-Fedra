@@ -20,6 +20,8 @@ const NAV: NavItem[] = [
   { href: "/pacientes", label: "Pacientes", roles: ["admin", "doctora", "asistente"], ready: true },
   { href: "/agenda", label: "Agenda", roles: ["admin", "doctora", "asistente"], ready: true },
   { href: "/recetas", label: "Recetas", roles: ["admin", "doctora"], ready: true },
+  { href: "/cobros", label: "Cobros", roles: ["admin", "doctora", "asistente"], ready: true },
+  { href: "/servicios", label: "Servicios", roles: ["admin", "doctora"], ready: true },
 ];
 
 export default function Sidebar({ rol }: { rol: Rol }) {
