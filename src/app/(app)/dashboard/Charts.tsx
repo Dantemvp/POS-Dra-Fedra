@@ -4,6 +4,9 @@ import {
   Bar,
   BarChart,
   Cell,
+  Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -139,6 +142,80 @@ export function TopProductosChart({
             <Cell key={i} fill={COLORS[i % COLORS.length]} />
           ))}
         </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Distribución de pacientes por fase de tratamiento.
+export function PacientesFaseChart({
+  data,
+}: {
+  data: { fase: string; pacientes: number }[];
+}) {
+  if (data.length === 0)
+    return (
+      <p className="py-12 text-center text-sm text-zinc-400">
+        Aún no hay pacientes con fase asignada.
+      </p>
+    );
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+        <XAxis dataKey="fase" tick={{ fontSize: 11, fill: AXIS }} />
+        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: AXIS }} width={32} />
+        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: CURSOR }} />
+        <Bar dataKey="pacientes" fill={TAUPE} radius={[4, 4, 0, 0]}>
+          {data.map((_, i) => (
+            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Recetas y citas por mes (últimos 12 meses).
+export function PorMesChart({
+  data,
+}: {
+  data: { mes: string; recetas: number; citas: number }[];
+}) {
+  if (data.length === 0)
+    return <p className="py-12 text-center text-sm text-zinc-400">Sin datos.</p>;
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <LineChart data={data} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
+        <XAxis dataKey="mes" tick={{ fontSize: 10, fill: AXIS }} />
+        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: AXIS }} width={32} />
+        <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: AXIS, strokeWidth: 1 }} />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Line type="monotone" dataKey="recetas" name="Recetas" stroke="#b19b7d" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="citas" name="Citas" stroke="#c8a4a0" strokeWidth={2} dot={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Ingresos del consultorio por mes (cobros).
+export function IngresosMesChart({
+  data,
+}: {
+  data: { mes: string; total: number }[];
+}) {
+  if (data.length === 0)
+    return (
+      <p className="py-12 text-center text-sm text-zinc-400">
+        Aún no hay cobros registrados.
+      </p>
+    );
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+        <XAxis dataKey="mes" tick={{ fontSize: 10, fill: AXIS }} />
+        <YAxis tick={{ fontSize: 11, fill: AXIS }} width={64} tickFormatter={(v) => money(Number(v))} />
+        <Tooltip formatter={(v) => money(Number(v))} contentStyle={tooltipStyle} cursor={{ fill: CURSOR }} />
+        <Bar dataKey="total" fill={TAUPE} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

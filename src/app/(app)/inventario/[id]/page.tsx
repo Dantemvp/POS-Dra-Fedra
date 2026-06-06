@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
 import Archivos, { type ArchivoVista } from "./Archivos";
 import EditarProducto from "./EditarProducto";
+import EliminarProducto from "./EliminarProducto";
 
 type Producto = {
   id: string;
@@ -30,6 +32,8 @@ export default async function ProductoDetalle({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const usuario = await getUsuarioActual();
+  const esAdmin = usuario?.rol === "admin";
 
   const { data } = await supabase
     .from("productos")
@@ -110,6 +114,12 @@ export default async function ProductoDetalle({
       </div>
 
       <Archivos productoId={p.id} archivos={archivos} />
+
+      {esAdmin && (
+        <div className="mt-8 border-t border-zinc-200 pt-4">
+          <EliminarProducto productoId={p.id} nombre={p.nombre} />
+        </div>
+      )}
     </div>
   );
 }

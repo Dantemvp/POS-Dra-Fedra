@@ -2,8 +2,55 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
 
 export type ActionResult = { ok: boolean; error?: string };
+
+// Eliminar producto — SOLO admin. Si no tiene ventas ni movimientos (basura de
+// prueba), lo borra de verdad. Si ya tiene historial, lo archiva (activo=false)
+// para no romper la contabilidad.
+export async function eliminarProducto(id: string): Promise<ActionResult> {
+  const usuario = await getUsuarioActual();
+  if (usuario?.rol !== "admin")
+    return { ok: false, error: "Solo el administrador puede eliminar productos." };
+  if (!id) return { ok: false, error: "Falta el producto." };
+
+  const supabase = await createClient();
+
+  // ¿Tiene historial que debamos preservar?
+  const [{ count: ventas }, { count: movs }] = await Promise.all([
+    supabase
+      .from("venta_items")
+      .select("id", { count: "exact", head: true })
+      .eq("producto_id", id),
+    supabase
+      .from("movimientos_inv")
+      .select("id", { count: "exact", head: true })
+      .eq("producto_id", id),
+  ]);
+
+  if ((ventas ?? 0) > 0 || (movs ?? 0) > 0) {
+    const { error } = await supabase
+      .from("productos")
+      .update({ activo: false })
+      .eq("id", id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/inventario");
+    return {
+      ok: true,
+      error: "El producto tenía ventas/movimientos, así que se archivó (no se borra historial).",
+    };
+  }
+
+  // Sin historial: borrar dependientes y el producto
+  await supabase.from("producto_archivos").delete().eq("producto_id", id);
+  await supabase.from("compra_items").delete().eq("producto_id", id);
+  await supabase.from("lotes").delete().eq("producto_id", id);
+  const { error } = await supabase.from("productos").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/inventario");
+  return { ok: true };
+}
 
 // Alta de producto
 export async function crearProducto(

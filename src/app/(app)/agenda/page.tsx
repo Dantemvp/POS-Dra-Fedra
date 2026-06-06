@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import NuevaCita from "./NuevaCita";
 import CitaCard from "./CitaCard";
+import CalendarioAgenda, { type CitaCal } from "./CalendarioAgenda";
 import { confirmacionVencida, necesitaConfirmar } from "./confirmacion";
 
 export type Cita = {
@@ -53,23 +54,57 @@ export default async function AgendaPage() {
   const hoyClave = claveDia(new Date().toISOString());
   const desde = `${hoyClave}T00:00:00-07:00`;
 
-  const [{ data: citasData }, { data: pacData }] = await Promise.all([
-    supabase
-      .from("citas")
-      .select(
-        "id, fecha_hora, estado, notas, recordatorio_enviado, limite_confirmacion, paciente:pacientes(id, nombre, apellidos, telefono_wpp)",
-      )
-      .gte("fecha_hora", desde)
-      .neq("estado", "cancelada")
-      .order("fecha_hora"),
-    supabase
-      .from("pacientes")
-      .select("id, nombre, apellidos")
-      .order("nombre"),
-  ]);
+  // Ventana del calendario: 6 meses atrás → 12 meses adelante.
+  const winIni = `${hoyClave.slice(0, 8)}01T00:00:00-07:00`;
+  const calDesde = new Date(winIni);
+  calDesde.setMonth(calDesde.getMonth() - 6);
+  const calHasta = new Date(winIni);
+  calHasta.setMonth(calHasta.getMonth() + 12);
+
+  const [{ data: citasData }, { data: pacData }, { data: calData }] =
+    await Promise.all([
+      supabase
+        .from("citas")
+        .select(
+          "id, fecha_hora, estado, notas, recordatorio_enviado, limite_confirmacion, paciente:pacientes(id, nombre, apellidos, telefono_wpp)",
+        )
+        .gte("fecha_hora", desde)
+        .neq("estado", "cancelada")
+        .order("fecha_hora"),
+      supabase
+        .from("pacientes")
+        .select("id, nombre, apellidos")
+        .order("nombre"),
+      supabase
+        .from("citas")
+        .select(
+          "id, fecha_hora, estado, paciente:pacientes(id, nombre, apellidos)",
+        )
+        .gte("fecha_hora", calDesde.toISOString())
+        .lte("fecha_hora", calHasta.toISOString())
+        .order("fecha_hora"),
+    ]);
 
   const citas = (citasData ?? []) as unknown as Cita[];
   const pacientes = (pacData ?? []) as PacienteOpcion[];
+
+  type CalRow = {
+    id: string;
+    fecha_hora: string;
+    estado: string;
+    paciente: { id: string; nombre: string; apellidos: string | null } | null;
+  };
+  const citasCal: CitaCal[] = ((calData ?? []) as unknown as CalRow[]).map(
+    (c) => ({
+      id: c.id,
+      fecha_hora: c.fecha_hora,
+      estado: c.estado,
+      paciente_id: c.paciente?.id ?? null,
+      nombre: c.paciente
+        ? `${c.paciente.nombre} ${c.paciente.apellidos ?? ""}`.trim()
+        : "—",
+    }),
+  );
 
   // Estado de confirmación
   const ahora = new Date();
@@ -120,8 +155,13 @@ export default async function AgendaPage() {
         </div>
       )}
 
+      <div className="mb-6">
+        <CalendarioAgenda citas={citasCal} />
+      </div>
+
       <NuevaCita pacientes={pacientes} />
 
+      <h2 className="mb-3 mt-8 text-lg font-medium text-zinc-900">Próximas citas</h2>
       {grupos.size === 0 ? (
         <div className="rounded-xl bg-white px-4 py-12 text-center text-sm text-zinc-400 ring-1 ring-zinc-200">
           No hay citas próximas.

@@ -2,7 +2,14 @@ import Link from "next/link";
 import { getUsuarioActual } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { inicioDiaSinaloa, etiquetaDiaCorta, horaSinaloa } from "@/lib/tz";
-import { VentasDiaChart, MetodoChart, TopProductosChart } from "./Charts";
+import {
+  VentasDiaChart,
+  MetodoChart,
+  TopProductosChart,
+  PacientesFaseChart,
+  PorMesChart,
+  IngresosMesChart,
+} from "./Charts";
 import {
   confirmacionVencida,
   necesitaConfirmar,
@@ -140,6 +147,10 @@ export default async function DashboardPage() {
   // paciente_id -> { fase actual, último peso } tomado de su última receta
   const infoPac: Record<string, { fase: number | null; peso: string | null }> =
     {};
+  // KPIs nuevos
+  let pacientesFase: { fase: string; pacientes: number }[] = [];
+  let porMes: { mes: string; recetas: number; citas: number }[] = [];
+  let ingresosMes: { mes: string; total: number }[] = [];
   if (verClinica) {
     const { count } = await supabase
       .from("pacientes")
@@ -218,6 +229,85 @@ export default async function DashboardPage() {
           };
       }
     }
+
+    // --- Pacientes por fase (fase actual = última receta con fase) ---
+    const { data: recFase } = await supabase
+      .from("recetas")
+      .select("paciente_id, fase, fecha")
+      .not("fase", "is", null)
+      .order("fecha", { ascending: false });
+    const faseActualPac = new Map<string, number>();
+    for (const r of (recFase ?? []) as {
+      paciente_id: string;
+      fase: number;
+      fecha: string;
+    }[]) {
+      if (!faseActualPac.has(r.paciente_id))
+        faseActualPac.set(r.paciente_id, r.fase);
+    }
+    const conteoFase = new Map<number, number>();
+    for (const f of faseActualPac.values())
+      conteoFase.set(f, (conteoFase.get(f) ?? 0) + 1);
+    pacientesFase = [...conteoFase.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([f, n]) => ({ fase: `Fase ${f}`, pacientes: n }));
+
+    // --- Últimos 12 meses: claves YYYY-MM en Sinaloa ---
+    const mesKey = (iso: string) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Mazatlan",
+        year: "numeric",
+        month: "2-digit",
+      }).format(new Date(iso));
+    const meses: string[] = [];
+    const base = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+      meses.push(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      );
+    }
+    const etiquetaMes = (k: string) => {
+      const [y, m] = k.split("-");
+      return (
+        new Intl.DateTimeFormat("es-MX", { month: "short" }).format(
+          new Date(Number(y), Number(m) - 1, 1),
+        ) + ` ${y.slice(2)}`
+      );
+    };
+    const desde12 = `${meses[0]}-01T00:00:00-07:00`;
+
+    const [{ data: recMes }, { data: citMes }, { data: cobMes }] =
+      await Promise.all([
+        supabase.from("recetas").select("fecha").gte("fecha", desde12),
+        supabase.from("citas").select("fecha_hora").gte("fecha_hora", desde12),
+        supabase.from("cobros").select("fecha, total").gte("fecha", desde12),
+      ]);
+
+    const rMap = new Map<string, number>();
+    const cMap = new Map<string, number>();
+    const iMap = new Map<string, number>();
+    for (const x of (recMes ?? []) as { fecha: string }[]) {
+      const k = mesKey(x.fecha);
+      rMap.set(k, (rMap.get(k) ?? 0) + 1);
+    }
+    for (const x of (citMes ?? []) as { fecha_hora: string }[]) {
+      const k = mesKey(x.fecha_hora);
+      cMap.set(k, (cMap.get(k) ?? 0) + 1);
+    }
+    for (const x of (cobMes ?? []) as { fecha: string; total: number }[]) {
+      const k = mesKey(x.fecha);
+      iMap.set(k, (iMap.get(k) ?? 0) + Number(x.total));
+    }
+    porMes = meses.map((k) => ({
+      mes: etiquetaMes(k),
+      recetas: rMap.get(k) ?? 0,
+      citas: cMap.get(k) ?? 0,
+    }));
+    ingresosMes = meses.map((k) => ({
+      mes: etiquetaMes(k),
+      total: iMap.get(k) ?? 0,
+    }));
   }
 
   return (
@@ -407,6 +497,20 @@ export default async function DashboardPage() {
               value={String(citasPorConfirmar)}
               alerta={citasPorConfirmar > 0}
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Panel titulo="Pacientes por fase">
+              <PacientesFaseChart data={pacientesFase} />
+            </Panel>
+            <Panel titulo="Ingresos del consultorio por mes">
+              <IngresosMesChart data={ingresosMes} />
+            </Panel>
+            <div className="lg:col-span-2">
+              <Panel titulo="Recetas y citas por mes (12 meses)">
+                <PorMesChart data={porMes} />
+              </Panel>
+            </div>
           </div>
         </div>
       )}
