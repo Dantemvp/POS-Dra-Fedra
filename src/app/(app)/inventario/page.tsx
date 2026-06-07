@@ -29,7 +29,8 @@ export default async function InventarioPage() {
       (s, l) => s + Number(l.cantidad_actual ?? 0),
       0,
     );
-    return { ...p, stock, bajo: stock <= Number(p.stock_minimo ?? 0) };
+    const min = Number(p.stock_minimo ?? 0);
+    return { ...p, stock, bajo: min > 0 && stock <= min };
   });
 
   const alertas = conStock.filter((p) => p.bajo).length;

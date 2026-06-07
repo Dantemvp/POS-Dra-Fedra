@@ -119,8 +119,9 @@ export default async function DashboardPage() {
         (s, l) => s + Number(l.cantidad_actual ?? 0),
         0,
       );
-      if (stock <= Number(p.stock_minimo ?? 0))
-        stockBajo.push({ nombre: p.nombre, stock, minimo: Number(p.stock_minimo) });
+      const min = Number(p.stock_minimo ?? 0);
+      if (min > 0 && stock <= min)
+        stockBajo.push({ nombre: p.nombre, stock, minimo: min });
       for (const l of p.lotes ?? []) {
         if (
           l.caducidad &&
