@@ -98,28 +98,35 @@ export default async function HistoriaPrint({
           padding: 137px 43px 237px 122px; /* top right bottom left @72dpi */
         }
 
-        /* --- Impresión: el membrete se repite (fixed) en cada hoja --- */
+        /* --- Impresión: hoja carta exacta, membrete llenando 8.5x11in --- */
         @media print {
-          @page { size: letter; margin: 1.9in 0.6in 3.3in 1.7in; }
-          html, body { margin: 0 !important; background: #fff !important; }
+          @page { size: letter; margin: 0; }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           main { padding: 0 !important; }
+          .no-print { display: none !important; }
           body * { visibility: hidden; }
           .hc-doc, .hc-doc * { visibility: visible !important; }
           .hc-doc {
-            position: static;
-            width: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8.5in;
+            height: 11in;
             min-height: 0;
+            margin: 0;
+            overflow: hidden;
           }
           .hc-bg {
-            position: fixed;
+            position: absolute;
             inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            width: 8.5in;
+            height: 11in;
+            object-fit: fill;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          .hc-content { padding: 0 !important; }
+          /* Zona segura en pulgadas (libra mancha sup-izq e inf-der) */
+          .hc-content { padding: 1.9in 0.6in 3.3in 1.7in !important; }
         }
       `}</style>
 
