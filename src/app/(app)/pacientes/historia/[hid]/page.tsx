@@ -133,7 +133,9 @@ export default async function HistoriaPrint({
         >
           ← Pacientes
         </Link>
-        <PrintButton />
+        <PrintButton
+          filename={`HC-${p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : "paciente"}-${fechaTxt}`.replace(/[^\w\sáéíóúñ-]/gi, "")}
+        />
       </div>
 
       <div className="hc-doc ring-1 ring-zinc-200 print:ring-0">
