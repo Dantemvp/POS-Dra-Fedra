@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
 import NuevaCompra from "./NuevaCompra";
+import EliminarCompra from "./EliminarCompra";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -14,6 +16,8 @@ type Compra = {
 
 export default async function ComprasPage() {
   const supabase = await createClient();
+  const usuario = await getUsuarioActual();
+  const esAdmin = usuario?.rol === "admin";
 
   const { data: productosData } = await supabase
     .from("productos")
@@ -46,12 +50,13 @@ export default async function ComprasPage() {
               <th className="px-4 py-3">Proveedor</th>
               <th className="px-4 py-3">Factura</th>
               <th className="px-4 py-3 text-right">Total</th>
+              {esAdmin && <th className="px-4 py-3"></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {compras.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-zinc-400">
+                <td colSpan={esAdmin ? 5 : 4} className="px-4 py-8 text-center text-zinc-400">
                   Sin compras registradas.
                 </td>
               </tr>
@@ -68,6 +73,11 @@ export default async function ComprasPage() {
                 <td className="px-4 py-3 text-right tabular-nums text-zinc-900">
                   {c.total != null ? money(Number(c.total)) : "—"}
                 </td>
+                {esAdmin && (
+                  <td className="px-4 py-3 text-right">
+                    <EliminarCompra id={c.id} />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

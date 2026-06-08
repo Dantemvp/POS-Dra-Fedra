@@ -144,6 +144,7 @@ export default async function HistoriaPrint({
         <img className="hc-bg" src="/membrete-historia.png" alt="" />
 
         <div className="hc-content">
+          <div className="hc-body">
           {/* Encabezado: logo + datos de la doctora (como la plantilla oficial) */}
           <div className="flex items-start justify-between gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -232,6 +233,7 @@ export default async function HistoriaPrint({
             <p className="text-[8px] text-zinc-500">
               Médico Cirujano · Céd. Prof. 11015233 · S.S.A. 20982
             </p>
+          </div>
           </div>
         </div>
       </div>

@@ -70,12 +70,13 @@ export default async function InventarioPage() {
               <th className="px-4 py-3 text-right">Stock</th>
               <th className="px-4 py-3 text-right">Mínimo</th>
               <th className="px-4 py-3">COFEPRIS</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {conStock.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-zinc-400">
                   Aún no hay productos. Agrega el primero arriba.
                 </td>
               </tr>
@@ -114,6 +115,14 @@ export default async function InventarioPage() {
                   {p.fraccion_cofepris === "na"
                     ? "—"
                     : `Fracción ${p.fraccion_cofepris}`}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Link
+                    href={`/inventario/${p.id}`}
+                    className="text-sm font-medium text-zinc-700 hover:text-zinc-900"
+                  >
+                    Editar →
+                  </Link>
                 </td>
               </tr>
             ))}

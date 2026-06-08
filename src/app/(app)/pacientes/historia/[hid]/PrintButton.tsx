@@ -2,41 +2,81 @@
 
 import { useState } from "react";
 
-// Genera un PDF tamaño carta capturando EXACTAMENTE el documento de la preview
-// (.hc-doc) — así lo impreso es idéntico a lo que se ve en pantalla.
+// Carta en puntos
+const PAGE_W = 612;
+const PAGE_H = 792;
+// Márgenes de cada hoja (deja respirar las esquinas decorativas del membrete)
+const MARGIN_X = 44;
+const MARGIN_TOP = 44;
+const MARGIN_BOTTOM = 48;
+const CONTENT_W = PAGE_W - MARGIN_X * 2; // 524
+const CONTENT_H = PAGE_H - MARGIN_TOP - MARGIN_BOTTOM; // 700
+
+function cargarImagen(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Genera un PDF carta MULTIPÁGINA: cada hoja lleva el membrete completo y
+// alineado + márgenes, y una porción del contenido. Así nunca se corta ni
+// se desalinea el membrete.
 export default function PrintButton({ filename = "historia-clinica" }: { filename?: string }) {
   const [trabajando, setTrabajando] = useState<"" | "pdf" | "print">("");
 
   async function generar(): Promise<{ blobUrl: string; save: () => void } | null> {
-    const el = document.querySelector(".hc-doc") as HTMLElement | null;
-    if (!el) return null;
-    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    const body = document.querySelector(".hc-body") as HTMLElement | null;
+    if (!body) return null;
+
+    const [{ default: html2canvas }, { jsPDF }, membrete] = await Promise.all([
       import("html2canvas-pro"),
       import("jspdf"),
+      cargarImagen("/membrete-historia.png"),
     ]);
-    const canvas = await html2canvas(el, {
+
+    // Captura SOLO el contenido (sin el membrete de fondo)
+    const canvas = await html2canvas(body, {
       scale: 2,
-      backgroundColor: "#ffffff",
+      backgroundColor: null, // transparente: el membrete va detrás en el PDF
       useCORS: true,
       logging: false,
     });
-    const img = canvas.toDataURL("image/jpeg", 0.95);
 
-    // Carta en puntos: 612 x 792. La imagen se ajusta al ancho y se pagina.
+    // Escala: el ancho capturado mapea a CONTENT_W puntos
+    const pxPerPt = canvas.width / CONTENT_W; // px de canvas por punto
+    const sliceHpx = CONTENT_H * pxPerPt; // alto de cada página en px de canvas
+    const paginas = Math.max(1, Math.ceil(canvas.height / sliceHpx));
+
     const pdf = new jsPDF({ unit: "pt", format: "letter" });
-    const pageW = 612;
-    const pageH = 792;
-    const imgH = (canvas.height * pageW) / canvas.width;
-    let heightLeft = imgH;
-    let position = 0;
-    pdf.addImage(img, "JPEG", 0, position, pageW, imgH);
-    heightLeft -= pageH;
-    while (heightLeft > 0) {
-      position -= pageH;
-      pdf.addPage();
-      pdf.addImage(img, "JPEG", 0, position, pageW, imgH);
-      heightLeft -= pageH;
+
+    for (let p = 0; p < paginas; p++) {
+      if (p > 0) pdf.addPage();
+      // 1) Membrete completo de la hoja
+      pdf.addImage(membrete, "PNG", 0, 0, PAGE_W, PAGE_H);
+      // 2) Porción del contenido recortada a una hoja
+      const sy = p * sliceHpx;
+      const hpx = Math.min(sliceHpx, canvas.height - sy);
+      const slice = document.createElement("canvas");
+      slice.width = canvas.width;
+      slice.height = hpx;
+      const ctx = slice.getContext("2d");
+      if (!ctx) continue;
+      ctx.drawImage(canvas, 0, sy, canvas.width, hpx, 0, 0, canvas.width, hpx);
+      const hpt = hpx / pxPerPt;
+      pdf.addImage(
+        slice.toDataURL("image/png"),
+        "PNG",
+        MARGIN_X,
+        MARGIN_TOP,
+        CONTENT_W,
+        hpt,
+      );
     }
+
     return {
       blobUrl: pdf.output("bloburl") as unknown as string,
       save: () => pdf.save(`${filename}.pdf`),

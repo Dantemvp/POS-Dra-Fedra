@@ -2,6 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
+
+export async function eliminarCompra(id: string): Promise<Result> {
+  const u = await getUsuarioActual();
+  if (u?.rol !== "admin")
+    return { ok: false, error: "Solo el administrador puede eliminar compras." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("eliminar_compra", { p_compra: id });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/compras");
+  revalidatePath("/inventario");
+  return { ok: true };
+}
 
 export type ItemCompra = {
   producto_id: string;

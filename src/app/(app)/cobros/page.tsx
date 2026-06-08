@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
 import { fechaSinaloa } from "@/lib/tz";
 import NuevoCobro, { type Paciente, type Servicio, type Producto } from "./NuevoCobro";
+import EliminarCobro from "./EliminarCobro";
 
 type CobroRow = {
   id: string;
@@ -16,6 +18,8 @@ const fmt = (n: number) =>
 
 export default async function CobrosPage() {
   const supabase = await createClient();
+  const usuario = await getUsuarioActual();
+  const puedeBorrar = usuario?.rol === "admin" || usuario?.rol === "doctora";
 
   const [{ data: pac }, { data: srv }, { data: prod }, { data: cob }] =
     await Promise.all([
@@ -107,6 +111,11 @@ export default async function CobrosPage() {
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-zinc-900">
                     {fmt(c.total)}
+                    {puedeBorrar && (
+                      <div className="mt-1">
+                        <EliminarCobro id={c.id} />
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

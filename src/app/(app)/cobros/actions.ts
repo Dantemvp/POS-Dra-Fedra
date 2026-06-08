@@ -2,8 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
 
 export type Result = { ok: boolean; error?: string; id?: string };
+
+export async function eliminarCobro(id: string): Promise<Result> {
+  const u = await getUsuarioActual();
+  if (u?.rol !== "admin" && u?.rol !== "doctora")
+    return {
+      ok: false,
+      error: "Solo la doctora o el administrador pueden eliminar cobros.",
+    };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("eliminar_cobro", { p_cobro: id });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/cobros");
+  revalidatePath("/inventario");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
 
 export type ItemCobro = {
   tipo: "servicio" | "producto";
