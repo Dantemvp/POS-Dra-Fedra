@@ -2,6 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { fechaSinaloa, horaSinaloa } from "@/lib/tz";
+
+// Fecha y hora de captura en zona Sinaloa (ej. "7 jun 2026, 4:16 p.m.")
+function captura(s: string | null): string {
+  if (!s) return "";
+  return `${fechaSinaloa(s)}, ${horaSinaloa(s)}`;
+}
 
 export type PacienteLista = {
   id: string;
@@ -46,7 +53,7 @@ export default function ListaPacientes({
     let r = pacientes.filter((p) => {
       const coincide =
         !t ||
-        `${p.nombre} ${p.apellidos ?? ""} ${p.telefono_wpp ?? ""}`
+        `${p.nombre} ${p.apellidos ?? ""} ${p.telefono_wpp ?? ""} ${captura(p.creado_en)}`
           .toLowerCase()
           .includes(t);
       const faseOk =
@@ -79,7 +86,7 @@ export default function ListaPacientes({
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por nombre, apellido o WhatsApp…"
+          placeholder="Buscar por nombre, apellido, WhatsApp o fecha de captura…"
           className="min-w-[12rem] flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
         />
         <select
@@ -114,13 +121,14 @@ export default function ListaPacientes({
               <th className="px-4 py-3">Nombre</th>
               <th className="px-4 py-3">Fase</th>
               <th className="px-4 py-3">WhatsApp</th>
+              <th className="px-4 py-3">Captura</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-zinc-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-zinc-400">
                   {pacientes.length === 0
                     ? "Aún no hay pacientes."
                     : "Ningún paciente coincide con los filtros."}
@@ -157,6 +165,9 @@ export default function ListaPacientes({
                     ) : (
                       "—"
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {captura(p.creado_en) || "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link

@@ -91,8 +91,6 @@ export default async function HistoriaPrint({
           inset: 0;
           width: 100%;
           height: 100%;
-          object-fit: fill;
-          opacity: 0.55;
           z-index: 0;
           pointer-events: none;
         }
@@ -103,27 +101,28 @@ export default async function HistoriaPrint({
         }
 
         @media print {
-          @page { size: letter; margin: 0; }
+          /* Margen vertical en CADA hoja (evita que el texto se pegue al cruzar
+             de página). Sin margen lateral: el contenido lo controla .hc-content
+             y el membrete sangra a todo el ancho. */
+          @page { size: letter; margin: 0.55in 0; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           main { padding: 0 !important; }
           .no-print { display: none !important; }
           body * { visibility: hidden; }
           .hc-doc, .hc-doc * { visibility: visible !important; }
-          .hc-doc {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 8.5in;
-            min-height: 11in;
-            margin: 0;
-          }
+          .hc-doc { position: static; width: auto; min-height: 0; margin: 0; }
+          /* Membrete fijo = se repite en cada hoja, a tamaño carta completo.
+             top negativo compensa el margen de @page para sangrar arriba. */
           .hc-bg {
+            position: fixed;
+            top: -0.55in;
+            left: 0;
             width: 8.5in;
             height: 11in;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          .hc-content { padding: 0.5in 0.6in !important; }
+          .hc-content { padding: 0 0.6in !important; }
         }
       `}</style>
 
