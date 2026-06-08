@@ -73,32 +73,35 @@ export default async function HistoriaPrint({
   const fechaTxt = new Date(h.fecha).toLocaleDateString("es-MX");
 
   return (
-    <div className="mx-auto max-w-[640px]">
+    <div className="mx-auto max-w-[660px]">
       <style>{`
-        /* --- Pantalla: vista WYSIWYG tamaño carta (612x792 @72dpi) --- */
+        /* Documento tamaño carta (612x792 @72dpi). El membrete va de marca de
+           agua tenue al fondo y el contenido fluye a TODO el ancho con márgenes,
+           igual que la plantilla oficial. */
         .hc-doc {
           position: relative;
           width: 612px;
           min-height: 792px;
           margin: 0 auto;
           background: #fff;
+          color: #1c1917;
         }
         .hc-bg {
           position: absolute;
           inset: 0;
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: fill;
+          opacity: 0.55;
           z-index: 0;
+          pointer-events: none;
         }
-        /* Zona segura: libra la mancha sup-izq y la inf-der del membrete. */
         .hc-content {
           position: relative;
           z-index: 1;
-          padding: 137px 43px 237px 122px; /* top right bottom left @72dpi */
+          padding: 40px 44px 44px 44px; /* ~0.55in laterales */
         }
 
-        /* --- Impresión: hoja carta exacta, membrete llenando 8.5x11in --- */
         @media print {
           @page { size: letter; margin: 0; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
@@ -111,22 +114,16 @@ export default async function HistoriaPrint({
             top: 0;
             left: 0;
             width: 8.5in;
-            height: 11in;
-            min-height: 0;
+            min-height: 11in;
             margin: 0;
-            overflow: hidden;
           }
           .hc-bg {
-            position: absolute;
-            inset: 0;
             width: 8.5in;
             height: 11in;
-            object-fit: fill;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          /* Zona segura en pulgadas (libra mancha sup-izq e inf-der) */
-          .hc-content { padding: 1.9in 0.6in 3.3in 1.7in !important; }
+          .hc-content { padding: 0.5in 0.6in !important; }
         }
       `}</style>
 
@@ -146,50 +143,75 @@ export default async function HistoriaPrint({
         <img className="hc-bg" src="/membrete-historia.png" alt="" />
 
         <div className="hc-content">
-          {/* Encabezado de la doctora (el membrete es solo decorativo) */}
-          <div className="text-center">
-            <p className="text-[12px] font-semibold text-zinc-800">
-              Dra. Fedra Yarissa Aldama Castro
-            </p>
-            <p className="text-[9px] text-zinc-500">
-              Médico Cirujano · Céd. Prof. 11015233 · S.S.A. 20982
-            </p>
+          {/* Encabezado: logo + datos de la doctora (como la plantilla oficial) */}
+          <div className="flex items-start justify-between gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Dra. Fedra Aldama" style={{ width: 170, height: "auto" }} />
+            <div className="text-right text-[8px] leading-tight text-zinc-700">
+              <p className="text-[9px] font-semibold text-zinc-900">
+                DRA. FEDRA YARISSA ALDAMA CASTRO
+              </p>
+              <p>Médico Cirujano — Universidad Autónoma de Guadalajara</p>
+              <p>Céd. Prof. 11015233 · S.S.A. 20982</p>
+              <p>Tel. 668 146 35 02</p>
+              <p>Blvd Río Fuerte 2677, Viñedos · Los Mochis, Sin.</p>
+            </div>
           </div>
 
-          <h1 className="mt-3 text-center text-[15px] font-semibold tracking-wide text-zinc-900">
-            HISTORIA CLÍNICA
-          </h1>
-          <p className="text-center text-[10px] text-zinc-500">
-            {h.tipos_historia?.nombre ?? ""}
-          </p>
+          <div className="mt-2 border-t-2" style={{ borderColor: "#b8aa9c" }} />
 
-          <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-0.5 text-[10px] text-zinc-700">
-            <span>
-              <span className="text-zinc-400">Paciente: </span>
-              {p ? `${p.nombre} ${p.apellidos ?? ""}` : "—"}
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-[10px] text-zinc-500">
+              {h.tipos_historia?.nombre ?? ""}
             </span>
-            {p?.sexo && <span>Sexo: {p.sexo}</span>}
-            {p?.fecha_nac && <span>Nac.: {p.fecha_nac}</span>}
-            <span>
+            <h1 className="text-[15px] font-bold tracking-wide text-zinc-900">
+              HISTORIA CLÍNICA
+            </h1>
+            <span className="text-[10px] text-zinc-700">
               <span className="text-zinc-400">Fecha: </span>
               {fechaTxt}
             </span>
           </div>
 
+          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-0.5 border-y border-zinc-200 py-1 text-[10px] text-zinc-800">
+            <span>
+              <span className="text-zinc-400">Paciente: </span>
+              <strong>{p ? `${p.nombre} ${p.apellidos ?? ""}` : "—"}</strong>
+            </span>
+            {p?.sexo && (
+              <span>
+                <span className="text-zinc-400">Sexo: </span>
+                {p.sexo}
+              </span>
+            )}
+            {p?.fecha_nac && (
+              <span>
+                <span className="text-zinc-400">Nac.: </span>
+                {p.fecha_nac}
+              </span>
+            )}
+            {p?.telefono_wpp && (
+              <span>
+                <span className="text-zinc-400">Tel.: </span>
+                {p.telefono_wpp}
+              </span>
+            )}
+          </div>
+
           <div className="mt-3 space-y-2.5">
             {secciones.map((s) => (
               <section key={s.nombre} className="break-inside-avoid">
-                <h2 className="mb-1 border-b border-[#cbbfae] pb-0.5 text-[9px] font-semibold uppercase tracking-wide text-[#9a8c7a]">
+                <h2 className="mb-1 bg-[#f1ebe1] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#8c7a63]">
                   {s.nombre}
                 </h2>
-                <dl className="grid grid-cols-1 gap-x-6 gap-y-0.5 text-[10px] sm:grid-cols-2">
+                <dl className="grid grid-cols-1 gap-x-8 gap-y-px text-[10px] sm:grid-cols-2">
                   {s.filas.map(([k, v], i) => (
                     <div
                       key={i}
-                      className="flex justify-between gap-3 border-b border-zinc-100 py-0.5"
+                      className="flex justify-between gap-3 border-b border-dotted border-zinc-300 py-0.5"
                     >
                       <dt className="text-zinc-500">{k}</dt>
-                      <dd className="text-right font-medium text-zinc-800">{v}</dd>
+                      <dd className="text-right font-medium text-zinc-900">{v}</dd>
                     </div>
                   ))}
                 </dl>
@@ -200,13 +222,13 @@ export default async function HistoriaPrint({
             )}
           </div>
 
-          {/* Firma al final */}
+          {/* Firma */}
           <div className="mt-10 break-inside-avoid text-center">
-            <div className="mx-auto w-52 border-t border-zinc-500" />
-            <p className="mt-1 text-[10px] font-semibold text-zinc-800">
+            <div className="mx-auto w-56 border-t border-zinc-500" />
+            <p className="mt-1 text-[10px] font-semibold text-zinc-900">
               Dra. Fedra Yarissa Aldama Castro
             </p>
-            <p className="text-[9px] text-zinc-500">
+            <p className="text-[8px] text-zinc-500">
               Médico Cirujano · Céd. Prof. 11015233 · S.S.A. 20982
             </p>
           </div>
