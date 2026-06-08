@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { fechaSinaloa } from "@/lib/tz";
 
 export type RecetaLista = {
   id: string;
@@ -111,7 +112,7 @@ export default function ListaRecetas({ recetas }: { recetas: RecetaLista[] }) {
                   )}
                 </td>
                 <td className="px-4 py-3 text-zinc-600">
-                  {new Date(r.fecha).toLocaleDateString("es-MX")}
+                  {fechaSinaloa(r.fecha)}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <Link

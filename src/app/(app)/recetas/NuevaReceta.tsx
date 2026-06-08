@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { crearReceta, ultimoInBody, type ItemReceta } from "./actions";
 import { extraerInBody } from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
+import { fechaSinaloa } from "@/lib/tz";
 
 // InBody guardado (claves legibles) -> métricas de la receta
 function mapInBodyGuardado(d: Record<string, unknown>): Record<string, string> {
@@ -79,9 +80,7 @@ export default function NuevaReceta({
       setMetricas((p) => ({ ...p, ...mapInBodyGuardado(res.datos!) }));
       setInbodyMsg(
         "Cargado del último InBody" +
-          (res.fecha
-            ? " (" + new Date(res.fecha).toLocaleDateString("es-MX") + ")"
-            : "") +
+          (res.fecha ? " (" + fechaSinaloa(res.fecha) + ")" : "") +
           ".",
       );
     });
