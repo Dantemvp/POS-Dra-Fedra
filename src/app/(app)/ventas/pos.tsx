@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { cobrar } from "./actions";
-import BarcodeScanner from "@/components/BarcodeScanner";
+import BarcodeInput from "@/components/BarcodeInput";
 
 type Producto = {
   id: string;
@@ -32,11 +32,9 @@ export default function POS({ productos }: { productos: Producto[] }) {
   const [metodo, setMetodo] = useState("efectivo");
   const [error, setError] = useState<string | null>(null);
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [scanner, setScanner] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function onScan(code: string) {
-    setScanner(false);
     const p = productos.find((x) => x.codigo_barras === code);
     if (!p) {
       setError(`Código ${code} no está ligado a ningún producto.`);
@@ -177,27 +175,16 @@ export default function POS({ productos }: { productos: Producto[] }) {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* Productos */}
-      {scanner && <BarcodeScanner onDetect={onScan} onClose={() => setScanner(false)} />}
       <div className="rounded-xl bg-white p-4 ring-1 ring-zinc-200">
-        <div className="mb-3 flex gap-2">
-          <input
-            autoFocus
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar producto…"
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
-          />
-          <button
-            onClick={() => {
-              setError(null);
-              setScanner(true);
-            }}
-            className="shrink-0 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            title="Escanear código de barras"
-          >
-            Escanear
-          </button>
+        <div className="mb-2">
+          <BarcodeInput onScan={onScan} />
         </div>
+        <input
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="…o busca producto por nombre"
+          className="mb-3 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+        />
         <div className="space-y-1">
           {filtrados.length === 0 && (
             <p className="py-6 text-center text-sm text-zinc-400">

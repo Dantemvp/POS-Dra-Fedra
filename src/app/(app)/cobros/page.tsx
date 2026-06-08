@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { fechaSinaloa } from "@/lib/tz";
-import NuevoCobro, { type Paciente, type Servicio } from "./NuevoCobro";
+import NuevoCobro, { type Paciente, type Servicio, type Producto } from "./NuevoCobro";
 
 type CobroRow = {
   id: string;
@@ -17,27 +17,48 @@ const fmt = (n: number) =>
 export default async function CobrosPage() {
   const supabase = await createClient();
 
-  const [{ data: pac }, { data: srv }, { data: cob }] = await Promise.all([
-    supabase.from("pacientes").select("id, nombre, apellidos").order("nombre"),
-    supabase
-      .from("servicios")
-      .select("id, nombre, precio")
-      .eq("activo", true)
-      .order("nombre"),
-    supabase
-      .from("cobros")
-      .select(
-        "id, fecha, total, pacientes(nombre, apellidos), cobro_pagos(metodo)",
-      )
-      .order("fecha", { ascending: false })
-      .limit(50),
-  ]);
+  const [{ data: pac }, { data: srv }, { data: prod }, { data: cob }] =
+    await Promise.all([
+      supabase.from("pacientes").select("id, nombre, apellidos").order("nombre"),
+      supabase
+        .from("servicios")
+        .select("id, nombre, precio")
+        .eq("activo", true)
+        .order("nombre"),
+      supabase
+        .from("productos")
+        .select("id, nombre, precio_venta, codigo_barras, lotes(cantidad_actual)")
+        .eq("activo", true)
+        .order("nombre"),
+      supabase
+        .from("cobros")
+        .select(
+          "id, fecha, total, pacientes(nombre, apellidos), cobro_pagos(metodo)",
+        )
+        .order("fecha", { ascending: false })
+        .limit(50),
+    ]);
 
   const pacientes: Paciente[] = (pac ?? []).map((p) => ({
     id: p.id as string,
     nombre: `${p.nombre}${p.apellidos ? " " + p.apellidos : ""}`,
   }));
   const servicios = (srv ?? []) as Servicio[];
+  const productos: Producto[] = (
+    (prod ?? []) as unknown as {
+      id: string;
+      nombre: string;
+      precio_venta: number;
+      codigo_barras: string | null;
+      lotes: { cantidad_actual: number }[];
+    }[]
+  ).map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    precio: Number(p.precio_venta),
+    codigo_barras: p.codigo_barras,
+    stock: (p.lotes ?? []).reduce((s, l) => s + Number(l.cantidad_actual ?? 0), 0),
+  }));
   const cobros = (cob ?? []) as unknown as CobroRow[];
 
   return (
@@ -49,7 +70,11 @@ export default async function CobrosPage() {
         <p className="mb-4 text-sm text-zinc-500">
           Paciente, servicio (el precio se llena solo) y método. Listo.
         </p>
-        <NuevoCobro pacientes={pacientes} servicios={servicios} />
+        <NuevoCobro
+          pacientes={pacientes}
+          servicios={servicios}
+          productos={productos}
+        />
         <Link
           href="/servicios"
           className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900"

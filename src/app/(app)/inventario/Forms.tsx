@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { crearProducto, registrarEntrada, type ActionResult } from "./actions";
+import BarcodeScanner from "@/components/BarcodeScanner";
 
 const inicial: ActionResult = { ok: false };
 
@@ -74,8 +75,19 @@ const label = "mb-1 block text-xs font-medium text-zinc-600";
 
 function NuevoProducto() {
   const [state, action, pending] = useActionState(crearProducto, inicial);
+  const [codigo, setCodigo] = useState("");
+  const [scanner, setScanner] = useState(false);
   return (
     <form action={action} className="space-y-3">
+      {scanner && (
+        <BarcodeScanner
+          onDetect={(c) => {
+            setCodigo(c);
+            setScanner(false);
+          }}
+          onClose={() => setScanner(false)}
+        />
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className={label}>Nombre del producto *</label>
@@ -83,7 +95,24 @@ function NuevoProducto() {
         </div>
         <div className="sm:col-span-2">
           <label className={label}>Código de barras / SKU</label>
-          <input name="codigo_barras" className={input} placeholder="Escanea o escribe el código" />
+          <div className="flex gap-2">
+            <input
+              name="codigo_barras"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              className={input}
+              placeholder="Escanea (BIP) o escribe el código"
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              onClick={() => setScanner(true)}
+              className="shrink-0 rounded-lg border border-zinc-300 px-3 text-sm hover:bg-zinc-50"
+              title="Escanear con cámara"
+            >
+              📷
+            </button>
+          </div>
         </div>
         <div>
           <label className={label}>Precio de venta</label>
