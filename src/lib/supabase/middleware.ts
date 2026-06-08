@@ -46,7 +46,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = path.startsWith("/login") || path.startsWith("/auth");
+  // Rutas públicas: login/auth, los crons (se autentican con CRON_SECRET dentro
+  // del handler), y los archivos del PWA (service worker + manifiesto), que el
+  // navegador debe poder descargar sin sesión.
+  const isPublic =
+    path.startsWith("/login") ||
+    path.startsWith("/auth") ||
+    path.startsWith("/api/cron") ||
+    path === "/sw.js" ||
+    path === "/manifest.webmanifest";
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
