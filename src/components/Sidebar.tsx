@@ -3,35 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Rol } from "@/lib/auth";
-
-type NavItem = {
-  href: string;
-  label: string;
-  roles: Rol[];
-  ready: boolean; // false = aún no construido (se muestra deshabilitado)
-};
-
-const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Inicio", roles: ["admin", "farmacia", "doctora", "asistente"], ready: true },
-  { href: "/inventario", label: "Inventario", roles: ["admin", "farmacia"], ready: true },
-  { href: "/compras", label: "Compras", roles: ["admin", "farmacia"], ready: true },
-  { href: "/ventas", label: "Punto de venta", roles: ["admin", "farmacia"], ready: true },
-  { href: "/caja", label: "Caja y reportes", roles: ["admin", "farmacia"], ready: true },
-  { href: "/pacientes", label: "Pacientes", roles: ["admin", "doctora", "asistente"], ready: true },
-  { href: "/agenda", label: "Agenda", roles: ["admin", "doctora", "asistente"], ready: true },
-  { href: "/recetas", label: "Recetas", roles: ["admin", "doctora"], ready: true },
-  { href: "/cobros", label: "Cobros", roles: ["admin", "doctora", "asistente"], ready: true },
-  { href: "/servicios", label: "Servicios", roles: ["admin", "doctora"], ready: true },
-  { href: "/usuarios", label: "Usuarios", roles: ["admin"], ready: true },
-  { href: "/notificaciones", label: "Notificaciones", roles: ["admin", "farmacia", "doctora", "asistente"], ready: true },
-];
+import { navParaRol } from "@/components/nav";
 
 export default function Sidebar({ rol }: { rol: Rol }) {
   const pathname = usePathname();
-  const items = NAV.filter((i) => i.roles.includes(rol));
+  const items = navParaRol(rol);
 
   return (
-    <aside className="flex w-56 flex-col border-r border-zinc-200 bg-white print:hidden">
+    <aside className="hidden w-56 flex-col border-r border-zinc-200 bg-white print:hidden md:flex">
       <div className="border-b border-zinc-200 px-5 py-4">
         <p className="text-sm font-semibold text-zinc-900">Dra. Fedra Aldama</p>
         <p className="text-xs text-zinc-500 capitalize">{rol}</p>
