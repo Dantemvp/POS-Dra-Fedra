@@ -9,7 +9,7 @@ import {
   PacientesFaseChart,
   PorMesChart,
   IngresosMesChart,
-} from "./Charts";
+} from "./Charts.lazy";
 import {
   confirmacionVencida,
   necesitaConfirmar,
