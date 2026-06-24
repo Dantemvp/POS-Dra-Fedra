@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { registrarCompra, type ItemCompra } from "./actions";
 
 const input =
@@ -28,6 +28,13 @@ export default function NuevaCompra({
   const [msg, setMsg] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // El aviso de éxito se borra solo a los 3 segundos.
+  useEffect(() => {
+    if (!ok) return;
+    const t = setTimeout(() => setOk(false), 3000);
+    return () => clearTimeout(t);
+  }, [ok]);
 
   function setItem(idx: number, patch: Partial<ItemCompra>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));

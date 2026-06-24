@@ -138,7 +138,7 @@ export default async function HistoriaPrint({
         />
       </div>
 
-      <div className="hc-doc ring-1 ring-zinc-200 print:ring-0">
+      <div className="hc-doc doc-imprimible ring-1 ring-zinc-200 print:ring-0">
         {/* Membrete oficial — <img> (no background-image) para que imprima */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="hc-bg" src="/membrete-historia.png" alt="" />

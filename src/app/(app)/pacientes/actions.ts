@@ -5,6 +5,21 @@ import { createClient } from "@/lib/supabase/server";
 
 export type Result = { ok: boolean; error?: string; id?: string };
 
+// Marca/desmarca si el paciente ya dejó reseña en Google Maps.
+export async function marcarReviewGoogle(
+  pacienteId: string,
+  valor: boolean,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("pacientes")
+    .update({ review_google: valor })
+    .eq("id", pacienteId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/pacientes/${pacienteId}`);
+  return { ok: true };
+}
+
 async function usuarioId(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },

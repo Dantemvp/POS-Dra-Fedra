@@ -7,6 +7,7 @@ import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
 import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
 import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
+import ReviewGoogle from "./ReviewGoogle";
 
 // Edad en años a partir de la fecha de nacimiento.
 function edadDe(fnac: string | null): string | null {
@@ -57,6 +58,7 @@ type Paciente = {
   sexo: string | null;
   telefono_wpp: string | null;
   email: string | null;
+  review_google: boolean | null;
 };
 
 type Historia = {
@@ -78,7 +80,7 @@ export default async function PacienteDetalle({
 
   const { data: paciente } = await supabase
     .from("pacientes")
-    .select("id, nombre, apellidos, fecha_nac, sexo, telefono_wpp, email")
+    .select("id, nombre, apellidos, fecha_nac, sexo, telefono_wpp, email, review_google")
     .eq("id", id)
     .single();
 
@@ -178,16 +180,19 @@ export default async function PacienteDetalle({
               </span>
             )}
           </div>
-          {waLink(p.telefono_wpp) && (
-            <a
-              href={waLink(p.telefono_wpp)!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
-            >
-              WhatsApp
-            </a>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            <ReviewGoogle pacienteId={p.id} inicial={!!p.review_google} />
+            {waLink(p.telefono_wpp) && (
+              <a
+                href={waLink(p.telefono_wpp)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+              >
+                WhatsApp
+              </a>
+            )}
+          </div>
         </div>
         <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-600">
           {p.telefono_wpp && <span>WhatsApp: {p.telefono_wpp}</span>}

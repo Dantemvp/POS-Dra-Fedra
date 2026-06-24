@@ -122,7 +122,7 @@ export default function POS({ productos }: { productos: Producto[] }) {
   if (ticket) {
     return (
       <div className="mx-auto max-w-sm">
-        <div className="rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
+        <div className="doc-imprimible rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
           <div className="text-center">
             <p className="font-semibold text-zinc-900">Dra. Fedra Aldama</p>
             <p className="text-xs text-zinc-500">Farmacia</p>

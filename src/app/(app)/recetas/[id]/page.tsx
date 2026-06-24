@@ -79,7 +79,7 @@ export default async function RecetaPrint({
       </div>
 
       <div
-        className="print-area relative mx-auto w-full bg-white text-zinc-900"
+        className="print-area doc-imprimible relative mx-auto w-full bg-white text-zinc-900"
         style={{
           aspectRatio: "2000 / 1294",
           containerType: "inline-size",

@@ -56,6 +56,29 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Documentos imprimibles (historia, receta, ticket): SIEMPRE en claro, aunque
+   la app esté en tema oscuro. Si heredaran el tema, el texto saldría blanco y
+   la impresión/PDF quedaría en blanco. Reponemos la rampa zinc clara y fondo
+   blanco SOLO dentro de estos contenedores (afecta también la captura a PDF). */
+.doc-imprimible {
+  color-scheme: light;
+  color: #18181b;
+  background: #ffffff;
+  --background: #ffffff;
+  --foreground: #18181b;
+  --color-white: #ffffff;
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+}
+
 /* Impresión: mostrar solo el área marcada (recetas, tickets) */
 @media print {
   body * {
