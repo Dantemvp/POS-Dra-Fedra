@@ -4,15 +4,15 @@ import { NextResponse, type NextRequest } from "next/server";
 // Roles permitidos por prefijo de ruta. Si una ruta protegida no aparece aquí,
 // queda permitida para cualquier usuario autenticado (ej. /dashboard).
 const RUTAS_ROL: { prefijo: string; roles: string[] }[] = [
-  { prefijo: "/inventario", roles: ["admin", "farmacia"] },
-  { prefijo: "/compras", roles: ["admin", "farmacia"] },
-  { prefijo: "/ventas", roles: ["admin", "farmacia"] },
-  { prefijo: "/caja", roles: ["admin", "farmacia"] },
-  { prefijo: "/pacientes", roles: ["admin", "doctora", "asistente"] },
-  { prefijo: "/agenda", roles: ["admin", "doctora", "asistente"] },
-  { prefijo: "/recetas", roles: ["admin", "doctora"] },
-  { prefijo: "/cobros", roles: ["admin", "doctora", "asistente"] },
-  { prefijo: "/servicios", roles: ["admin", "doctora"] },
+  { prefijo: "/inventario", roles: ["admin", "farmacia", "gerente"] },
+  { prefijo: "/compras", roles: ["admin", "farmacia", "gerente"] },
+  { prefijo: "/ventas", roles: ["admin", "farmacia", "gerente"] },
+  { prefijo: "/caja", roles: ["admin", "farmacia", "gerente"] },
+  { prefijo: "/pacientes", roles: ["admin", "doctora", "asistente", "gerente"] },
+  { prefijo: "/agenda", roles: ["admin", "doctora", "asistente", "gerente"] },
+  { prefijo: "/recetas", roles: ["admin", "doctora", "gerente"] },
+  { prefijo: "/cobros", roles: ["admin", "doctora", "asistente", "gerente"] },
+  { prefijo: "/servicios", roles: ["admin", "doctora", "gerente"] },
   { prefijo: "/usuarios", roles: ["admin"] },
 ];
 

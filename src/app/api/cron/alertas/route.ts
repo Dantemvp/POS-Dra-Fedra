@@ -89,7 +89,7 @@ export async function GET(req: Request) {
     if (bajos.length > 0) {
       partes.push(`${bajos.length} con stock bajo (ej. ${bajos[0].nombre})`);
     }
-    await enviarARoles(["admin", "farmacia", "doctora"], {
+    await enviarARoles(["admin", "farmacia", "doctora", "gerente"], {
       title: "⚠️ Inventario para revisar",
       body: partes.join(" · "),
       url: "/inventario",
@@ -104,7 +104,7 @@ export async function GET(req: Request) {
     const nom = primera.pacientes
       ? `${primera.pacientes.nombre} ${primera.pacientes.apellidos ?? ""}`.trim()
       : "paciente";
-    await enviarARoles(["admin", "doctora", "asistente"], {
+    await enviarARoles(["admin", "doctora", "asistente", "gerente"], {
       title: `📅 Hoy: ${citasHoy.length} cita${citasHoy.length === 1 ? "" : "s"}`,
       body: `Primera: ${nom} a las ${horaSinaloa(primera.fecha_hora)}.`,
       url: "/agenda",

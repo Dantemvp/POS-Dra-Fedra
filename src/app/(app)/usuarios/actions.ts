@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export type Result = { ok: boolean; error?: string };
 
-const ROLES = ["admin", "doctora", "asistente", "farmacia"] as const;
+const ROLES = ["admin", "gerente", "doctora", "asistente", "farmacia"] as const;
 type Rol = (typeof ROLES)[number];
 
 async function exigirAdmin(): Promise<Result | null> {

@@ -28,9 +28,9 @@ const METODO_LABEL: Record<string, string> = {
 export default async function DashboardPage() {
   const usuario = await getUsuarioActual();
   const rol = usuario?.rol ?? "asistente";
-  const verFarmacia = rol === "admin" || rol === "farmacia";
+  const verFarmacia = rol === "admin" || rol === "farmacia" || rol === "gerente";
   const verClinica =
-    rol === "admin" || rol === "doctora" || rol === "asistente";
+    rol === "admin" || rol === "doctora" || rol === "asistente" || rol === "gerente";
   const supabase = await createClient();
 
   // ---- Datos de farmacia ----

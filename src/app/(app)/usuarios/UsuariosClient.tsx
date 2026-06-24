@@ -22,6 +22,7 @@ export type UsuarioRow = {
 
 const ROLES = [
   { v: "admin", l: "Admin" },
+  { v: "gerente", l: "Gerente" },
   { v: "doctora", l: "Doctora" },
   { v: "asistente", l: "Asistente" },
   { v: "farmacia", l: "Farmacia" },

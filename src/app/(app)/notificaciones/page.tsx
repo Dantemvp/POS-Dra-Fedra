@@ -30,7 +30,9 @@ export default async function NotificacionesPage() {
         </p>
       </div>
 
-      {usuario?.rol !== "admin" && usuario?.rol !== "doctora" && (
+      {usuario?.rol !== "admin" &&
+        usuario?.rol !== "doctora" &&
+        usuario?.rol !== "gerente" && (
         <p className="mt-4 text-xs text-zinc-400">
           Nota: los resúmenes y alertas de inventario se envían al personal
           autorizado (Dra. y administración).
