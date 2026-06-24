@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import {
   cambiarEstadoCita,
   marcarRecordatorio,
-  TIPOS_CITA,
   type Result,
 } from "./actions";
+import { TIPOS_CITA } from "./tipos";
 import type { Cita } from "./page";
 
 const TZ = "America/Mazatlan";

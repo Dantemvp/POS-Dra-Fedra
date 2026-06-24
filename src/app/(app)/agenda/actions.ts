@@ -3,18 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { OFFSET_SINALOA, limiteConfirmacion } from "./confirmacion";
+import { TIPOS_CITA_VALORES as TIPOS } from "./tipos";
 
 export type Result = { ok: boolean; error?: string; id?: string };
-
-// Tipos de evento de la agenda (no solo citas de paciente).
-export const TIPOS_CITA = [
-  { v: "cita_paciente", l: "Cita de paciente" },
-  { v: "reunion", l: "Reunión" },
-  { v: "trabajo", l: "Trabajo / Grabación" },
-  { v: "interesado", l: "Interesado" },
-  { v: "otro", l: "Otro" },
-] as const;
-const TIPOS = TIPOS_CITA.map((t) => t.v) as readonly string[];
 
 async function usuarioId(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {

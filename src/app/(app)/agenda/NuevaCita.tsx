@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { crearCita, TIPOS_CITA, type Result } from "./actions";
+import { crearCita, type Result } from "./actions";
+import { TIPOS_CITA } from "./tipos";
 import type { PacienteOpcion } from "./page";
 
 const inicial: Result = { ok: false };
