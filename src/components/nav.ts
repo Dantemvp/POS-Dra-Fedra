@@ -19,6 +19,7 @@ export const NAV: NavItem[] = [
   { href: "/recetas", label: "Recetas", roles: ["admin", "doctora", "gerente"], ready: true },
   { href: "/cobros", label: "Cobros", roles: ["admin", "doctora", "asistente", "gerente"], ready: true },
   { href: "/servicios", label: "Servicios", roles: ["admin", "doctora", "gerente"], ready: true },
+  { href: "/movimientos", label: "Movimientos", roles: ["admin", "doctora"], ready: true },
   { href: "/usuarios", label: "Usuarios", roles: ["admin"], ready: true },
   { href: "/notificaciones", label: "Notificaciones", roles: ["admin", "farmacia", "doctora", "asistente", "gerente"], ready: true },
 ];

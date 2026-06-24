@@ -13,6 +13,7 @@ const RUTAS_ROL: { prefijo: string; roles: string[] }[] = [
   { prefijo: "/recetas", roles: ["admin", "doctora", "gerente"] },
   { prefijo: "/cobros", roles: ["admin", "doctora", "asistente", "gerente"] },
   { prefijo: "/servicios", roles: ["admin", "doctora", "gerente"] },
+  { prefijo: "/movimientos", roles: ["admin", "doctora"] },
   { prefijo: "/usuarios", roles: ["admin"] },
 ];
 
