@@ -4,11 +4,16 @@ import { useState, useTransition } from "react";
 import {
   cambiarEstadoCita,
   marcarRecordatorio,
+  TIPOS_CITA,
   type Result,
 } from "./actions";
 import type { Cita } from "./page";
 
 const TZ = "America/Mazatlan";
+
+const TIPO_LABEL: Record<string, string> = Object.fromEntries(
+  TIPOS_CITA.map((t) => [t.v, t.l]),
+);
 
 const BADGE: Record<Cita["estado"], string> = {
   agendada: "bg-amber-100 text-amber-700",
@@ -46,7 +51,10 @@ export default function CitaCard({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const p = cita.paciente;
-  const nombre = p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : "—";
+  const esPaciente = cita.tipo === "cita_paciente";
+  const nombre = p
+    ? `${p.nombre} ${p.apellidos ?? ""}`.trim()
+    : cita.titulo ?? "Evento";
 
   function run(fn: () => Promise<Result>) {
     setError(null);
@@ -94,6 +102,11 @@ export default function CitaCard({
             >
               {cita.estado}
             </span>
+            {!esPaciente && (
+              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase text-zinc-600">
+                {TIPO_LABEL[cita.tipo] ?? "Evento"}
+              </span>
+            )}
             {cita.recordatorio_enviado && (
               <span className="text-[10px] text-zinc-400">recordado ✓</span>
             )}
@@ -124,7 +137,7 @@ export default function CitaCard({
               WhatsApp
             </a>
           )}
-          {cita.estado === "agendada" && (
+          {esPaciente && cita.estado === "agendada" && (
             <button
               disabled={pending}
               onClick={() => run(() => cambiarEstadoCita(cita.id, "confirmada"))}

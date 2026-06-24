@@ -4,11 +4,13 @@ import { getUsuarioActual } from "@/lib/auth";
 import { fechaSinaloa } from "@/lib/tz";
 import NuevoCobro, { type Paciente, type Servicio, type Producto } from "./NuevoCobro";
 import EliminarCobro from "./EliminarCobro";
+import CancelarCobro from "./CancelarCobro";
 
 type CobroRow = {
   id: string;
   fecha: string;
   total: number;
+  estado: string | null;
   pacientes: { nombre: string; apellidos: string | null } | null;
   cobro_pagos: { metodo: string }[];
 };
@@ -20,6 +22,10 @@ export default async function CobrosPage() {
   const supabase = await createClient();
   const usuario = await getUsuarioActual();
   const puedeBorrar = usuario?.rol === "admin" || usuario?.rol === "doctora";
+  const puedeCancelar =
+    usuario?.rol === "admin" ||
+    usuario?.rol === "doctora" ||
+    usuario?.rol === "gerente";
 
   const [{ data: pac }, { data: srv }, { data: prod }, { data: cob }] =
     await Promise.all([
@@ -37,7 +43,7 @@ export default async function CobrosPage() {
       supabase
         .from("cobros")
         .select(
-          "id, fecha, total, pacientes(nombre, apellidos), cobro_pagos(metodo)",
+          "id, fecha, total, estado, pacientes(nombre, apellidos), cobro_pagos(metodo)",
         )
         .order("fecha", { ascending: false })
         .limit(50),
@@ -94,31 +100,42 @@ export default async function CobrosPage() {
         <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
           <table className="w-full text-sm">
             <tbody className="divide-y divide-zinc-100">
-              {cobros.map((c) => (
-                <tr key={c.id}>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-zinc-800">
-                      {c.pacientes
-                        ? `${c.pacientes.nombre} ${c.pacientes.apellidos ?? ""}`
-                        : "—"}
-                    </p>
-                    <p className="text-xs text-zinc-400">
-                      {fechaSinaloa(c.fecha)}
-                      {c.cobro_pagos?.[0]?.metodo
-                        ? ` · ${c.cobro_pagos[0].metodo}`
-                        : ""}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold text-zinc-900">
-                    {fmt(c.total)}
-                    {puedeBorrar && (
-                      <div className="mt-1">
-                        <EliminarCobro id={c.id} />
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {cobros.map((c) => {
+                const cancelado = c.estado === "cancelado";
+                return (
+                  <tr key={c.id} className={cancelado ? "opacity-60" : ""}>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-zinc-800">
+                        {c.pacientes
+                          ? `${c.pacientes.nombre} ${c.pacientes.apellidos ?? ""}`
+                          : "—"}
+                        {cancelado && (
+                          <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium uppercase text-red-600">
+                            Cancelado
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {fechaSinaloa(c.fecha)}
+                        {c.cobro_pagos?.[0]?.metodo
+                          ? ` · ${c.cobro_pagos[0].metodo}`
+                          : ""}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-zinc-900">
+                      <span className={cancelado ? "line-through" : ""}>
+                        {fmt(c.total)}
+                      </span>
+                      {!cancelado && (puedeCancelar || puedeBorrar) && (
+                        <div className="mt-1 flex items-center justify-end gap-3">
+                          {puedeCancelar && <CancelarCobro id={c.id} />}
+                          {puedeBorrar && <EliminarCobro id={c.id} />}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
               {cobros.length === 0 && (
                 <tr>
                   <td className="px-4 py-8 text-center text-zinc-400">

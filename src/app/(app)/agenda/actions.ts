@@ -6,6 +6,16 @@ import { OFFSET_SINALOA, limiteConfirmacion } from "./confirmacion";
 
 export type Result = { ok: boolean; error?: string; id?: string };
 
+// Tipos de evento de la agenda (no solo citas de paciente).
+export const TIPOS_CITA = [
+  { v: "cita_paciente", l: "Cita de paciente" },
+  { v: "reunion", l: "Reunión" },
+  { v: "trabajo", l: "Trabajo / Grabación" },
+  { v: "interesado", l: "Interesado" },
+  { v: "otro", l: "Otro" },
+] as const;
+const TIPOS = TIPOS_CITA.map((t) => t.v) as readonly string[];
+
 async function usuarioId(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },
@@ -26,22 +36,33 @@ export async function crearCita(
   const supabase = await createClient();
   const uid = await usuarioId(supabase);
 
+  const tipo = String(formData.get("tipo") ?? "cita_paciente");
   const pacienteId = String(formData.get("paciente_id") ?? "");
+  const titulo = String(formData.get("titulo") ?? "").trim();
   const fecha = String(formData.get("fecha") ?? "");
   const hora = String(formData.get("hora") ?? "");
-  if (!pacienteId) return { ok: false, error: "Selecciona un paciente." };
+  if (!TIPOS.includes(tipo)) return { ok: false, error: "Tipo no válido." };
   if (!fecha || !hora) return { ok: false, error: "Falta fecha u hora." };
 
-  // Instante exacto en zona de Sinaloa (evita que la cita se corra al guardar).
+  const esPaciente = tipo === "cita_paciente";
+  if (esPaciente && !pacienteId)
+    return { ok: false, error: "Selecciona un paciente." };
+  if (!esPaciente && !titulo)
+    return { ok: false, error: "Ponle un título al evento." };
+
+  // Instante exacto en zona de Sinaloa (evita que se corra al guardar).
   const fechaHora = `${fecha}T${hora}:00${OFFSET_SINALOA}`;
 
   const { data, error } = await supabase
     .from("citas")
     .insert({
-      paciente_id: pacienteId,
+      tipo,
+      paciente_id: esPaciente ? pacienteId : null,
+      titulo: esPaciente ? null : titulo,
       doctora_id: uid,
       fecha_hora: fechaHora,
-      limite_confirmacion: limiteConfirmacion(fechaHora),
+      // Solo las citas de paciente requieren confirmación/recordatorio.
+      limite_confirmacion: esPaciente ? limiteConfirmacion(fechaHora) : null,
       notas: String(formData.get("notas") ?? "").trim() || null,
     })
     .select("id")

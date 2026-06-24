@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { crearCita, type Result } from "./actions";
+import { crearCita, TIPOS_CITA, type Result } from "./actions";
 import type { PacienteOpcion } from "./page";
 
 const inicial: Result = { ok: false };
@@ -15,7 +15,9 @@ export default function NuevaCita({
   pacientes: PacienteOpcion[];
 }) {
   const [abierto, setAbierto] = useState(false);
+  const [tipo, setTipo] = useState("cita_paciente");
   const [state, action, pending] = useActionState(crearCita, inicial);
+  const esPaciente = tipo === "cita_paciente";
 
   if (!abierto) {
     return (
@@ -23,7 +25,7 @@ export default function NuevaCita({
         onClick={() => setAbierto(true)}
         className="mb-6 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
       >
-        + Nueva cita
+        + Nuevo evento
       </button>
     );
   }
@@ -32,18 +34,45 @@ export default function NuevaCita({
     <div className="mb-6 rounded-xl bg-white p-4 ring-1 ring-zinc-200">
       <form action={action} className="space-y-3">
         <div>
-          <label className={label}>Paciente *</label>
-          <select name="paciente_id" required defaultValue="" className={input}>
-            <option value="" disabled>
-              Selecciona…
-            </option>
-            {pacientes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre} {p.apellidos ?? ""}
+          <label className={label}>Tipo de evento *</label>
+          <select
+            name="tipo"
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value)}
+            className={input}
+          >
+            {TIPOS_CITA.map((t) => (
+              <option key={t.v} value={t.v}>
+                {t.l}
               </option>
             ))}
           </select>
         </div>
+
+        {esPaciente ? (
+          <div>
+            <label className={label}>Paciente *</label>
+            <select name="paciente_id" defaultValue="" className={input}>
+              <option value="" disabled>
+                Selecciona…
+              </option>
+              {pacientes.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} {p.apellidos ?? ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label className={label}>Título *</label>
+            <input
+              name="titulo"
+              className={input}
+              placeholder="Ej. Reunión con proveedor, Grabación reel…"
+            />
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className={label}>Fecha *</label>
@@ -70,7 +99,7 @@ export default function NuevaCita({
         )}
         {state.ok && (
           <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-            Cita agendada.
+            Evento agendado.
           </p>
         )}
 
@@ -79,7 +108,7 @@ export default function NuevaCita({
             disabled={pending}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
           >
-            {pending ? "Guardando…" : "Agendar cita"}
+            {pending ? "Guardando…" : "Agendar"}
           </button>
           <button
             type="button"

@@ -9,6 +9,7 @@ export type CitaCal = {
   id: string;
   fecha_hora: string;
   estado: string;
+  tipo: string;
   paciente_id: string | null;
   nombre: string;
 };

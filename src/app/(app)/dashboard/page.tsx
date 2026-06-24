@@ -282,7 +282,11 @@ export default async function DashboardPage() {
       await Promise.all([
         supabase.from("recetas").select("fecha").gte("fecha", desde12),
         supabase.from("citas").select("fecha_hora").gte("fecha_hora", desde12),
-        supabase.from("cobros").select("fecha, total").gte("fecha", desde12),
+        supabase
+          .from("cobros")
+          .select("fecha, total")
+          .neq("estado", "cancelado")
+          .gte("fecha", desde12),
       ]);
 
     const rMap = new Map<string, number>();

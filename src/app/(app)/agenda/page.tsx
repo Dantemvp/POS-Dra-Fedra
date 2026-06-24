@@ -11,6 +11,8 @@ export type Cita = {
   notas: string | null;
   recordatorio_enviado: boolean;
   limite_confirmacion: string | null;
+  tipo: string;
+  titulo: string | null;
   paciente: {
     id: string;
     nombre: string;
@@ -66,7 +68,7 @@ export default async function AgendaPage() {
       supabase
         .from("citas")
         .select(
-          "id, fecha_hora, estado, notas, recordatorio_enviado, limite_confirmacion, paciente:pacientes(id, nombre, apellidos, telefono_wpp)",
+          "id, fecha_hora, estado, notas, recordatorio_enviado, limite_confirmacion, tipo, titulo, paciente:pacientes(id, nombre, apellidos, telefono_wpp)",
         )
         .gte("fecha_hora", desde)
         .neq("estado", "cancelada")
@@ -78,7 +80,7 @@ export default async function AgendaPage() {
       supabase
         .from("citas")
         .select(
-          "id, fecha_hora, estado, paciente:pacientes(id, nombre, apellidos)",
+          "id, fecha_hora, estado, tipo, titulo, paciente:pacientes(id, nombre, apellidos)",
         )
         .gte("fecha_hora", calDesde.toISOString())
         .lte("fecha_hora", calHasta.toISOString())
@@ -92,6 +94,8 @@ export default async function AgendaPage() {
     id: string;
     fecha_hora: string;
     estado: string;
+    tipo: string;
+    titulo: string | null;
     paciente: { id: string; nombre: string; apellidos: string | null } | null;
   };
   const citasCal: CitaCal[] = ((calData ?? []) as unknown as CalRow[]).map(
@@ -99,18 +103,23 @@ export default async function AgendaPage() {
       id: c.id,
       fecha_hora: c.fecha_hora,
       estado: c.estado,
+      tipo: c.tipo ?? "cita_paciente",
       paciente_id: c.paciente?.id ?? null,
       nombre: c.paciente
         ? `${c.paciente.nombre} ${c.paciente.apellidos ?? ""}`.trim()
-        : "—",
+        : c.titulo ?? "Evento",
     }),
   );
 
   // Estado de confirmación
   const ahora = new Date();
+  // La confirmación/recordatorio solo aplica a citas de paciente.
   const vencida = (c: Cita) =>
+    c.tipo === "cita_paciente" &&
     confirmacionVencida(c.estado, c.fecha_hora, c.limite_confirmacion, ahora);
-  const porConfirmar = citas.filter((c) => necesitaConfirmar(c.estado)).length;
+  const porConfirmar = citas.filter(
+    (c) => c.tipo === "cita_paciente" && necesitaConfirmar(c.estado),
+  ).length;
   const vencidas = citas.filter(vencida).length;
 
   // Agrupar por día

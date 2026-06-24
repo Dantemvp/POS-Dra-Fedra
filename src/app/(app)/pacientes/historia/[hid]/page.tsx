@@ -99,8 +99,25 @@ export default async function HistoriaPrint({
           z-index: 1;
           padding: 40px 44px 44px 44px; /* ~0.55in laterales */
         }
+        /* Guías de corte de hoja carta (solo en pantalla): una línea cada 792px
+           (alto de carta a 72dpi) para que se vea dónde parten las páginas.
+           Es una referencia visual; el PDF/impresión dividen exacto por su cuenta. */
+        .hc-guias {
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          background-image: repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 790px,
+            rgba(140, 122, 99, 0.45) 790px,
+            rgba(140, 122, 99, 0.45) 792px
+          );
+        }
 
         @media print {
+          .hc-guias { display: none !important; }
           /* Margen vertical en CADA hoja (evita que el texto se pegue al cruzar
              de página). Sin margen lateral: el contenido lo controla .hc-content
              y el membrete sangra a todo el ancho. */
@@ -142,6 +159,8 @@ export default async function HistoriaPrint({
         {/* Membrete oficial — <img> (no background-image) para que imprima */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="hc-bg" src="/membrete-historia.png" alt="" />
+        {/* Guías de corte de hoja (solo pantalla) */}
+        <div className="hc-guias no-print" aria-hidden />
 
         <div className="hc-content">
           <div className="hc-body">

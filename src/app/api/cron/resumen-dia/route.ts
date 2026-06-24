@@ -32,7 +32,12 @@ export async function GET(req: Request) {
       .select("total, estado")
       .gte("fecha", desde)
       .lt("fecha", hasta),
-    admin.from("cobros").select("total").gte("fecha", desde).lt("fecha", hasta),
+    admin
+      .from("cobros")
+      .select("total")
+      .neq("estado", "cancelado")
+      .gte("fecha", desde)
+      .lt("fecha", hasta),
   ]);
 
   const ventasPagadas = (ventas ?? []).filter(
