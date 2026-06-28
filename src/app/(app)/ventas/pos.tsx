@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { cobrar } from "./actions";
+import { cobrar, cargarReceta } from "./actions";
 import BarcodeInput from "@/components/BarcodeInput";
 import { FISCAL_FARMACIA, leyendaFacturacion } from "@/lib/fiscal";
 
@@ -47,16 +47,61 @@ export default function POS({
   // Efectivo recibido del cliente, para calcular el cambio a devolver.
   const [recibido, setRecibido] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [pending, startTransition] = useTransition();
 
   function onScan(code: string) {
-    const p = productos.find((x) => x.codigo_barras === code);
+    const c = code.trim();
+    // Código de receta "REC<folio>": carga los medicamentos recetados.
+    const rec = c.match(/^REC(\d+)$/i);
+    if (rec) {
+      cargarRecetaAlCarrito(Number(rec[1]));
+      return;
+    }
+    const p = productos.find((x) => x.codigo_barras === c);
     if (!p) {
-      setError(`Código ${code} no está ligado a ningún producto.`);
+      setError(`Código ${c} no está ligado a ningún producto.`);
       return;
     }
     agregar(p);
+  }
+
+  // Escaneo de receta: trae los productos recetados y los agrega al carrito.
+  function cargarRecetaAlCarrito(folio: number) {
+    setError(null);
+    setAviso(null);
+    startTransition(async () => {
+      const res = await cargarReceta(folio);
+      if (!res.ok) {
+        setError(res.error ?? "No se pudo leer la receta.");
+        return;
+      }
+      let agregados = 0;
+      const sinStock: string[] = [];
+      for (const id of res.productoIds ?? []) {
+        const p = productos.find((x) => x.id === id);
+        if (!p) continue; // producto inactivo o ya no existe
+        if (p.stock <= 0) {
+          sinStock.push(p.nombre);
+          continue;
+        }
+        agregar(p);
+        agregados++;
+      }
+      const notas: string[] = [];
+      if (sinStock.length) notas.push(`sin stock: ${sinStock.join(", ")}`);
+      if ((res.sinLigar ?? []).length)
+        notas.push(`no están en inventario: ${res.sinLigar!.join(", ")}`);
+      const sufijo = notas.length ? ` (revisar — ${notas.join("; ")})` : "";
+      if (agregados > 0) {
+        setAviso(`Receta REC${folio}: ${agregados} producto(s) agregados${sufijo}.`);
+      } else {
+        setError(
+          `Receta REC${folio} sin productos para cargar${sufijo || "."}`,
+        );
+      }
+    });
   }
 
   const filtrados = useMemo(() => {
@@ -287,6 +332,11 @@ export default function POS({
         <div className="mb-2">
           <BarcodeInput onScan={onScan} />
         </div>
+        {aviso && (
+          <p className="mb-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+            {aviso}
+          </p>
+        )}
         <input
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
