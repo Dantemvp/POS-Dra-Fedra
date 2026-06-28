@@ -2,17 +2,23 @@ import { createClient } from "@/lib/supabase/server";
 import { inicioDiaSinaloa, horaSinaloa } from "@/lib/tz";
 import CorteButton from "./CorteButton";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
-import CancelarVentaBtn from "./CancelarVentaBtn";
+import VentasDelDia, { type VentaDetalle } from "./VentasDelDia";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
-type Venta = {
+type VentaRow = {
   id: string;
   folio: number;
   fecha: string;
   total: number;
   metodo_pago: string | null;
+  venta_items: {
+    cantidad: number;
+    precio_unit: number;
+    productos: { nombre: string } | null;
+  }[];
+  pagos: { metodo: string; monto: number }[];
 };
 type Mov = {
   tipo: string;
@@ -28,12 +34,14 @@ export default async function CajaPage() {
 
   const { data: ventasData } = await supabase
     .from("ventas")
-    .select("id, folio, fecha, total, metodo_pago")
+    .select(
+      "id, folio, fecha, total, metodo_pago, venta_items(cantidad, precio_unit, productos(nombre)), pagos(metodo, monto)",
+    )
     .gte("fecha", desde)
     .eq("estado", "pagada")
     .order("fecha", { ascending: false });
 
-  const ventas = (ventasData ?? []) as Venta[];
+  const ventas = (ventasData ?? []) as unknown as VentaRow[];
   const totalDia = ventas.reduce((s, v) => s + Number(v.total), 0);
   const porMetodo = ventas.reduce<Record<string, number>>((acc, v) => {
     const m = v.metodo_pago ?? "otro";
@@ -41,6 +49,23 @@ export default async function CajaPage() {
     return acc;
   }, {});
   const efectivo = porMetodo["efectivo"] ?? 0;
+
+  const ventasDetalle: VentaDetalle[] = ventas.map((v) => ({
+    id: v.id,
+    folio: v.folio,
+    hora: horaSinaloa(v.fecha),
+    total: Number(v.total),
+    metodo_pago: v.metodo_pago,
+    items: (v.venta_items ?? []).map((it) => ({
+      nombre: it.productos?.nombre ?? "—",
+      cantidad: Number(it.cantidad),
+      precio_unit: Number(it.precio_unit),
+    })),
+    pagos: (v.pagos ?? []).map((p) => ({
+      metodo: p.metodo,
+      monto: Number(p.monto),
+    })),
+  }));
 
   // Libro de Control COFEPRIS: movimientos de productos controlados
   const { data: movData } = await supabase
@@ -97,47 +122,10 @@ export default async function CajaPage() {
         <h2 className="mb-3 text-lg font-medium text-zinc-900">
           Ventas de hoy
         </h2>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
-              <tr>
-                <th className="px-4 py-3">Folio</th>
-                <th className="px-4 py-3">Hora</th>
-                <th className="px-4 py-3">Método</th>
-                <th className="px-4 py-3 text-right">Total</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {ventas.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-zinc-400">
-                    Sin ventas hoy.
-                  </td>
-                </tr>
-              )}
-              {ventas.map((v) => (
-                <tr key={v.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 font-medium text-zinc-900">
-                    #{v.folio}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">
-                    {horaSinaloa(v.fecha)}
-                  </td>
-                  <td className="px-4 py-3 capitalize text-zinc-600">
-                    {v.metodo_pago ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-zinc-900">
-                    {money(Number(v.total))}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <CancelarVentaBtn ventaId={v.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="mb-3 text-xs text-zinc-500">
+          Toca el folio para ver el desglose de productos y el pago.
+        </p>
+        <VentasDelDia ventas={ventasDetalle} />
       </section>
 
       {/* Libro de Control COFEPRIS */}
