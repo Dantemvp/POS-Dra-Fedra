@@ -10,9 +10,8 @@ export const FISCAL_FARMACIA = {
   domicilio: "Blvd. Río Fuerte 2677, Int. 3 y 4, Col. Los Viñedos",
   cp: "81228",
   ciudad: "Los Mochis, Ahome, Sinaloa",
-  // TODO Dante: confirmar el número de la farmacia para facturación.
-  // Por ahora se usa el de contacto conocido de la Dra.
-  telFacturacion: "668 146 35 02",
+  // Número de Aldama Farmacéutica para solicitar facturación (confirmado por Dante).
+  telFacturacion: "668 152 6539",
 } as const;
 
 // Leyenda genérica y conforme al SAT: el cliente solicita su factura dentro
