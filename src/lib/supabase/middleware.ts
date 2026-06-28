@@ -8,6 +8,7 @@ const RUTAS_ROL: { prefijo: string; roles: string[] }[] = [
   { prefijo: "/compras", roles: ["admin", "farmacia", "gerente"] },
   { prefijo: "/ventas", roles: ["admin", "farmacia", "gerente"] },
   { prefijo: "/caja", roles: ["admin", "farmacia", "gerente"] },
+  { prefijo: "/cortes", roles: ["admin", "doctora", "gerente"] },
   { prefijo: "/pacientes", roles: ["admin", "doctora", "asistente", "gerente"] },
   { prefijo: "/agenda", roles: ["admin", "doctora", "asistente", "gerente"] },
   { prefijo: "/recetas", roles: ["admin", "doctora", "gerente"] },

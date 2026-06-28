@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { inicioDiaSinaloa } from "@/lib/tz";
 
 export type CorteResult = { ok: boolean; error?: string };
 
@@ -47,6 +48,9 @@ export async function registrarCorte(datos: CorteDatos): Promise<CorteResult> {
 
   const { error } = await supabase.from("cortes_caja").insert({
     usuario_id: usuario.id,
+    // Rango del corte: del inicio del día (Sinaloa) al momento del cierre. Define
+    // qué movimientos pertenecen a este corte al verlo en el historial.
+    apertura: inicioDiaSinaloa().toISOString(),
     cierre: new Date().toISOString(),
     total_ventas: datos.totalVentas,
     total_cobros: datos.totalCobros,

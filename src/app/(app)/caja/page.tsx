@@ -160,25 +160,6 @@ export default async function CajaPage() {
     timeZone: "America/Mazatlan",
   }).format(new Date());
 
-  // Historial de cortes anteriores.
-  const { data: cortesData } = await supabase
-    .from("cortes_caja")
-    .select(
-      "id, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia",
-    )
-    .not("cierre", "is", null)
-    .order("cierre", { ascending: false })
-    .limit(10);
-  const cortes = (cortesData ?? []) as {
-    id: string;
-    cierre: string;
-    total_ventas: number | null;
-    total_cobros: number | null;
-    total_efectivo: number | null;
-    efectivo_contado: number | null;
-    diferencia: number | null;
-  }[];
-
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <h1 className="text-2xl font-semibold text-zinc-900">Caja y reportes</h1>
@@ -264,72 +245,6 @@ export default async function CajaPage() {
         </div>
       </section>
 
-      {/* Historial de cortes */}
-      {cortes.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-lg font-medium text-zinc-900">
-            Cortes anteriores
-          </h2>
-          <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3">Cierre</th>
-                  <th className="px-4 py-3 text-right">Ventas</th>
-                  <th className="px-4 py-3 text-right">Cobros</th>
-                  <th className="px-4 py-3 text-right">Efectivo esperado</th>
-                  <th className="px-4 py-3 text-right">Contado</th>
-                  <th className="px-4 py-3 text-right">Diferencia</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {cortes.map((c) => (
-                  <tr key={c.id} className="hover:bg-zinc-50">
-                    <td className="px-4 py-3 text-zinc-700">
-                      {new Intl.DateTimeFormat("es-MX", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                        timeZone: "America/Mazatlan",
-                      }).format(new Date(c.cierre))}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
-                      {money(Number(c.total_ventas ?? 0))}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
-                      {money(Number(c.total_cobros ?? 0))}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
-                      {money(Number(c.total_efectivo ?? 0))}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
-                      {c.efectivo_contado == null
-                        ? "—"
-                        : money(Number(c.efectivo_contado))}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {c.diferencia == null ? (
-                        "—"
-                      ) : (
-                        <span
-                          className={
-                            Number(c.diferencia) === 0
-                              ? "text-green-700"
-                              : Number(c.diferencia) > 0
-                                ? "text-amber-700"
-                                : "text-red-600"
-                          }
-                        >
-                          {money(Number(c.diferencia))}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
     </div>
   );
 }
