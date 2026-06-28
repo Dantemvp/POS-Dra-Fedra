@@ -238,14 +238,15 @@ export default function NuevaReceta({
               value={it.medicamento}
               onChange={(e) => setItem(idx, { medicamento: e.target.value })}
             />
-            <input
-              className={`${input} sm:col-span-3`}
-              placeholder="Dosis (ej. 1 al día)"
+            <textarea
+              className={`${input} resize-y sm:col-span-3`}
+              rows={2}
+              placeholder={"Dosis. Enter para esquemas:\nSem 1: 0.25 mg\nSem 2: 0.5 mg"}
               value={it.dosis}
               onChange={(e) => setItem(idx, { dosis: e.target.value })}
             />
             <input
-              className={`${input} sm:col-span-2`}
+              className={`${input} self-start sm:col-span-2`}
               type="number"
               placeholder="Días"
               value={it.duracion_dias ?? ""}
@@ -255,8 +256,9 @@ export default function NuevaReceta({
                 })
               }
             />
-            <input
-              className={`${input} sm:col-span-3`}
+            <textarea
+              className={`${input} resize-y sm:col-span-3`}
+              rows={2}
               placeholder="Indicaciones"
               value={it.indicaciones}
               onChange={(e) => setItem(idx, { indicaciones: e.target.value })}

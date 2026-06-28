@@ -151,7 +151,13 @@ export default async function RecetaPrint({
                 <div style={{ fontWeight: 600 }}>
                   {i + 1}. {it.medicamento}
                 </div>
-                <div style={{ color: "#52525b", paddingLeft: "1.4cqw" }}>
+                <div
+                  style={{
+                    color: "#52525b",
+                    paddingLeft: "1.4cqw",
+                    whiteSpace: "pre-line", // respeta saltos de línea en dosis/indicaciones
+                  }}
+                >
                   {[
                     it.dosis,
                     it.duracion_dias ? `${it.duracion_dias} días` : null,
