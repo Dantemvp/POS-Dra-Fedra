@@ -149,7 +149,8 @@ export default async function RecetaPrint({
             {r.receta_items.map((it, i) => (
               <li key={i}>
                 <div style={{ fontWeight: 600 }}>
-                  {i + 1}. {it.medicamento}
+                  <span style={{ paddingRight: "0.6cqw" }}>›</span>
+                  {it.medicamento}
                 </div>
                 <div
                   style={{

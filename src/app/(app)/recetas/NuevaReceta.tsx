@@ -53,8 +53,10 @@ const METRICAS: [string, string][] = [
 
 export default function NuevaReceta({
   pacientes,
+  productos,
 }: {
   pacientes: { id: string; nombre: string }[];
+  productos: string[];
 }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -229,11 +231,18 @@ export default function NuevaReceta({
 
       <div className="mt-4 space-y-3">
         <p className="text-xs font-medium uppercase text-zinc-500">Medicamentos</p>
+        {/* Sugerencias del inventario; el campo sigue aceptando texto libre. */}
+        <datalist id="lista-medicamentos">
+          {productos.map((nombre) => (
+            <option key={nombre} value={nombre} />
+          ))}
+        </datalist>
         {items.map((it, idx) => (
           <div key={idx} className="grid grid-cols-1 gap-2 rounded-lg bg-zinc-50 p-3 sm:grid-cols-12">
             <input
               className={`${input} sm:col-span-4`}
-              placeholder="Medicamento"
+              placeholder="Medicamento (busca o escribe)"
+              list="lista-medicamentos"
               value={it.medicamento}
               onChange={(e) => setItem(idx, { medicamento: e.target.value })}
             />

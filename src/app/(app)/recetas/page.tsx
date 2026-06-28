@@ -23,6 +23,15 @@ export default async function RecetasPage() {
     nombre: `${p.nombre}${p.apellidos ? " " + p.apellidos : ""}`,
   }));
 
+  // Productos del inventario: sugerencias al escribir el medicamento (sin
+  // perder la opción de escribir libre).
+  const { data: productosData } = await supabase
+    .from("productos")
+    .select("nombre")
+    .eq("activo", true)
+    .order("nombre");
+  const productos = (productosData ?? []).map((p) => p.nombre as string);
+
   const { data: recetasData } = await supabase
     .from("recetas")
     .select("id, folio, fecha, fase, pacientes(nombre, apellidos)")
@@ -48,7 +57,7 @@ export default async function RecetasPage() {
         Genera una receta pre-llenada lista para imprimir.
       </p>
 
-      <NuevaReceta pacientes={pacientes} />
+      <NuevaReceta pacientes={pacientes} productos={productos} />
 
       <ListaRecetas recetas={recetas} />
     </div>
