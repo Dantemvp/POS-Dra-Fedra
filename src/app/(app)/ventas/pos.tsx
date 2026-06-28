@@ -25,6 +25,8 @@ type Ticket = {
   total: number;
   metodo: string;
   pagos?: { metodo: string; monto: number }[];
+  recibido?: number;
+  cambio?: number;
   fecha: string;
 };
 
@@ -42,6 +44,8 @@ export default function POS({
   const [dividir, setDividir] = useState(false);
   const [metodo2, setMetodo2] = useState("tarjeta");
   const [monto1, setMonto1] = useState("");
+  // Efectivo recibido del cliente, para calcular el cambio a devolver.
+  const [recibido, setRecibido] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [pending, startTransition] = useTransition();
@@ -64,6 +68,19 @@ export default function POS({
   }, [busqueda, productos]);
 
   const total = carrito.reduce((s, l) => s + l.precio * l.cantidad, 0);
+
+  // Cuánto de esta venta se cobra en efectivo (para calcular el cambio).
+  const montoEfectivo = !dividir
+    ? metodo === "efectivo"
+      ? total
+      : 0
+    : metodo === "efectivo"
+      ? Number(monto1) || 0
+      : metodo2 === "efectivo"
+        ? Math.max(0, total - (Number(monto1) || 0))
+        : 0;
+  const recibidoNum = Number(recibido) || 0;
+  const cambio = recibidoNum - montoEfectivo;
 
   function agregar(p: Producto) {
     setError(null);
@@ -130,6 +147,9 @@ export default function POS({
     const snapshot = carrito;
     const metodoSel = metodo;
     const pagosSel = pagos;
+    const recibidoSel = recibidoNum > 0 ? recibidoNum : undefined;
+    const cambioSel =
+      recibidoNum > 0 && montoEfectivo > 0 ? cambio : undefined;
     startTransition(async () => {
       const res = await cobrar(
         snapshot.map((l) => ({
@@ -149,6 +169,8 @@ export default function POS({
         folio: res.folio,
         lineas: snapshot,
         pagos: pagosSel ?? undefined,
+        recibido: recibidoSel,
+        cambio: cambioSel,
         total: snapshot.reduce((s, l) => s + l.precio * l.cantidad, 0),
         metodo: pagosSel ? "mixto" : metodoSel,
         fecha: new Date().toLocaleString("es-MX"),
@@ -156,6 +178,7 @@ export default function POS({
       setCarrito([]);
       setDividir(false);
       setMonto1("");
+      setRecibido("");
     });
   }
 
@@ -210,6 +233,18 @@ export default function POS({
             <p className="mt-1 text-right text-xs capitalize text-zinc-500">
               {ticket.metodo}
             </p>
+          )}
+          {ticket.cambio != null && (
+            <div className="mt-1 space-y-0.5 text-xs text-zinc-500">
+              <div className="flex justify-between">
+                <span>Recibido</span>
+                <span className="tabular-nums">{money(ticket.recibido ?? 0)}</span>
+              </div>
+              <div className="flex justify-between font-medium text-zinc-700">
+                <span>Cambio</span>
+                <span className="tabular-nums">{money(ticket.cambio)}</span>
+              </div>
+            </div>
           )}
 
           <div className="my-3 border-t border-dashed border-zinc-300" />
@@ -377,6 +412,39 @@ export default function POS({
                   {money(Math.max(0, total - (Number(monto1) || 0)))}
                 </span>
               </p>
+            </div>
+          )}
+
+          {montoEfectivo > 0 && (
+            <div className="mb-3 rounded-lg bg-zinc-50 p-3">
+              <label className="mb-1 block text-xs font-medium text-zinc-600">
+                ¿Con cuánto paga? (efectivo {money(montoEfectivo)})
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={recibido}
+                onChange={(e) => setRecibido(e.target.value)}
+                placeholder="0.00"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+              />
+              {recibido !== "" &&
+                (cambio >= 0 ? (
+                  <p className="mt-2 flex justify-between text-sm">
+                    <span className="text-zinc-600">Cambio a devolver</span>
+                    <span className="font-semibold tabular-nums text-green-700">
+                      {money(cambio)}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="mt-2 flex justify-between text-sm">
+                    <span className="text-zinc-600">Falta</span>
+                    <span className="font-semibold tabular-nums text-red-600">
+                      {money(-cambio)}
+                    </span>
+                  </p>
+                ))}
             </div>
           )}
 
