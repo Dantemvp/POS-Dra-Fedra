@@ -56,7 +56,7 @@ export default function NuevaReceta({
   productos,
 }: {
   pacientes: { id: string; nombre: string }[];
-  productos: string[];
+  productos: { id: string; nombre: string }[];
 }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -65,6 +65,12 @@ export default function NuevaReceta({
     () => pacientes.map((p) => ({ value: p.id, label: p.nombre })),
     [pacientes],
   );
+  // Mapa nombre(min)→id para ligar el medicamento al producto del inventario.
+  const productoPorNombre = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of productos) m.set(p.nombre.trim().toLowerCase(), p.id);
+    return m;
+  }, [productos]);
   const [fase, setFase] = useState("");
   const [items, setItems] = useState<ItemReceta[]>([{ ...filaVacia }]);
   const [metricas, setMetricas] = useState<Record<string, string>>({});
@@ -131,11 +137,17 @@ export default function NuevaReceta({
 
   function guardar() {
     setMsg(null);
+    // Liga cada renglón a un producto del inventario si el nombre coincide.
+    const itemsLigados = items.map((it) => ({
+      ...it,
+      producto_id:
+        productoPorNombre.get(it.medicamento.trim().toLowerCase()) ?? null,
+    }));
     startTransition(async () => {
       const res = await crearReceta(
         pacienteId,
         fase ? Number(fase) : null,
-        items,
+        itemsLigados,
         metricas,
       );
       if (!res.ok) {
@@ -233,8 +245,8 @@ export default function NuevaReceta({
         <p className="text-xs font-medium uppercase text-zinc-500">Medicamentos</p>
         {/* Sugerencias del inventario; el campo sigue aceptando texto libre. */}
         <datalist id="lista-medicamentos">
-          {productos.map((nombre) => (
-            <option key={nombre} value={nombre} />
+          {productos.map((p) => (
+            <option key={p.id} value={p.nombre} />
           ))}
         </datalist>
         {items.map((it, idx) => (

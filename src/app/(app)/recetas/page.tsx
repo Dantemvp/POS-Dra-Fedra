@@ -27,10 +27,13 @@ export default async function RecetasPage() {
   // perder la opción de escribir libre).
   const { data: productosData } = await supabase
     .from("productos")
-    .select("nombre")
+    .select("id, nombre")
     .eq("activo", true)
     .order("nombre");
-  const productos = (productosData ?? []).map((p) => p.nombre as string);
+  const productos = (productosData ?? []).map((p) => ({
+    id: p.id as string,
+    nombre: p.nombre as string,
+  }));
 
   const { data: recetasData } = await supabase
     .from("recetas")

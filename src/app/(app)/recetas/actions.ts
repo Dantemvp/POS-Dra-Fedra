@@ -8,6 +8,9 @@ export type ItemReceta = {
   dosis: string;
   duracion_dias: number | null;
   indicaciones: string;
+  // Si el medicamento coincide con un producto del inventario, se liga su id
+  // para que la farmacia lo cargue al escanear el folio de la receta.
+  producto_id?: string | null;
 };
 
 export type Result = { ok: boolean; error?: string; id?: string };
@@ -75,6 +78,7 @@ export async function crearReceta(
   const { error: itemsErr } = await supabase.from("receta_items").insert(
     limpios.map((i) => ({
       receta_id: receta.id,
+      producto_id: i.producto_id ?? null,
       medicamento: i.medicamento.trim(),
       dosis: i.dosis.trim() || null,
       duracion_dias: i.duracion_dias,

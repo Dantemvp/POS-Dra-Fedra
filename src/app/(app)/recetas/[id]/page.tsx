@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
+import CodigoBarrasReceta from "./CodigoBarrasReceta";
 
 type Item = {
   medicamento: string;
@@ -184,6 +185,19 @@ export default async function RecetaPrint({
         >
           Folio #{r.folio}
         </span>
+
+        {/* Código de barras del folio: la farmacia lo escanea para cargar los
+            medicamentos recetados en el POS. */}
+        <div
+          style={{
+            position: "absolute",
+            right: "3.5%",
+            top: "90%",
+            width: "24%",
+          }}
+        >
+          <CodigoBarrasReceta folio={r.folio} />
+        </div>
       </div>
     </div>
   );
