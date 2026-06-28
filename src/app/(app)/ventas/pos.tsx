@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { cobrar } from "./actions";
 import BarcodeInput from "@/components/BarcodeInput";
+import { FISCAL_FARMACIA, leyendaFacturacion } from "@/lib/fiscal";
 
 type Producto = {
   id: string;
@@ -130,8 +131,12 @@ export default function POS({
       <div className="mx-auto max-w-sm">
         <div className="doc-imprimible rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
           <div className="text-center">
-            <p className="font-semibold text-zinc-900">Dra. Fedra Aldama</p>
-            <p className="text-xs text-zinc-500">Farmacia</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-farmacia.png"
+              alt={FISCAL_FARMACIA.nombreComercial}
+              className="mx-auto h-12 w-auto object-contain"
+            />
           </div>
           <div className="my-3 border-t border-dashed border-zinc-300" />
           <p className="text-xs text-zinc-500">
@@ -161,6 +166,21 @@ export default function POS({
           </div>
           <p className="mt-1 text-right text-xs capitalize text-zinc-500">
             {ticket.metodo}
+          </p>
+
+          <div className="my-3 border-t border-dashed border-zinc-300" />
+          <div className="space-y-0.5 text-center text-[10px] leading-tight text-zinc-500">
+            <p className="font-medium text-zinc-700">
+              {FISCAL_FARMACIA.razonSocial}
+            </p>
+            <p>RFC: {FISCAL_FARMACIA.rfc}</p>
+            <p>
+              {FISCAL_FARMACIA.domicilio}, C.P. {FISCAL_FARMACIA.cp},{" "}
+              {FISCAL_FARMACIA.ciudad}
+            </p>
+          </div>
+          <p className="mt-2 text-center text-[10px] leading-snug text-zinc-500">
+            {leyendaFacturacion()}
           </p>
         </div>
         <div className="mt-4 flex gap-2 print:hidden">
