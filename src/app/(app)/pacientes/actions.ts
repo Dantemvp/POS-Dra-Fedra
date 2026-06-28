@@ -43,6 +43,10 @@ export async function crearPaciente(
   const nombre = String(formData.get("nombre") ?? "").trim();
   if (!nombre) return { ok: false, error: "El nombre es obligatorio." };
 
+  // COFEPRIS exige domicilio para vender medicamento controlado.
+  const direccion = String(formData.get("direccion") ?? "").trim();
+  if (!direccion) return { ok: false, error: "La dirección es obligatoria." };
+
   const { data, error } = await supabase
     .from("pacientes")
     .insert({
@@ -52,6 +56,7 @@ export async function crearPaciente(
       sexo: String(formData.get("sexo") ?? "") || null,
       telefono_wpp: String(formData.get("telefono_wpp") ?? "").trim() || null,
       email: String(formData.get("email") ?? "").trim() || null,
+      direccion,
       creado_por: uid,
     })
     .select("id")

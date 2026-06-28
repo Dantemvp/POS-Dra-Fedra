@@ -57,6 +57,19 @@ export default function NuevoPaciente() {
           </div>
         </div>
 
+        <div>
+          <label className={label}>Dirección *</label>
+          <input
+            name="direccion"
+            required
+            className={input}
+            placeholder="Calle, número, colonia, ciudad"
+          />
+          <p className="mt-1 text-[11px] text-zinc-400">
+            Requerida por COFEPRIS para la venta de medicamento controlado.
+          </p>
+        </div>
+
         {state.error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
             {state.error}
