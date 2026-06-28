@@ -26,7 +26,13 @@ type Ticket = {
   fecha: string;
 };
 
-export default function POS({ productos }: { productos: Producto[] }) {
+export default function POS({
+  productos,
+  vendedor,
+}: {
+  productos: Producto[];
+  vendedor: string;
+}) {
   const [busqueda, setBusqueda] = useState("");
   const [carrito, setCarrito] = useState<Linea[]>([]);
   const [metodo, setMetodo] = useState("efectivo");
@@ -131,6 +137,9 @@ export default function POS({ productos }: { productos: Producto[] }) {
           <p className="text-xs text-zinc-500">
             Folio #{ticket.folio} · {ticket.fecha}
           </p>
+          {vendedor && (
+            <p className="text-xs text-zinc-500">Atendió: {vendedor}</p>
+          )}
           <table className="mt-3 w-full text-sm">
             <tbody>
               {ticket.lineas.map((l) => (

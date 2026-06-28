@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
 import POS from "./pos";
 
 type Lote = { cantidad_actual: number };
@@ -13,6 +14,7 @@ type ProductoRow = {
 
 export default async function VentasPage() {
   const supabase = await createClient();
+  const usuario = await getUsuarioActual();
   const { data } = await supabase
     .from("productos")
     .select(
@@ -36,7 +38,7 @@ export default async function VentasPage() {
       <p className="mb-6 text-sm text-zinc-500">
         Busca productos, arma el carrito y cobra.
       </p>
-      <POS productos={productos} />
+      <POS productos={productos} vendedor={usuario?.nombre ?? ""} />
     </div>
   );
 }
