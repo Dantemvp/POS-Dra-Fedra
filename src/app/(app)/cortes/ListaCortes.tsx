@@ -15,6 +15,7 @@ const MESES = [
 export type CorteLista = {
   id: string;
   cierre: string;
+  hechoPor: string | null;
   totalVentas: number;
   totalCobros: number;
   efectivoEsperado: number;
@@ -100,11 +101,16 @@ export default function ListaCortes({ cortes }: { cortes: CorteLista[] }) {
                             <tbody className="divide-y divide-zinc-100">
                               {lista.map((c) => (
                                 <tr key={c.id} className="hover:bg-zinc-50">
-                                  <td className="px-4 py-3 capitalize text-zinc-800">
-                                    {c.p.dia}{" "}
+                                  <td className="px-4 py-3 text-zinc-800">
+                                    <span className="capitalize">{c.p.dia}</span>{" "}
                                     <span className="text-xs text-zinc-400">
                                       {c.p.hora}
                                     </span>
+                                    {c.hechoPor && (
+                                      <span className="block text-xs text-zinc-400">
+                                        por {c.hechoPor}
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
                                     {money(c.totalVentas + c.totalCobros)}

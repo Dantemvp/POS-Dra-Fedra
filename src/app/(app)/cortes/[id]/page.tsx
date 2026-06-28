@@ -15,6 +15,7 @@ const hora = (iso: string) =>
 type Corte = {
   apertura: string | null;
   cierre: string;
+  usuarios: { nombre: string } | null;
   total_ventas: number | null;
   total_cobros: number | null;
   total_efectivo: number | null;
@@ -51,12 +52,12 @@ export default async function DetalleCortePage({
   const { data: corteData } = await supabase
     .from("cortes_caja")
     .select(
-      "apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos",
+      "apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, usuarios(nombre)",
     )
     .eq("id", id)
     .single();
   if (!corteData) notFound();
-  const corte = corteData as Corte;
+  const corte = corteData as unknown as Corte;
 
   // Rango del corte. Si es un corte viejo sin `apertura`, se usa el inicio del
   // día (Sinaloa, UTC-7) del cierre.
@@ -111,7 +112,10 @@ export default async function DetalleCortePage({
         <h1 className="mt-1 text-2xl font-semibold capitalize text-zinc-900">
           Corte — {fechaTitulo}
         </h1>
-        <p className="text-sm text-zinc-500">Cerrado a las {hora(cierre)}</p>
+        <p className="text-sm text-zinc-500">
+          Cerrado a las {hora(cierre)}
+          {corte.usuarios?.nombre ? ` por ${corte.usuarios.nombre}` : ""}
+        </p>
       </div>
 
       {/* Resumen guardado */}
