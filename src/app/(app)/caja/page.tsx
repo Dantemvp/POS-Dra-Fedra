@@ -43,12 +43,22 @@ export default async function CajaPage() {
 
   const ventas = (ventasData ?? []) as unknown as VentaRow[];
   const totalDia = ventas.reduce((s, v) => s + Number(v.total), 0);
-  const porMetodo = ventas.reduce<Record<string, number>>((acc, v) => {
-    const m = v.metodo_pago ?? "otro";
-    acc[m] = (acc[m] ?? 0) + Number(v.total);
-    return acc;
-  }, {});
-  const efectivo = porMetodo["efectivo"] ?? 0;
+  // Efectivo del corte: se suma desde la tabla `pagos` (monto por método), para
+  // que una venta con pago mixto (efectivo + tarjeta) aporte solo su parte en
+  // efectivo y la caja cuadre. Ventas viejas sin filas en `pagos` caen al
+  // metodo_pago de la cabecera.
+  const efectivo = ventas.reduce((s, v) => {
+    const pagos = v.pagos ?? [];
+    if (pagos.length === 0) {
+      return s + (v.metodo_pago === "efectivo" ? Number(v.total) : 0);
+    }
+    return (
+      s +
+      pagos
+        .filter((p) => p.metodo === "efectivo")
+        .reduce((a, p) => a + Number(p.monto), 0)
+    );
+  }, 0);
 
   const ventasDetalle: VentaDetalle[] = ventas.map((v) => ({
     id: v.id,

@@ -16,10 +16,13 @@ export type CobrarResult = {
   ventaId?: string;
 };
 
+export type PagoVenta = { metodo: string; monto: number };
+
 export async function cobrar(
   items: ItemVenta[],
   metodo: string,
   pacienteId?: string | null,
+  pagos?: PagoVenta[] | null,
 ): Promise<CobrarResult> {
   const supabase = await createClient();
 
@@ -31,6 +34,8 @@ export async function cobrar(
     })),
     p_metodo: metodo,
     p_paciente: pacienteId ?? null,
+    // Solo se manda con pago dividido; si no, la RPC usa p_metodo (igual que antes).
+    p_pagos: pagos && pagos.length > 0 ? pagos : null,
   });
 
   if (error) return { ok: false, error: error.message };

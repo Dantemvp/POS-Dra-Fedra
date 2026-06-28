@@ -24,6 +24,7 @@ type Ticket = {
   lineas: Linea[];
   total: number;
   metodo: string;
+  pagos?: { metodo: string; monto: number }[];
   fecha: string;
 };
 
@@ -37,6 +38,10 @@ export default function POS({
   const [busqueda, setBusqueda] = useState("");
   const [carrito, setCarrito] = useState<Linea[]>([]);
   const [metodo, setMetodo] = useState("efectivo");
+  // Pago dividido: monto1 va al método principal y el resto al segundo método.
+  const [dividir, setDividir] = useState(false);
+  const [metodo2, setMetodo2] = useState("tarjeta");
+  const [monto1, setMonto1] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [pending, startTransition] = useTransition();
@@ -100,8 +105,31 @@ export default function POS({
   function finalizar() {
     setError(null);
     if (carrito.length === 0) return;
+
+    // Pago dividido: validar montos y construir el desglose para la RPC.
+    let pagos: { metodo: string; monto: number }[] | null = null;
+    if (dividir) {
+      const m1 = Math.round(Number(monto1) * 100) / 100;
+      if (!m1 || m1 <= 0 || m1 >= total) {
+        setError(
+          `El monto en ${metodo} debe ser mayor a 0 y menor al total.`,
+        );
+        return;
+      }
+      if (metodo === metodo2) {
+        setError("Elige dos métodos distintos para dividir el pago.");
+        return;
+      }
+      const m2 = Math.round((total - m1) * 100) / 100;
+      pagos = [
+        { metodo, monto: m1 },
+        { metodo: metodo2, monto: m2 },
+      ];
+    }
+
     const snapshot = carrito;
     const metodoSel = metodo;
+    const pagosSel = pagos;
     startTransition(async () => {
       const res = await cobrar(
         snapshot.map((l) => ({
@@ -110,6 +138,8 @@ export default function POS({
           precio_unit: l.precio,
         })),
         metodoSel,
+        null,
+        pagosSel,
       );
       if (!res.ok) {
         setError(res.error ?? "No se pudo cobrar.");
@@ -118,11 +148,14 @@ export default function POS({
       setTicket({
         folio: res.folio,
         lineas: snapshot,
+        pagos: pagosSel ?? undefined,
         total: snapshot.reduce((s, l) => s + l.precio * l.cantidad, 0),
-        metodo: metodoSel,
+        metodo: pagosSel ? "mixto" : metodoSel,
         fecha: new Date().toLocaleString("es-MX"),
       });
       setCarrito([]);
+      setDividir(false);
+      setMonto1("");
     });
   }
 
@@ -164,9 +197,20 @@ export default function POS({
             <span>Total</span>
             <span className="tabular-nums">{money(ticket.total)}</span>
           </div>
-          <p className="mt-1 text-right text-xs capitalize text-zinc-500">
-            {ticket.metodo}
-          </p>
+          {ticket.pagos && ticket.pagos.length > 0 ? (
+            <div className="mt-1 space-y-0.5 text-xs text-zinc-500">
+              {ticket.pagos.map((p, i) => (
+                <div key={i} className="flex justify-between capitalize">
+                  <span>{p.metodo}</span>
+                  <span className="tabular-nums">{money(p.monto)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-1 text-right text-xs capitalize text-zinc-500">
+              {ticket.metodo}
+            </p>
+          )}
 
           <div className="my-3 border-t border-dashed border-zinc-300" />
           <div className="space-y-0.5 text-center text-[10px] leading-tight text-zinc-500">
@@ -274,18 +318,67 @@ export default function POS({
             </span>
           </div>
           <label className="mb-1 block text-xs font-medium text-zinc-600">
-            Método de pago
+            {dividir ? "Método 1" : "Método de pago"}
           </label>
           <select
             value={metodo}
             onChange={(e) => setMetodo(e.target.value)}
-            className="mb-3 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+            className="mb-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
           >
             <option value="efectivo">Efectivo</option>
             <option value="tarjeta">Tarjeta</option>
             <option value="transferencia">Transferencia</option>
             <option value="otro">Otro</option>
           </select>
+
+          <label className="mb-3 flex items-center gap-2 text-sm text-zinc-600">
+            <input
+              type="checkbox"
+              checked={dividir}
+              onChange={(e) => setDividir(e.target.checked)}
+            />
+            Dividir el pago en dos métodos
+          </label>
+
+          {dividir && (
+            <div className="mb-3 space-y-2 rounded-lg bg-zinc-50 p-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-600">
+                  Monto en {metodo}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={monto1}
+                  onChange={(e) => setMonto1(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-600">
+                  Resto en
+                </label>
+                <select
+                  value={metodo2}
+                  onChange={(e) => setMetodo2(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+                >
+                  <option value="efectivo">Efectivo</option>
+                  <option value="tarjeta">Tarjeta</option>
+                  <option value="transferencia">Transferencia</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <p className="text-sm text-zinc-600">
+                {metodo2}:{" "}
+                <span className="font-medium tabular-nums text-zinc-900">
+                  {money(Math.max(0, total - (Number(monto1) || 0)))}
+                </span>
+              </p>
+            </div>
+          )}
 
           {error && (
             <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
