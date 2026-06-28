@@ -20,10 +20,18 @@ export async function cancelarVenta(
   return { ok: true };
 }
 
-export async function registrarCorte(
-  totalVentas: number,
-  totalEfectivo: number,
-): Promise<CorteResult> {
+export type CorteDatos = {
+  totalVentas: number;
+  totalCobros: number;
+  efectivoEsperado: number;
+  efectivoContado: number | null;
+  diferencia: number | null;
+  totalProductos: number;
+  pacientesAtendidos: number;
+  desglose: Record<string, number>;
+};
+
+export async function registrarCorte(datos: CorteDatos): Promise<CorteResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -40,8 +48,14 @@ export async function registrarCorte(
   const { error } = await supabase.from("cortes_caja").insert({
     usuario_id: usuario.id,
     cierre: new Date().toISOString(),
-    total_ventas: totalVentas,
-    total_efectivo: totalEfectivo,
+    total_ventas: datos.totalVentas,
+    total_cobros: datos.totalCobros,
+    total_efectivo: datos.efectivoEsperado, // efectivo esperado en el cajón
+    efectivo_contado: datos.efectivoContado,
+    diferencia: datos.diferencia,
+    total_productos: datos.totalProductos,
+    pacientes_atendidos: datos.pacientesAtendidos,
+    desglose: datos.desglose,
   });
   if (error) return { ok: false, error: error.message };
 

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { inicioDiaSinaloa, horaSinaloa } from "@/lib/tz";
-import CorteButton from "./CorteButton";
+import CorteDelDia from "./CorteDelDia";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
 import VentasDelDia, { type VentaDetalle } from "./VentasDelDia";
 
@@ -19,6 +19,12 @@ type VentaRow = {
     productos: { nombre: string } | null;
   }[];
   pagos: { metodo: string; monto: number }[];
+};
+type CobroRow = {
+  id: string;
+  total: number;
+  paciente_id: string | null;
+  cobro_pagos: { metodo: string; monto: number }[];
 };
 type Mov = {
   tipo: string;
@@ -59,6 +65,49 @@ export default async function CajaPage() {
         .reduce((a, p) => a + Number(p.monto), 0)
     );
   }, 0);
+
+  // Unidades de producto que salieron por ventas en el día.
+  const productosSalidos = ventas.reduce(
+    (s, v) =>
+      s + (v.venta_items ?? []).reduce((a, it) => a + Number(it.cantidad), 0),
+    0,
+  );
+
+  // Cobros del consultorio del día: ingresos + pacientes atendidos + efectivo.
+  const { data: cobrosData } = await supabase
+    .from("cobros")
+    .select("id, total, paciente_id, cobro_pagos(metodo, monto)")
+    .gte("fecha", desde);
+  const cobros = (cobrosData ?? []) as unknown as CobroRow[];
+  const totalCobros = cobros.reduce((s, c) => s + Number(c.total), 0);
+  const pacientesAtendidos = cobros.filter((c) => c.paciente_id).length;
+  const efectivoCobros = cobros.reduce(
+    (s, c) =>
+      s +
+      (c.cobro_pagos ?? [])
+        .filter((p) => p.metodo === "efectivo")
+        .reduce((a, p) => a + Number(p.monto), 0),
+    0,
+  );
+  // Efectivo esperado en el cajón = ventas en efectivo + cobros en efectivo.
+  const efectivoEsperado = efectivo + efectivoCobros;
+
+  // Desglose por método de todo el día (ventas + cobros).
+  const desglose: Record<string, number> = {};
+  for (const v of ventas) {
+    const pgs = v.pagos ?? [];
+    if (pgs.length === 0) {
+      const m = v.metodo_pago ?? "otro";
+      desglose[m] = (desglose[m] ?? 0) + Number(v.total);
+    } else {
+      for (const p of pgs)
+        desglose[p.metodo] = (desglose[p.metodo] ?? 0) + Number(p.monto);
+    }
+  }
+  for (const c of cobros) {
+    for (const p of c.cobro_pagos ?? [])
+      desglose[p.metodo] = (desglose[p.metodo] ?? 0) + Number(p.monto);
+  }
 
   const ventasDetalle: VentaDetalle[] = ventas.map((v) => ({
     id: v.id,
@@ -106,25 +155,46 @@ export default async function CajaPage() {
     existencia: f.entradas - f.salidas,
   }));
 
+  const fechaCorte = new Intl.DateTimeFormat("es-MX", {
+    dateStyle: "full",
+    timeZone: "America/Mazatlan",
+  }).format(new Date());
+
+  // Historial de cortes anteriores.
+  const { data: cortesData } = await supabase
+    .from("cortes_caja")
+    .select(
+      "id, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia",
+    )
+    .not("cierre", "is", null)
+    .order("cierre", { ascending: false })
+    .limit(10);
+  const cortes = (cortesData ?? []) as {
+    id: string;
+    cierre: string;
+    total_ventas: number | null;
+    total_cobros: number | null;
+    total_efectivo: number | null;
+    efectivo_contado: number | null;
+    diferencia: number | null;
+  }[];
+
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      {/* Resumen del día */}
+      <h1 className="text-2xl font-semibold text-zinc-900">Caja y reportes</h1>
+
+      {/* Corte / resumen del día */}
       <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-zinc-900">
-            Caja y reportes
-          </h1>
-          <CorteButton totalVentas={totalDia} totalEfectivo={efectivo} />
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <Card label="Ventas de hoy" value={String(ventas.length)} />
-          <Card label="Total del día" value={money(totalDia)} />
-          <Card label="Efectivo" value={money(efectivo)} />
-          <Card
-            label="Otros métodos"
-            value={money(totalDia - efectivo)}
-          />
-        </div>
+        <CorteDelDia
+          numVentas={ventas.length}
+          totalVentas={totalDia}
+          totalCobros={totalCobros}
+          productosSalidos={productosSalidos}
+          pacientesAtendidos={pacientesAtendidos}
+          efectivoEsperado={efectivoEsperado}
+          desglose={desglose}
+          fecha={fechaCorte}
+        />
       </section>
 
       {/* Ventas recientes */}
@@ -193,17 +263,73 @@ export default async function CajaPage() {
           </table>
         </div>
       </section>
-    </div>
-  );
-}
 
-function Card({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-white p-5 ring-1 ring-zinc-200">
-      <p className="text-sm text-zinc-500">{label}</p>
-      <p className="mt-1 text-xl font-semibold tabular-nums text-zinc-900">
-        {value}
-      </p>
+      {/* Historial de cortes */}
+      {cortes.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-medium text-zinc-900">
+            Cortes anteriores
+          </h2>
+          <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3">Cierre</th>
+                  <th className="px-4 py-3 text-right">Ventas</th>
+                  <th className="px-4 py-3 text-right">Cobros</th>
+                  <th className="px-4 py-3 text-right">Efectivo esperado</th>
+                  <th className="px-4 py-3 text-right">Contado</th>
+                  <th className="px-4 py-3 text-right">Diferencia</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {cortes.map((c) => (
+                  <tr key={c.id} className="hover:bg-zinc-50">
+                    <td className="px-4 py-3 text-zinc-700">
+                      {new Intl.DateTimeFormat("es-MX", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                        timeZone: "America/Mazatlan",
+                      }).format(new Date(c.cierre))}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
+                      {money(Number(c.total_ventas ?? 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
+                      {money(Number(c.total_cobros ?? 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
+                      {money(Number(c.total_efectivo ?? 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-zinc-700">
+                      {c.efectivo_contado == null
+                        ? "—"
+                        : money(Number(c.efectivo_contado))}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {c.diferencia == null ? (
+                        "—"
+                      ) : (
+                        <span
+                          className={
+                            Number(c.diferencia) === 0
+                              ? "text-green-700"
+                              : Number(c.diferencia) > 0
+                                ? "text-amber-700"
+                                : "text-red-600"
+                          }
+                        >
+                          {money(Number(c.diferencia))}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
