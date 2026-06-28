@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { crearProducto, registrarEntrada, type ActionResult } from "./actions";
 import BarcodeScanner from "@/components/BarcodeScanner";
+import ComboBuscador from "@/components/ComboBuscador";
 
 const inicial: ActionResult = { ok: false };
 
@@ -156,21 +157,24 @@ function NuevoProducto() {
 
 function Entrada({ productos }: { productos: { id: string; nombre: string }[] }) {
   const [state, action, pending] = useActionState(registrarEntrada, inicial);
+  const [productoId, setProductoId] = useState("");
+  const ops = useMemo(
+    () => productos.map((p) => ({ value: p.id, label: p.nombre })),
+    [productos],
+  );
   return (
     <form action={action} className="space-y-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className={label}>Producto *</label>
-          <select name="producto_id" required className={input} defaultValue="">
-            <option value="" disabled>
-              Selecciona un producto…
-            </option>
-            {productos.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
+          <ComboBuscador
+            opciones={ops}
+            value={productoId}
+            onChange={setProductoId}
+            name="producto_id"
+            requerido
+            placeholder="Busca el producto por nombre…"
+          />
         </div>
         <div>
           <label className={label}>Cantidad *</label>

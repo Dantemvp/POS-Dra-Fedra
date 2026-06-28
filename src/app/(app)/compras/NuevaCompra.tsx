@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { registrarCompra, type ItemCompra } from "./actions";
+import ComboBuscador from "@/components/ComboBuscador";
 
 const input =
   "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900";
@@ -25,6 +26,10 @@ export default function NuevaCompra({
   const [factura, setFactura] = useState("");
   const [fecha, setFecha] = useState("");
   const [items, setItems] = useState<ItemCompra[]>([{ ...filaVacia }]);
+  const opcionesProducto = useMemo(
+    () => productos.map((p) => ({ value: p.id, label: p.nombre })),
+    [productos],
+  );
   const [msg, setMsg] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -106,18 +111,14 @@ export default function NuevaCompra({
             key={idx}
             className="grid grid-cols-1 gap-2 rounded-lg bg-zinc-50 p-3 sm:grid-cols-12"
           >
-            <select
-              className={`${input} sm:col-span-4`}
-              value={it.producto_id}
-              onChange={(e) => setItem(idx, { producto_id: e.target.value })}
-            >
-              <option value="">Producto…</option>
-              {productos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
+            <div className="sm:col-span-4">
+              <ComboBuscador
+                opciones={opcionesProducto}
+                value={it.producto_id}
+                onChange={(v) => setItem(idx, { producto_id: v })}
+                placeholder="Busca el producto…"
+              />
+            </div>
             <input
               className={`${input} sm:col-span-2`}
               type="number"
