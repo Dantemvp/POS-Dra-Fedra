@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { crearReceta, ultimoInBody, type ItemReceta } from "./actions";
+import ComboBuscador from "@/components/ComboBuscador";
 import { extraerInBody } from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fechaSinaloa } from "@/lib/tz";
@@ -58,6 +59,10 @@ export default function NuevaReceta({
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
   const [pacienteId, setPacienteId] = useState("");
+  const opcionesPaciente = useMemo(
+    () => pacientes.map((p) => ({ value: p.id, label: p.nombre })),
+    [pacientes],
+  );
   const [fase, setFase] = useState("");
   const [items, setItems] = useState<ItemReceta[]>([{ ...filaVacia }]);
   const [metricas, setMetricas] = useState<Record<string, string>>({});
@@ -157,18 +162,12 @@ export default function NuevaReceta({
           <label className="mb-1 block text-xs font-medium text-zinc-600">
             Paciente *
           </label>
-          <select
+          <ComboBuscador
+            opciones={opcionesPaciente}
             value={pacienteId}
-            onChange={(e) => setPacienteId(e.target.value)}
-            className={input}
-          >
-            <option value="">Selecciona…</option>
-            {pacientes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
+            onChange={setPacienteId}
+            placeholder="Busca al paciente por nombre…"
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-600">

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarcodeInput from "@/components/BarcodeInput";
+import ComboBuscador from "@/components/ComboBuscador";
 import { crearCobro, type ItemCobro } from "./actions";
 
 export type Paciente = { id: string; nombre: string };
@@ -39,6 +40,11 @@ export default function NuevoCobro({
   const total = useMemo(
     () => items.reduce((s, i) => s + (i.precio_unit || 0) * (i.cantidad || 1), 0),
     [items],
+  );
+
+  const opcionesPaciente = useMemo(
+    () => pacientes.map((p) => ({ value: p.id, label: p.nombre })),
+    [pacientes],
   );
 
   function setItem(i: number, patch: Partial<ItemCobro>) {
@@ -131,18 +137,14 @@ export default function NuevoCobro({
     <div className="space-y-5 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
       <div>
         <label className="block text-xs text-zinc-500">Paciente</label>
-        <select
-          value={pacienteId}
-          onChange={(e) => setPacienteId(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-        >
-          <option value="">— Selecciona —</option>
-          {pacientes.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre}
-            </option>
-          ))}
-        </select>
+        <div className="mt-1">
+          <ComboBuscador
+            opciones={opcionesPaciente}
+            value={pacienteId}
+            onChange={setPacienteId}
+            placeholder="Busca al paciente por nombre…"
+          />
+        </div>
       </div>
 
       {/* BIP — escanear producto del inventario */}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { crearCita, type Result } from "./actions";
 import { TIPOS_CITA } from "./tipos";
 import type { PacienteOpcion } from "./page";
+import ComboBuscador from "@/components/ComboBuscador";
 
 const inicial: Result = { ok: false };
 const input =
@@ -17,8 +18,18 @@ export default function NuevaCita({
 }) {
   const [abierto, setAbierto] = useState(false);
   const [tipo, setTipo] = useState("cita_paciente");
+  const [pacienteId, setPacienteId] = useState("");
   const [state, action, pending] = useActionState(crearCita, inicial);
   const esPaciente = tipo === "cita_paciente";
+
+  const opcionesPaciente = useMemo(
+    () =>
+      pacientes.map((p) => ({
+        value: p.id,
+        label: `${p.nombre} ${p.apellidos ?? ""}`.trim(),
+      })),
+    [pacientes],
+  );
 
   if (!abierto) {
     return (
@@ -53,16 +64,13 @@ export default function NuevaCita({
         {esPaciente ? (
           <div>
             <label className={label}>Paciente *</label>
-            <select name="paciente_id" defaultValue="" className={input}>
-              <option value="" disabled>
-                Selecciona…
-              </option>
-              {pacientes.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre} {p.apellidos ?? ""}
-                </option>
-              ))}
-            </select>
+            <ComboBuscador
+              opciones={opcionesPaciente}
+              value={pacienteId}
+              onChange={setPacienteId}
+              name="paciente_id"
+              placeholder="Busca al paciente por nombre…"
+            />
           </div>
         ) : (
           <div>
