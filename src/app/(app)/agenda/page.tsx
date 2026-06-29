@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioActual } from "@/lib/auth";
+import { estadoConexion, googleConfigurado } from "@/lib/google/calendar";
 import NuevaCita from "./NuevaCita";
 import CitaCard from "./CitaCard";
 import CalendarioAgenda, { type CitaCal } from "./CalendarioAgenda";
+import ConexionGoogle from "./ConexionGoogle";
 import { confirmacionVencida, necesitaConfirmar } from "./confirmacion";
 
 export type Cita = {
@@ -49,8 +52,21 @@ function tituloDia(iso: string) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-export default async function AgendaPage() {
+export default async function AgendaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ gcal?: string }>;
+}) {
   const supabase = await createClient();
+  const { gcal } = await searchParams;
+
+  // Conexión con Google Calendar — solo la gestionan admin/doctora.
+  const usuario = await getUsuarioActual();
+  const puedeGestionarGoogle =
+    usuario?.rol === "admin" || usuario?.rol === "doctora";
+  const gcalEstado = puedeGestionarGoogle
+    ? await estadoConexion()
+    : { conectado: false, email: null };
 
   // Desde el inicio del día de hoy (en Sinaloa) en adelante.
   const hoyClave = claveDia(new Date().toISOString());
@@ -162,6 +178,15 @@ export default async function AgendaPage() {
             )}
           </span>
         </div>
+      )}
+
+      {puedeGestionarGoogle && (
+        <ConexionGoogle
+          configurado={googleConfigurado()}
+          conectado={gcalEstado.conectado}
+          email={gcalEstado.email}
+          aviso={gcal}
+        />
       )}
 
       <div className="mb-6">
