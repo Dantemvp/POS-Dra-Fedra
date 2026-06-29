@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { registrarCompra, type ItemCompra } from "./actions";
 import ComboBuscador from "@/components/ComboBuscador";
+import { parseCfdi, normaliza } from "@/lib/cfdi";
 
 const input =
   "w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900";
@@ -19,7 +20,7 @@ const filaVacia: ItemCompra = {
 export default function NuevaCompra({
   productos,
 }: {
-  productos: { id: string; nombre: string }[];
+  productos: { id: string; nombre: string; codigo_barras: string | null }[];
 }) {
   const [abierto, setAbierto] = useState(false);
   const [proveedor, setProveedor] = useState("");
@@ -30,9 +31,69 @@ export default function NuevaCompra({
     () => productos.map((p) => ({ value: p.id, label: p.nombre })),
     [productos],
   );
+  // Índices para ligar conceptos del CFDI a productos: por código de barras
+  // (NoIdentificacion) y por nombre normalizado.
+  const porCodigo = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of productos)
+      if (p.codigo_barras) m.set(p.codigo_barras.trim(), p.id);
+    return m;
+  }, [productos]);
+  const porNombre = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of productos) m.set(normaliza(p.nombre), p.id);
+    return m;
+  }, [productos]);
+  const xmlInputRef = useRef<HTMLInputElement>(null);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // Importa un CFDI (XML) del proveedor y prellena el formulario. No guarda
+  // nada: el usuario revisa y luego pulsa "Guardar compra" como siempre.
+  async function importarXml(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (xmlInputRef.current) xmlInputRef.current.value = "";
+    if (!file) return;
+    setImportMsg(null);
+    setMsg(null);
+    const texto = await file.text();
+    const cfdi = parseCfdi(texto);
+    if (!cfdi) {
+      setImportMsg("Ese archivo no parece un CFDI válido (XML del SAT).");
+      return;
+    }
+    if (cfdi.emisorNombre) setProveedor(cfdi.emisorNombre);
+    if (cfdi.folio) setFactura(cfdi.folio);
+    if (cfdi.fecha) setFecha(cfdi.fecha);
+
+    let ligados = 0;
+    const nuevos: ItemCompra[] = cfdi.conceptos.map((c) => {
+      const porCb = c.noIdentificacion
+        ? porCodigo.get(c.noIdentificacion.trim())
+        : undefined;
+      const id = porCb ?? porNombre.get(normaliza(c.descripcion)) ?? "";
+      if (id) ligados++;
+      return {
+        producto_id: id,
+        cantidad: c.cantidad ? String(c.cantidad) : "",
+        costo: c.valorUnitario ? String(c.valorUnitario) : "",
+        lote: "",
+        caducidad: "",
+      };
+    });
+    setItems(nuevos.length > 0 ? nuevos : [{ ...filaVacia }]);
+    const total = cfdi.conceptos.length;
+    const faltan = total - ligados;
+    setImportMsg(
+      `Factura importada: ${total} concepto(s), ${ligados} ligado(s) al inventario` +
+        (faltan > 0
+          ? `. Faltan ${faltan} por seleccionar manualmente (resaltados).`
+          : ".") +
+        (cfdi.uuid ? ` UUID ${cfdi.uuid.slice(0, 8)}…` : ""),
+    );
+  }
 
   // El aviso de éxito se borra solo a los 3 segundos.
   useEffect(() => {
@@ -75,6 +136,27 @@ export default function NuevaCompra({
 
   return (
     <div className="mb-6 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-3">
+        <label className="cursor-pointer rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800">
+          Importar factura (XML del CFDI)
+          <input
+            ref={xmlInputRef}
+            type="file"
+            accept=".xml,text/xml,application/xml"
+            className="hidden"
+            onChange={importarXml}
+          />
+        </label>
+        <span className="text-xs text-zinc-500">
+          Sube el XML del proveedor y se llena solo. Opcional: puedes capturar a mano.
+        </span>
+      </div>
+      {importMsg && (
+        <p className="mb-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          {importMsg}
+        </p>
+      )}
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
           <label className={label}>Proveedor</label>
@@ -106,17 +188,23 @@ export default function NuevaCompra({
 
       <div className="mt-4 space-y-2">
         <p className="text-xs font-medium uppercase text-zinc-500">Productos</p>
-        {items.map((it, idx) => (
+        {items.map((it, idx) => {
+          // Renglón importado del CFDI que no se ligó solo: tiene cantidad pero
+          // falta elegir el producto. Lo resaltamos para que no se pase.
+          const sinLigar = !it.producto_id && Number(it.cantidad) > 0;
+          return (
           <div
             key={idx}
-            className="grid grid-cols-1 gap-2 rounded-lg bg-zinc-50 p-3 sm:grid-cols-12"
+            className={`grid grid-cols-1 gap-2 rounded-lg p-3 sm:grid-cols-12 ${
+              sinLigar ? "bg-amber-50 ring-1 ring-amber-300" : "bg-zinc-50"
+            }`}
           >
             <div className="sm:col-span-4">
               <ComboBuscador
                 opciones={opcionesProducto}
                 value={it.producto_id}
                 onChange={(v) => setItem(idx, { producto_id: v })}
-                placeholder="Busca el producto…"
+                placeholder={sinLigar ? "⚠ Elige el producto…" : "Busca el producto…"}
               />
             </div>
             <input
@@ -148,7 +236,8 @@ export default function NuevaCompra({
               onChange={(e) => setItem(idx, { caducidad: e.target.value })}
             />
           </div>
-        ))}
+          );
+        })}
         <button
           onClick={() => setItems((p) => [...p, { ...filaVacia }])}
           className="text-sm font-medium text-zinc-600 hover:text-zinc-900"

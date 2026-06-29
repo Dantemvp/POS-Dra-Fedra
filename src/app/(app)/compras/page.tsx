@@ -21,10 +21,14 @@ export default async function ComprasPage() {
 
   const { data: productosData } = await supabase
     .from("productos")
-    .select("id, nombre")
+    .select("id, nombre, codigo_barras")
     .eq("activo", true)
     .order("nombre");
-  const productos = (productosData ?? []) as { id: string; nombre: string }[];
+  const productos = (productosData ?? []) as {
+    id: string;
+    nombre: string;
+    codigo_barras: string | null;
+  }[];
 
   const { data: comprasData } = await supabase
     .from("compras")
