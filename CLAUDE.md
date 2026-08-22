@@ -16,7 +16,7 @@ Corte de información: 14 de agosto de 2026, commit base `ae7aaed`.
 
 ## Stack real
 
-Next 16.2.6 con App Router, React 19.2.4, Supabase con Postgres, Auth SSR y Storage, Tailwind v4 y Recharts. La interfaz es propia, no hay shadcn/ui ni Radix a pesar de lo que decían las notas viejas. Para imprimir y generar códigos se usan jspdf, html2canvas-pro y jsbarcode. Las notificaciones van por web-push.
+Next 16.3.2 con App Router, React 19.2.4, Supabase con Postgres, Auth SSR y Storage, Tailwind v4 y Recharts. La interfaz es propia, no hay shadcn/ui ni Radix a pesar de lo que decían las notas viejas. Para imprimir y generar códigos se usan jspdf, html2canvas-pro y jsbarcode. Las notificaciones van por web-push.
 
 El lector de InBody llama a GPT-4o por fetch directo a la API de OpenAI, sin SDK, en `src/app/(app)/pacientes/actions.ts`.
 

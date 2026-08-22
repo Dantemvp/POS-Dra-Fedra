@@ -115,12 +115,12 @@ Ticket: pendiente de abrir
 Severidad: Rojo
 Carril: F operación
 Encontró: Codex
-Estado: Abierto
+Estado: En revisión
 Ticket: FED-005
 
 **Evidencia.** `package.json` fija Next 16.2.6. El reporte de `npm audit` del 22 de agosto de 2026 marca vulnerabilidades altas en esa versión, incluido bypass de Middleware/Proxy y problemas en Server Actions. La publicación oficial de seguridad de Next recomienda actualizar la línea 16.2 a 16.2.11 o posterior.
 **Impacto.** El sistema usa App Router, Middleware y Server Actions para módulos con ventas y expedientes. Una versión con bypass conocido debilita una capa de autorización y aumenta el riesgo de indisponibilidad o exposición.
-**Verificación.** FED-005 actualiza a una versión corregida de la misma línea, ejecuta lint, typecheck, pruebas, build y vuelve a revisar `npm audit`. La actualización no se mezcla con cambios funcionales ni se despliega sin revisión.
+**Verificación.** FED-005 actualiza Next y eslint-config-next a 16.3.2 y fija DOMPurify 3.4.14. Lint, typecheck, 12 pruebas y build pasan. `npm audit --omit=dev` reporta cero vulnerabilidades de producción. Quedan dos alertas altas en dependencias transitivas de ESLint usadas solo durante desarrollo; no se fuerzan versiones mayores incompatibles y se revisarán cuando sus paquetes padres publiquen solución.
 
 ### H-009 El POS permitía cobrar con efectivo recibido insuficiente
 

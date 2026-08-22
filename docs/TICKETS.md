@@ -40,9 +40,11 @@ Implementación local: workflow de CI con lint, typecheck, pruebas y build; Vite
 
 Modo: Remediación · Riesgo: Rojo · Carril: F operación
 Autor: Codex · Revisor: Claude
-Estado: por abrir, cierra H-008
+Estado: implementado por Codex en rama apilada, pendiente de revisión de Claude, cierra H-008
 
 Actualizar Next desde 16.2.6 a una versión corregida y compatible, sin saltar de línea salvo que la evidencia lo exija. Ejecutar la línea base completa de FED-002 antes y después, revisar el reporte de dependencias y separar cualquier cambio requerido por el framework. No desplegar hasta que Claude revise y Dante autorice.
+
+Implementación local: se probó primero 16.2.11, que corrigió los avisos directos del framework pero conservó vulnerabilidades altas de PostCSS y Sharp. Se avanzó a 16.3.2, se alineó eslint-config-next y se fijó DOMPurify 3.4.14. Resultado: cero vulnerabilidades de producción, lint y typecheck limpios, 12 pruebas aprobadas y build completo. Riesgo residual: dos alertas de desarrollo dentro de ESLint. El aviso de migrar `middleware.ts` a `proxy.ts` queda fuera de este ticket.
 
 ### FED-003 Rotación del token de despliegue
 
