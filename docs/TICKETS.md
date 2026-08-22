@@ -94,6 +94,14 @@ Actualizar Next desde 16.2.6 a una versión corregida y compatible, sin saltar d
 
 Implementación local: se probó primero 16.2.11, que corrigió los avisos directos del framework pero conservó vulnerabilidades altas de PostCSS y Sharp. Se avanzó a 16.3.2, se alineó eslint-config-next y se fijó DOMPurify 3.4.14. Resultado: cero vulnerabilidades de producción, lint y typecheck limpios, 12 pruebas aprobadas y build completo. Riesgo residual: dos alertas de desarrollo dentro de ESLint. El aviso de migrar `middleware.ts` a `proxy.ts` queda fuera de este ticket.
 
+### FED-008 Endurecer precios y cantidades de cobros
+
+Modo: Remediación · Riesgo: Rojo · Carril: A dinero
+Autor: por asignar · Revisor: el otro agente
+Estado: por abrir después de FED-004A, cierra H-012
+
+Rehacer `registrar_cobro()` para que los renglones ligados a catálogo obtengan su precio desde `productos.precio_venta` o `servicios.precio`, rechacen cantidades no positivas y conserven la atomicidad de cobro, pago e inventario. Antes de decidir cómo tratar conceptos y precios libres, Dante debe confirmar la regla de descuentos del consultorio. La prueba mínima intenta precio cero, precio manipulado, cantidad negativa, producto inactivo, stock insuficiente y un cobro válido. Sin cambios en producción hasta revisión cruzada y autorización.
+
 ### FED-003 Rotación del token de despliegue
 
 Modo: Remediación · Riesgo: Rojo · Carril: F operación

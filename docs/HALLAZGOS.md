@@ -148,6 +148,18 @@ Ticket: FED-014
 
 **Verificación.** FED-014 reemplaza las cuatro políticas por un conjunto por ruta y rol, sin permisos por omisión. Se comprueba desde fuera con la llave anónima y una sesión real de cada rol, como lo haría un extraño, no leyendo las migraciones: `farmacia` no enumera ni descarga ningún objeto bajo `inbody/`, no lo borra y no lo sobrescribe; los roles clínicos sí leen los suyos; el borrado de documento clínico queda restringido a lo que Dante confirme como regla de negocio; y los flujos legítimos de subir un InBody, firmar su URL y administrar archivos de producto siguen funcionando. Requiere FED-004A porque exige sesiones reales por rol contra Storage.
 
+### H-012 La RPC de cobros confía cantidades y precios del cliente
+
+Severidad: Rojo
+Carril: A dinero
+Encontró: Codex
+Estado: Abierto
+Ticket: FED-008
+
+**Evidencia.** La versión vigente de `registrar_cobro()` en `20260624000027_rol_gerente_permisos.sql` suma `cantidad * precio_unit` directamente desde `p_items`. No exige cantidad positiva y vuelve a insertar ese precio en `cobro_items`. La Server Action también acepta cualquier cantidad y solo comprueba que el precio sea mayor o igual a cero. La RPC es `security definer` y se concede a `authenticated`.
+**Impacto.** Un rol autorizado para cobrar puede llamar la RPC con precio cero o alterado. Con una cantidad negativa puede crear un total negativo sin pago y sin descuento de inventario. Los controles visuales del formulario no protegen una llamada directa.
+**Verificación.** FED-008 debe resolver en servidor el precio de todo producto o servicio ligado, permitir conceptos libres solo bajo una regla de negocio explícita, rechazar cantidades no positivas y probar manipulación directa, stock, total y pago dentro de una transacción. No se escribe la migración hasta disponer de FED-004A; esta máquina no tiene hoy Supabase CLI ni Docker disponibles y `supabase/seed.sql` todavía no existe.
+
 ### H-000 El contexto del repositorio afirmaba cosas falsas
 
 Severidad: Verde
