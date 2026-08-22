@@ -35,21 +35,7 @@ Antes de quitar el sufijo `dev`:
 
 ## Ficha obligatoria de cada liberación
 
-Copiar esta plantilla como una entrada nueva en `docs/LIBERACIONES.md`:
-
-```text
-Versión:
-Tag:
-Commit:
-Despliegue Vercel:
-Fecha y responsable:
-Última migración:
-Respaldo y restauración comprobada:
-Pruebas ejecutadas:
-Autorizaciones:
-Señales observadas después de desplegar:
-Resultado: aprobado | revertido | detenido
-```
+La plantilla única vive en `docs/LIBERACIONES.md`. Copiarla ahí como una entrada nueva y completar todos sus campos; este procedimiento no conserva una segunda copia.
 
 ## Secuencia de liberación
 
@@ -62,6 +48,8 @@ Resultado: aprobado | revertido | detenido
 7. Observar errores y conciliar las operaciones afectadas antes de declarar estable.
 
 El inventario de migraciones del commit se obtiene con `node scripts/release-metadata.mjs <tag-o-commit>` y se adjunta a la entrada. El estado efectivo de producción se consulta por separado; la lista del repositorio demuestra intención, no aplicación.
+
+El checkout superficial actual de CI puede inventariar `HEAD`, incluido un workflow disparado por tag. Comparar contra otro tag durante una reversa se hace desde un clon local con ese tag disponible. Si se automatiza esa comparación en CI, `actions/checkout` debe usar `fetch-depth: 0`; no se asume que un checkout superficial contiene el historial ni los demás tags.
 
 ## Reversa de aplicación
 
