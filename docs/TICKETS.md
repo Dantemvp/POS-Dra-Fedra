@@ -102,6 +102,14 @@ Estado: por abrir después de FED-004A, cierra H-012
 
 Rehacer `registrar_cobro()` para que los renglones ligados a catálogo obtengan su precio desde `productos.precio_venta` o `servicios.precio`, rechacen cantidades no positivas y conserven la atomicidad de cobro, pago e inventario. Antes de decidir cómo tratar conceptos y precios libres, Dante debe confirmar la regla de descuentos del consultorio. La prueba mínima intenta precio cero, precio manipulado, cantidad negativa, producto inactivo, stock insuficiente y un cobro válido. Sin cambios en producción hasta revisión cruzada y autorización.
 
+### FED-009 Cerrar el alta pública de cuentas
+
+Modo: Remediación · Riesgo: Rojo · Carril: B permisos
+Autor: Dante · Revisores: Codex y Claude
+Estado: listo para ejecutar con autorización, cierra H-013
+
+Deshabilitar el alta pública en Supabase Auth sin eliminar el flujo administrativo de `crearUsuario()`, que usa `service_role`. Antes se guarda evidencia de la configuración actual; después se prueba que un alta anónima sea rechazada, que las sesiones existentes sigan entrando y que el administrador todavía pueda crear una empleada de prueba autorizada. El cambio real y su prueba se coordinan con la doctora para no improvisar sobre producción.
+
 ### FED-003 Rotación del token de despliegue
 
 Modo: Remediación · Riesgo: Rojo · Carril: F operación

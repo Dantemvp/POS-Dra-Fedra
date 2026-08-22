@@ -160,6 +160,18 @@ Ticket: FED-008
 **Impacto.** Un rol autorizado para cobrar puede llamar la RPC con precio cero o alterado. Con una cantidad negativa puede crear un total negativo sin pago y sin descuento de inventario. Los controles visuales del formulario no protegen una llamada directa.
 **Verificación.** FED-008 debe resolver en servidor el precio de todo producto o servicio ligado, permitir conceptos libres solo bajo una regla de negocio explícita, rechazar cantidades no positivas y probar manipulación directa, stock, total y pago dentro de una transacción. No se escribe la migración hasta disponer de FED-004A; esta máquina no tiene hoy Supabase CLI ni Docker disponibles y `supabase/seed.sql` todavía no existe.
 
+### H-013 El alta pública entrega automáticamente un rol clínico
+
+Severidad: Rojo
+Carril: B permisos
+Encontró: Codex al relacionar evidencia previa
+Estado: Abierto
+Ticket: FED-009
+
+**Evidencia.** La auditoría remota de solo lectura confirmó `disable_signup=false`. En las migraciones, `handle_new_user()` inserta toda cuenta posterior a la primera con rol `asistente`. Las políticas `clinica_*` permiten a asistente operar pacientes, historias clínicas, recetas y agenda. La interfaz solo ofrece iniciar sesión, pero ocultar el registro no deshabilita el endpoint de Supabase Auth.
+**Impacto.** Una persona externa puede crear una cuenta directamente contra Auth y recibir permisos clínicos sin aprobación del administrador. Es un camino de acceso a expedientes, no solo una cuenta inofensiva.
+**Verificación.** FED-009 deshabilita el alta pública en el proyecto remoto y demuestra que un `signUp` anónimo falla mientras `crearUsuario()` con `service_role` sigue dando de alta personal autorizado. Dante ejecuta el cambio y conserva evidencia antes/después; Codex y Claude no lo aplican por su cuenta.
+
 ### H-000 El contexto del repositorio afirmaba cosas falsas
 
 Severidad: Verde
