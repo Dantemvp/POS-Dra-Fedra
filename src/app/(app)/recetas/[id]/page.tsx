@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
 import CodigoBarrasReceta from "./CodigoBarrasReceta";
 import { edadEnFecha } from "@/lib/impresion-documento";
+import { fechaSinaloa, ymdSinaloa } from "@/lib/tz";
 
 type Item = {
   medicamento: string;
@@ -54,8 +55,8 @@ export default async function RecetaPrint({
   const r = data as unknown as Receta;
   const p = r.pacientes;
   const nombre = p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : "";
-  const edad = edadEnFecha(p?.fecha_nac, r.fecha);
-  const fecha = new Date(r.fecha).toLocaleDateString("es-MX");
+  const edad = edadEnFecha(p?.fecha_nac, ymdSinaloa(r.fecha));
+  const fecha = fechaSinaloa(r.fecha);
   const metricas = r.metricas ?? {};
 
   return (

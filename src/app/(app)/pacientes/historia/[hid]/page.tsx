@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
+import { fechaSinaloa } from "@/lib/tz";
 
 type Campo = { id: string; etiqueta: string; seccion: string | null; orden: number };
 type Historia = {
@@ -70,7 +71,7 @@ export default async function HistoriaPrint({
     .map(([k, v]) => [k, valor(v)]);
   if (extra.length > 0) secciones.push({ nombre: "Datos", filas: extra });
 
-  const fechaTxt = new Date(h.fecha).toLocaleDateString("es-MX");
+  const fechaTxt = fechaSinaloa(h.fecha);
 
   return (
     <div className="mx-auto max-w-[660px]">

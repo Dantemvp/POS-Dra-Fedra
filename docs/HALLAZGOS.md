@@ -221,6 +221,18 @@ Ticket: FED-015
 **Impacto.** La misma receta mostraba una edad distinta al reimprimirse años después y podía desviarse cerca del cumpleaños, alterando un dato clínico del documento histórico.
 **Verificación.** FED-015 calcula años cumplidos usando la fecha de nacimiento y la fecha inmutable de la receta. Cubre cumpleaños exacto, día anterior, 29 de febrero, fechas imposibles y referencias anteriores al nacimiento.
 
+### H-022 Los documentos imprimibles formateaban la fecha en la zona del servidor
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-015
+
+**Evidencia.** La receta y la historia usaban `new Date(fecha).toLocaleDateString("es-MX")` sin declarar zona horaria. Vercel opera en UTC, mientras la clínica usa `America/Mazatlan`. Un documento creado entre las 00:00 y las 06:59 UTC pertenece todavía al día anterior en Sinaloa.
+**Impacto.** Una receta o historia podía imprimir una fecha distinta del día clínico real, y esa misma fecha equivocada alimentaba el cálculo histórico de edad.
+**Verificación.** FED-015 usa `fechaSinaloa()` para mostrar ambos documentos y `ymdSinaloa()` como referencia del cálculo de edad. La prueba cubre los dos lados de la frontera de las 07:00 UTC.
+
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
 
