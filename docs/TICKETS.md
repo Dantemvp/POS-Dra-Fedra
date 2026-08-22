@@ -24,11 +24,13 @@ Estado: primera revisión de Codex con cambios solicitados, corregidos en un seg
 
 ## Siguientes
 
+Esta sección conserva los contratos por identificador y por momento de registro; no se ejecuta de arriba abajo. El orden operativo vigente es: consolidar la rama canónica, FED-009, FED-004A, FED-014, rediseñar FED-006 y FED-007, FED-008, FED-010 y después FED-011. FED-013 se ejecuta en una ventana controlada con acceso a Vercel. FED-003 y FED-004B requieren autorización específica para credenciales o recursos remotos.
+
 ### FED-012 Versionado y reversa verificable
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación
 Autor: Codex · Revisor: Claude
-Estado: implementado por Codex, pendiente de revisión
+Estado: cerrado; implementación de Codex aprobada por Claude, integrada en la rama canónica local, sin tag ni despliegue
 
 Mostrar versión y commit en la aplicación, validar que manifiesto, lockfile y tag coincidan, mantener un changelog y exigir una ficha por liberación. La reversa de código usa despliegues inmutables de Vercel; la reversa con migraciones requiere compatibilidad, respaldo y restauración ensayada. No crea tags, despliega ni toca producción.
 

@@ -26,6 +26,8 @@ Regla: quien encuentra un hallazgo no lo cierra solo. Lo cierra el revisor cuand
 
 ## Abiertos
 
+Los hallazgos se conservan en el orden en que se registraron para no reescribir su historia. El identificador es estable; la posición dentro del archivo no representa prioridad ni secuencia de ejecución. La prioridad operativa vive en `docs/TICKETS.md`.
+
 ### H-001 El token de despliegue de Vercel está quemado
 
 Severidad: Rojo
@@ -154,7 +156,7 @@ Encontró: Codex
 Estado: Abierto
 Ticket: FED-007
 
-**Evidencia.** `crearUsuario()` crea primero la identidad en Supabase Auth y, si falla el `upsert` en `usuarios`, devuelve el error sin reconciliar de forma demostrable ambos lados. `toggleActivo()` cambia el perfil y llama a Auth en pasos separados. La primera implementación de FED-007, commit `7a7150a`, también mostró que eliminar la identidad no elimina necesariamente el perfil creado por el trigger, y que una actualización de perfil que afecta cero filas puede terminar sin error.
+**Evidencia.** `crearUsuario()` crea primero la identidad en Supabase Auth y, si falla el `upsert` en `usuarios`, devuelve el error sin reconciliar de forma demostrable ambos lados. `toggleActivo()` cambia el perfil y llama a Auth en pasos separados. La primera implementación de FED-007, commit `7a7150a`, también mostró que eliminar la identidad no elimina el perfil creado por el trigger: ninguna de las 40 migraciones crea una llave foránea desde `usuarios.auth_uid` hacia `auth.users`. Además, una actualización de perfil que afecta cero filas puede terminar sin error.
 **Impacto.** El sistema puede dejar una identidad o un perfil huérfano, o mostrar un estado activo distinto del que aplica Supabase Auth. Eso vuelve ambiguo quién puede iniciar sesión y obliga a reparar cuentas manualmente.
 **Verificación pendiente.** Antes del rediseño se confirma en solo lectura el estado efectivo de los perfiles heredados con `auth_uid` nulo. La nueva implementación debe comprobar filas afectadas, reconciliar identidad y perfil en cualquier fallo parcial, y reportar de forma explícita cuando la compensación también falle. FED-004A debe probar creación, activación, desactivación, fallos en cada paso y recuperación, sin tocar usuarios reales.
 

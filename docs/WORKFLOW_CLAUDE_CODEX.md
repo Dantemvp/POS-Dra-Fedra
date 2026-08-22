@@ -58,12 +58,17 @@ Si dos tickets necesitan editar el mismo archivo, no son paralelos. Se ordenan o
 
 Los dos agentes trabajan en carpetas distintas conectadas al mismo repositorio.
 
+La rama canónica de integración es `codex/fedra-integration`. `main` representa únicamente lo que Dante ya autorizó para liberación y puede quedar detrás mientras una tanda sigue en revisión. Ninguna rama nueva parte de `origin/main` por costumbre: primero se actualiza la rama canónica y se registra el commit base del ticket.
+
 ```powershell
 git fetch origin
-git worktree add -b claude/FED-123-descripcion C:\Users\Alex\fedra-worktrees\claude-FED-123 origin/main
-git worktree add -b codex/FED-124-descripcion C:\Users\Alex\fedra-worktrees\codex-FED-124 origin/main
+git branch --force fedra-integration-base origin/codex/fedra-integration
+git worktree add -b claude/FED-123-descripcion C:\Users\Alex\fedra-worktrees\claude-FED-123 fedra-integration-base
+git worktree add -b codex/FED-124-descripcion C:\Users\Alex\fedra-worktrees\codex-FED-124 fedra-integration-base
 git worktree list
 ```
+
+`fedra-integration-base` es un apuntador local de solo arranque. No se trabaja directamente sobre él y no sustituye la revisión del commit exacto desde el que nació cada ticket.
 
 Ningún worktree recibe copias de secretos productivos.
 
