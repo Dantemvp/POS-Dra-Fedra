@@ -221,7 +221,7 @@ export default async function HistoriaPrint({
 
           <div className="mt-3 space-y-2.5">
             {secciones.map((s) => (
-              <section key={s.nombre} className="break-inside-avoid">
+              <section key={s.nombre} className="break-inside-avoid" data-pdf-block>
                 <h2 className="mb-1 bg-[#f1ebe1] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#8c7a63]">
                   {s.nombre}
                 </h2>
@@ -244,7 +244,7 @@ export default async function HistoriaPrint({
           </div>
 
           {/* Firma */}
-          <div className="mt-10 break-inside-avoid text-center">
+          <div className="mt-10 break-inside-avoid text-center" data-pdf-block>
             <div className="mx-auto w-56 border-t border-zinc-500" />
             <p className="mt-1 text-[10px] font-semibold text-zinc-900">
               Dra. Fedra Yarissa Aldama Castro

@@ -185,6 +185,30 @@ Ticket: FED-014
 **Impacto.** El documento fuente que leyó el modelo no queda ligado a la nota clínica que produjo, así que nadie puede cotejar lo que la IA interpretó contra lo que quedó en el expediente. Los objetos se acumulan sin que se puedan enumerar desde la base, y la única pista de a qué paciente pertenecen es la ruta. La regla que Dante confirmó el 22 de agosto de 2026, que una corrección entra como documento nuevo, conserva el anterior y queda vinculada a una bitácora, hoy no se puede implementar porque no existe la fila a la que vincularla. También bloquea proteger `inbody/` por metadatos, que es la estrategia que sí aplica a los archivos de producto.
 **Verificación.** FED-014 crea la tabla de documentos clínicos con paciente, ruta, tipo, quién subió, cuándo y a qué documento sustituye, escribe la fila dentro del mismo flujo que sube el archivo y la incluye en los disparadores de auditoría. Se comprueba que subir un InBody deja fila, que una corrección crea una fila nueva sin borrar la anterior, y que los objetos que ya existen quedan inventariados como huérfanos antes de endurecer nada.
 
+### H-018 El PDF de historia puede cortar una sección entre dos páginas
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-015
+
+**Evidencia.** `src/app/(app)/pacientes/historia/[hid]/PrintButton.tsx` captura todo `.hc-body` como una sola imagen y la divide en segmentos de altura fija. El corte no considera los límites de secciones ni de la firma, por lo que una fila que cruce la frontera queda partida aunque el componente afirme lo contrario.
+**Impacto.** Una historia larga puede imprimirse con una respuesta o firma dividida entre hojas, dificultando su lectura y dejando un documento clínico poco confiable.
+**Verificación.** FED-015 calcula los cortes antes de generar el PDF, adelanta la frontera al inicio de una sección o firma atravesada y conserva avance para cualquier bloque mayor que una hoja. La lógica se cubre con pruebas unitarias y queda pendiente una prueba visual con historias sintéticas de una, dos y tres páginas.
+
+### H-019 La receta de media carta no controla contenido largo
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Codex
+Estado: Abierto
+Ticket: FED-015
+
+**Evidencia.** `src/app/(app)/recetas/[id]/page.tsx` coloca todos los medicamentos dentro de un área absoluta de una sola media carta. No existe límite de renglones, medición de desbordamiento, reducción controlada ni segunda hoja; el folio y el código de barras ocupan posiciones fijas al pie.
+**Impacto.** Una receta con muchos medicamentos o indicaciones extensas puede invadir el folio y el código de barras o salir del área imprimible.
+**Verificación pendiente.** Probar recetas sintéticas con nombres e indicaciones de distinta longitud y acordar con Fedra si se limita el contenido, se reduce dentro de un mínimo legible o se genera una segunda hoja. No se elige esa regla clínica por suposición.
+
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
 

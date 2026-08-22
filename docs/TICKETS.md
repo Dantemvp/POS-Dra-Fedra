@@ -84,6 +84,24 @@ La lectura de `inbody/` copia los roles que `RUTAS_ROL` ya concede a `/pacientes
 
 **Plan de reversa.** El conjunto anterior de políticas queda citado íntegro dentro de la migración nueva, de modo que restablecerlo sea otra migración hacia adelante y no una edición de lo ya aplicado. Si un flujo legítimo se rompe se restablece ese conjunto y H-016 vuelve a Abierto en el mismo movimiento, porque volver a las políticas planas reabre el agujero. La tabla de documentos clínicos es aditiva y no se retira en una reversa: quitarla perdería el rastro que la regla de negocio exige conservar.
 
+### FED-015 Impresión confiable de historias y recetas
+
+Modo: Remediación · Riesgo: Ámbar · Carril: C pacientes
+Autor: Codex · Revisor: Claude
+Estado: implementación parcial en revisión; corrige H-018 y mantiene H-019 abierto hasta confirmar la regla de receta larga
+
+**Objetivo.** Evitar cortes arbitrarios en historias clínicas multipágina y definir un comportamiento comprobable para recetas que no caben en media carta.
+
+**Alcance de esta implementación.** Extraer una función pura de paginación, proteger secciones y firma al dividir la captura de historia, y cubrir documentos cortos, largos, bloques atravesados, superpuestos y mayores que una hoja. Registrar por separado el desbordamiento de receta sin imponer un límite clínico inventado.
+
+**Fuera de alcance.** Base de datos, Storage, InBody, datos reales, cambios al membrete oficial, migraciones y despliegue. La regla para una receta larga espera confirmación de Fedra o Dante.
+
+**Criterios de aceptación.** Ningún corte normal atraviesa una sección o firma. Un bloque mayor que una hoja se divide sin bloquear el generador. El PDF conserva tamaño carta y repite el membrete. La receta se prueba con fixtures sintéticos antes de cambiar su densidad o número de hojas.
+
+**Pruebas requeridas.** Pruebas unitarias del planificador y prueba visual pendiente en Chromium de historias sintéticas de una, dos y tres hojas. Para receta: casos de uno, cinco y diez medicamentos, indicaciones multilínea, nombre largo y código de barras legible.
+
+**Plan de reversa.** Revertir el commit restaura los cortes fijos anteriores. No cambia datos ni archivos clínicos almacenados.
+
 ### FED-002 Línea base de integración continua y pruebas puras
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación
