@@ -94,6 +94,22 @@ Actualizar Next desde 16.2.6 a una versión corregida y compatible, sin saltar d
 
 Implementación local: se probó primero 16.2.11, que corrigió los avisos directos del framework pero conservó vulnerabilidades altas de PostCSS y Sharp. Se avanzó a 16.3.2, se alineó eslint-config-next y se fijó DOMPurify 3.4.14. Resultado: cero vulnerabilidades de producción, lint y typecheck limpios, 12 pruebas aprobadas y build completo. Riesgo residual: dos alertas de desarrollo dentro de ESLint. El aviso de migrar `middleware.ts` a `proxy.ts` queda fuera de este ticket.
 
+### FED-006 Autorización explícita de documentos clínicos
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: Codex · Revisor: Claude
+Estado: devuelto al autor; la implementación `170cbdc` fue rechazada y no se integra, mantiene H-010 abierto
+
+Cerrar el rol implícito de una sesión sin perfil y exigir un perfil activo con rol clínico antes de firmar documentos o enviar un InBody a OpenAI. El flujo debe fallar cerrado sin provocar un ciclo entre `/login` y `/dashboard`. Las Server Actions cubren el camino de aplicación, pero el acceso directo a los bytes se resuelve en FED-014 y no se presenta como mitigado por este ticket. El rediseño se implementa en una rama limpia desde la base aprobada y se cierra con sesiones reales por rol en FED-004A.
+
+### FED-007 Consistencia entre identidades y perfiles
+
+Modo: Remediación · Riesgo: Rojo · Carril: B permisos
+Autor: Codex · Revisor: Claude
+Estado: devuelto al autor; la implementación `7a7150a` fue rechazada y no se integra, mantiene H-011 abierto
+
+Evitar identidades y perfiles huérfanos, estados contradictorios y falsos éxitos al crear, activar o desactivar usuarios. El rediseño debe considerar el perfil que crea el trigger, comprobar que cada actualización afectó la fila esperada y definir compensación o reconciliación explícita si falla el segundo paso. Antes se confirma en solo lectura si existen perfiles heredados con `auth_uid` nulo. FED-004A debe ensayar éxito, fallo en cada frontera y fallo de la propia compensación, sin operar sobre cuentas reales.
+
 ### FED-008 Endurecer precios y cantidades de cobros
 
 Modo: Remediación · Riesgo: Rojo · Carril: A dinero

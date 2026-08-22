@@ -134,6 +134,30 @@ Ticket: FED-002
 **Impacto.** Caja podía registrar una venta pagada aunque el efectivo capturado no alcanzara para cubrir la parte en efectivo, dejando un faltante operativo desde el momento del cobro.
 **Verificación.** FED-002 concentra el cálculo en `src/lib/dinero.ts`, bloquea `finalizar()` cuando existe faltante y cubre cambio, faltante, pagos simples y mixtos con pruebas unitarias.
 
+### H-010 Una sesión sin perfil puede alcanzar operaciones clínicas sensibles
+
+Severidad: Rojo
+Carril: C pacientes
+Encontró: Codex
+Estado: Abierto
+Ticket: FED-006 y FED-014
+
+**Evidencia.** `getUsuarioActual()` devuelve el rol `asistente` cuando la sesión autenticada no tiene una fila legible en `usuarios`. Además, `urlDocumento()` y `extraerInBody()` solo comprueban que haya una sesión. La primera genera una URL firmada de Storage y la segunda descarga el archivo y lo envía a OpenAI con una clave privada del servidor. H-016 confirma además que las políticas de `storage.objects` conceden acceso al bucket `archivos` a cualquier usuario autenticado.
+**Impacto.** Una cuenta autenticada sin perfil clínico válido puede alcanzar documentos de pacientes y activar su procesamiento externo. El alta pública abierta de H-013 amplifica este camino. Un control dentro de una Server Action no protege el acceso directo a Storage.
+**Verificación pendiente.** La primera implementación de FED-006, commit `170cbdc`, fue rechazada porque una sesión sin perfil o inactiva podía quedar en un ciclo de redirección entre `/login` y `/dashboard`, y porque no cerraba el acceso directo a Storage. El rediseño debe fallar cerrado sin crear ese ciclo, exigir un perfil activo y un rol clínico en cada operación de aplicación, y coordinarse con FED-014 para cerrar los bytes. El hallazgo solo se cierra con sesiones reales por rol contra el entorno local de FED-004A.
+
+### H-011 Auth y el perfil pueden quedar en estados contradictorios
+
+Severidad: Rojo
+Carril: B permisos
+Encontró: Codex
+Estado: Abierto
+Ticket: FED-007
+
+**Evidencia.** `crearUsuario()` crea primero la identidad en Supabase Auth y, si falla el `upsert` en `usuarios`, devuelve el error sin reconciliar de forma demostrable ambos lados. `toggleActivo()` cambia el perfil y llama a Auth en pasos separados. La primera implementación de FED-007, commit `7a7150a`, también mostró que eliminar la identidad no elimina necesariamente el perfil creado por el trigger, y que una actualización de perfil que afecta cero filas puede terminar sin error.
+**Impacto.** El sistema puede dejar una identidad o un perfil huérfano, o mostrar un estado activo distinto del que aplica Supabase Auth. Eso vuelve ambiguo quién puede iniciar sesión y obliga a reparar cuentas manualmente.
+**Verificación pendiente.** Antes del rediseño se confirma en solo lectura el estado efectivo de los perfiles heredados con `auth_uid` nulo. La nueva implementación debe comprobar filas afectadas, reconciliar identidad y perfil en cualquier fallo parcial, y reportar de forma explícita cuando la compensación también falle. FED-004A debe probar creación, activación, desactivación, fallos en cada paso y recuperación, sin tocar usuarios reales.
+
 ### H-016 Cualquier sesión autenticada lee, sustituye y borra los documentos del bucket clínico
 
 Severidad: Rojo
