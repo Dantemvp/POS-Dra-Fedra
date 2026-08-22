@@ -186,6 +186,18 @@ Ticket: FED-014
 **Verificación.** FED-014 crea la tabla de documentos clínicos con paciente, ruta, tipo, quién subió, cuándo y a qué documento sustituye, escribe la fila dentro del mismo flujo que sube el archivo y la incluye en los disparadores de auditoría. Se comprueba que subir un InBody deja fila, que una corrección crea una fila nueva sin borrar la anterior, y que los objetos que ya existen quedan inventariados como huérfanos antes de endurecer nada.
 
 
+### H-018 El repositorio no basta para reconstruir la base
+
+Severidad: Ámbar
+Carril: F operación
+Encontró: Claude
+Estado: Abierto
+Ticket: ninguno todavía
+
+**Evidencia.** El workflow de FED-004A levanta un Supabase local y aplica desde cero las 40 migraciones del repositorio. Al terminar, la consulta `select grantee, count(*) from information_schema.role_table_grants where table_schema='public' and privilege_type='SELECT' and grantee in ('anon','authenticated','service_role')` no devuelve ni una fila: los tres roles de la API no tienen ningún privilegio sobre ninguna de las 33 tablas. La primera consulta con la llave de servicio falló con `permission denied for table pacientes`. Después de conceder los privilegios que Supabase da por omisión, los tres roles quedan con las 33 tablas y todo funciona. La corrida está en el workflow `FED-004A · Supabase local y políticas`.
+**Impacto.** Producción funciona, así que esos privilegios existen allá, pero no salieron de ninguna migración de este repositorio: se aplicaron fuera de control de versiones. Eso significa que reconstruir la base desde el repositorio, que es justo lo que haría una restauración o el proyecto de vistas previas de FED-004B, produce una base donde la API no lee nada. También significa que nadie puede revisar en el repositorio quién tiene privilegio sobre qué: la RLS está versionada y la capa de permisos que está debajo, no.
+**Verificación.** Se decide con Dante si los privilegios se declaran en una migración aditiva, y en ese caso se comprueba que el entorno de FED-004A pasa sin el paso de concesión que hoy lo compensa. Antes de escribir esa migración hay que leer en solo lectura qué privilegios tiene hoy el proyecto remoto, para declarar lo que existe y no inventar uno nuevo.
+
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
 
 Severidad: Rojo
