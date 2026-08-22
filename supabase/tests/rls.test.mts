@@ -84,9 +84,27 @@ describe("la clínica no alcanza el dinero de la farmacia", () => {
     });
   }
 
-  it("doctora tampoco ve ventas ni movimientos de inventario", async () => {
-    expect(await filasVisibles(clientes.doctora, "ventas")).toBe(0);
+  // La migración 37 concede a la doctora, como dueña, LECTURA de cortes,
+  // ventas, renglones y pagos, y nada más. No es un hueco: es el contrato.
+  it("doctora lee el dinero de farmacia porque es la dueña, pero no lo escribe", async () => {
+    for (const tabla of ["ventas", "venta_items", "pagos", "cortes_caja"]) {
+      expect(
+        await filasVisibles(clientes.doctora, tabla),
+        `la doctora debe poder auditar ${tabla}`,
+      ).toBeGreaterThan(0);
+    }
+    const { data } = await clientes.doctora
+      .from("pagos")
+      .update({ monto: 1 })
+      .gt("monto", 0)
+      .select();
+    expect(data ?? [], "la doctora no debe poder modificar un pago").toHaveLength(0);
+  });
+
+  it("ni la doctora ni la asistente ven el movimiento de inventario", async () => {
     expect(await filasVisibles(clientes.doctora, "movimientos_inv")).toBe(0);
+    expect(await filasVisibles(clientes.doctora, "compras")).toBe(0);
+    expect(await filasVisibles(clientes.asistente, "movimientos_inv")).toBe(0);
   });
 });
 
