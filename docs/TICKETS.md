@@ -40,6 +40,38 @@ Estado: por ejecutar con acceso autorizado a Vercel, completa FED-012
 
 Identificar el despliegue inmutable que atiende `sistema-fedra.vercel.app`, su commit, fecha, configuración de variables de sistema y última migración efectiva. Registrar la correspondencia en `docs/LIBERACIONES.md` y ensayar que ese despliegue pueda volver a promoverse sin ejecutarlo sobre producción. Solo después se decide si corresponde crear una etiqueta histórica; nunca se etiqueta por suposición.
 
+### FED-014 Cerrar por rol y ruta el bucket de archivos
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: Claude · Revisor: Codex · Autoriza: Dante
+Estado: abierto, sin migración escrita, espera FED-004A y una regla de negocio de Dante; cierra H-016
+
+**Objetivo.** Reemplazar las cuatro políticas planas de `storage.objects` sobre el bucket `archivos` por un conjunto que distinga ruta y rol, sin permiso por omisión.
+
+**Regla de negocio por confirmar.** Quién puede borrar o sustituir un documento clínico ya cargado. Bajo NOM-004 lo prudente es que nadie lo borre y que una corrección entre como documento nuevo, conservando el anterior. Si la doctora necesita borrar de verdad, hay que decidir si es solo ella, si queda bitácora y dónde vive esa bitácora, porque hoy `storage.objects` no dispara ninguna auditoría. Sin esa respuesta no se escribe la migración.
+
+**Obstáculo de diseño que se resuelve antes del SQL.** Los archivos de producto se guardan en `{productoId}/...`, un uuid sin prefijo, así que la única ruta con nombre propio es `inbody/`. Escribir políticas positivas para los dos lados exige mover los objetos de producto a `productos/{id}/...`, y mover objetos es un cambio de datos en producción, no una migración de esquema. La alternativa es dejar las rutas y apoyar la política de producto en un `exists` contra `producto_archivos.path`, que no mueve nada pero acopla Storage a una tabla y deja fuera cualquier objeto huérfano. Recomiendo mover, con el movimiento tratado como paso propio, reversible y autorizado aparte, nunca escondido dentro de la migración de políticas. Definir esto es parte del ticket.
+
+**Matriz propuesta, sujeta a revisión de Codex y a la regla de negocio.**
+
+| Ruta | Leer | Crear | Sustituir | Borrar |
+| --- | --- | --- | --- | --- |
+| `inbody/` | admin, doctora, asistente, gerente | admin, doctora, asistente | admin, doctora | pendiente de la regla, propuesta inicial: nadie |
+| `productos/` | admin, farmacia, doctora, asistente, gerente | admin, farmacia | admin, farmacia | admin, farmacia |
+| cualquier otra | nadie | nadie | nadie | nadie |
+
+La lectura de `inbody/` copia los roles que `RUTAS_ROL` ya concede a `/pacientes` en el middleware. La de `productos/` parte de `farmacia_producto_archivos`, que hoy permite leer a farmacia, admin, doctora y asistente y escribir solo a farmacia y admin. Falta reconciliar al gerente, que entró después a las rutas de inventario y nunca se agregó a esa política: si el gerente lee los bytes, también debe leer la fila de metadatos, o los dos vuelven a contradecirse.
+
+**Archivos permitidos.** Una migración nueva bajo `supabase/migrations/`, más `docs/HALLAZGOS.md` y `docs/TICKETS.md`. Nada de `src/`, salvo que una prueba demuestre que un flujo legítimo se rompió.
+
+**Fuera de alcance.** `package.json`, reservado a FED-002. FED-006 y FED-007, que Codex rehace en ramas separadas. El alta pública, que es FED-009. Cualquier ejecución contra Supabase remoto, el movimiento real de objetos y el despliegue.
+
+**Invariantes.** Las migraciones son aditivas y ninguna aplicada se reescribe: la corrección es una migración nueva que reemplaza el conjunto de políticas. Un rol sin ruta clínica en `RUTAS_ROL` no alcanza objetos clínicos por ningún camino, ni por la aplicación ni con la llave anónima desde el navegador. Los flujos legítimos de la operación diaria siguen funcionando.
+
+**Pruebas requeridas.** Todas con FED-004A levantado, desde fuera, con la llave anónima y una sesión real por rol, nunca leyendo los archivos de migración. Una sesión de farmacia no enumera nada bajo `inbody/` con `list()`, no descarga una ruta conocida, no la borra y no la sobrescribe. Una cuenta sin rol clínico ni de farmacia no obtiene absolutamente nada. Una asistente lee un estudio y no lo borra, según quede la regla. La doctora sube un InBody, obtiene su URL firmada y extrae los datos. Farmacia sube y borra un archivo de producto, y la doctora lo lee sin poder borrarlo. Metadatos y bytes coinciden: quien no lee la fila de `producto_archivos` tampoco alcanza el objeto. Ningún proceso con `service_role` depende de las políticas retiradas.
+
+**Plan de reversa.** El conjunto anterior de políticas queda citado íntegro dentro de la migración nueva, de modo que restablecerlo sea otra migración hacia adelante y no una edición de lo ya aplicado. Si un flujo legítimo se rompe en producción se restablece ese conjunto, y H-016 vuelve a Abierto en el mismo movimiento, porque volver a las políticas planas reabre el agujero.
+
 ### FED-002 Línea base de integración continua y pruebas puras
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación

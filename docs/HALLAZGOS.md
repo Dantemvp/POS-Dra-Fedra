@@ -134,6 +134,20 @@ Ticket: FED-002
 **Impacto.** Caja podía registrar una venta pagada aunque el efectivo capturado no alcanzara para cubrir la parte en efectivo, dejando un faltante operativo desde el momento del cobro.
 **Verificación.** FED-002 concentra el cálculo en `src/lib/dinero.ts`, bloquea `finalizar()` cuando existe faltante y cubre cambio, faltante, pagos simples y mixtos con pruebas unitarias.
 
+### H-016 Cualquier sesión autenticada lee, sustituye y borra los documentos del bucket clínico
+
+Severidad: Rojo
+Carril: C pacientes
+Encontró: Claude
+Estado: Abierto
+Ticket: FED-014
+
+**Evidencia.** `supabase/migrations/20260529000010_storage_policies.sql` crea cuatro políticas sobre `storage.objects`, `archivos_select`, `archivos_insert`, `archivos_update` y `archivos_delete`. Las cuatro son `to authenticated using (bucket_id = 'archivos')` y ninguna distingue rol ni ruta. El bucket es privado según `20260529000009_archivos_productos.sql:8`, así que exige una sesión y nada más. Los estudios de InBody se suben desde el navegador con la llave anónima y la sesión del usuario a `inbody/{pacienteId}/{marca-de-tiempo}-{nombre}`, en `src/app/(app)/pacientes/[id]/ImportarInBody.tsx:57` y `src/app/(app)/recetas/NuevaReceta.tsx:112`. Los archivos de producto van a `{productoId}/{marca-de-tiempo}-{nombre}` en `src/app/(app)/inventario/[id]/Archivos.tsx:41`. La tabla de metadatos `producto_archivos` sí tiene políticas por rol en esa misma migración; los bytes en Storage no tienen ninguna. Con la sesión que ya abre la aplicación, un `list()` sobre el bucket enumera todo sin adivinar rutas, y `remove()` y `upload()` con sobrescritura alcanzan cualquier objeto.
+
+**Impacto.** El rol `farmacia`, que no tiene una sola ruta clínica en `RUTAS_ROL` del middleware, puede descargar los estudios de composición corporal de cualquier paciente, sustituirlos por otro archivo o borrarlos, desde la consola del navegador y con su propia sesión. Lo mismo alcanza a cualquier cuenta creada por el alta pública que sigue abierta en H-013. Borrar o sustituir un estudio no es solo exposición de datos, es alteración de historia clínica bajo NOM-004, y no deja rastro: los disparadores de auditoría de `20260529000002_rls_y_roles.sql` cubren `ventas`, `pagos`, `movimientos_inv`, `recetas`, `pacientes` y `productos`, todas en `public`, y `storage.objects` no está entre ellas. Un candado por rol dentro de una Server Action no cierra este camino, porque el navegador no necesita pasar por la Server Action. Contradice el invariante de `AGENTS.md`: el servidor aplica los permisos, esconder un botón no autoriza una operación.
+
+**Verificación.** FED-014 reemplaza las cuatro políticas por un conjunto por ruta y rol, sin permisos por omisión. Se comprueba desde fuera con la llave anónima y una sesión real de cada rol, como lo haría un extraño, no leyendo las migraciones: `farmacia` no enumera ni descarga ningún objeto bajo `inbody/`, no lo borra y no lo sobrescribe; los roles clínicos sí leen los suyos; el borrado de documento clínico queda restringido a lo que Dante confirme como regla de negocio; y los flujos legítimos de subir un InBody, firmar su URL y administrar archivos de producto siguen funcionando. Requiere FED-004A porque exige sesiones reales por rol contra Storage.
+
 ### H-000 El contexto del repositorio afirmaba cosas falsas
 
 Severidad: Verde
