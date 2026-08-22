@@ -132,6 +132,7 @@ export default async function RecetaPrint({
 
         {/* Rp / medicamentos */}
         <div
+          data-receta-contenido
           style={{
             position: "absolute",
             left: "5%",
@@ -189,6 +190,7 @@ export default async function RecetaPrint({
         {/* Código de barras del folio: la farmacia lo escanea para cargar los
             medicamentos recetados en el POS. */}
         <div
+          data-receta-limite
           style={{
             position: "absolute",
             right: "3.5%",

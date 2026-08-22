@@ -88,11 +88,11 @@ La lectura de `inbody/` copia los roles que `RUTAS_ROL` ya concede a `/pacientes
 
 Modo: Remediación · Riesgo: Ámbar · Carril: C pacientes
 Autor: Codex · Revisor: Claude
-Estado: implementación parcial en revisión; corrige H-018 y mantiene H-019 abierto hasta confirmar la regla de receta larga
+Estado: implementación en revisión; corrige H-018 y contiene H-019 con bloqueo de impresión hasta confirmar la regla de receta larga
 
 **Objetivo.** Evitar cortes arbitrarios en historias clínicas multipágina y definir un comportamiento comprobable para recetas que no caben en media carta.
 
-**Alcance de esta implementación.** Extraer una función pura de paginación, proteger secciones y firma al dividir la captura de historia, y cubrir documentos cortos, largos, bloques atravesados, superpuestos y mayores que una hoja. Registrar por separado el desbordamiento de receta sin imponer un límite clínico inventado.
+**Alcance de esta implementación.** Extraer una función pura de paginación, proteger secciones y firma al dividir la captura de historia, y cubrir documentos cortos, largos, bloques atravesados, superpuestos y mayores que una hoja. Medir el contenido de la receta en el navegador y bloquear la impresión si invade el área del código de barras, sin imponer un límite clínico inventado.
 
 **Fuera de alcance.** Base de datos, Storage, InBody, datos reales, cambios al membrete oficial, migraciones y despliegue. La regla para una receta larga espera confirmación de Fedra o Dante.
 

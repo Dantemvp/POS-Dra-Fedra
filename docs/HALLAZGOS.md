@@ -202,12 +202,12 @@ Ticket: FED-015
 Severidad: Ámbar
 Carril: C pacientes
 Encontró: Codex
-Estado: Abierto
+Estado: En revisión
 Ticket: FED-015
 
 **Evidencia.** `src/app/(app)/recetas/[id]/page.tsx` coloca todos los medicamentos dentro de un área absoluta de una sola media carta. No existe límite de renglones, medición de desbordamiento, reducción controlada ni segunda hoja; el folio y el código de barras ocupan posiciones fijas al pie.
 **Impacto.** Una receta con muchos medicamentos o indicaciones extensas puede invadir el folio y el código de barras o salir del área imprimible.
-**Verificación pendiente.** Probar recetas sintéticas con nombres e indicaciones de distinta longitud y acordar con Fedra si se limita el contenido, se reduce dentro de un mínimo legible o se genera una segunda hoja. No se elige esa regla clínica por suposición.
+**Verificación pendiente.** FED-015 bloquea la impresión cuando la medición real del navegador muestra que los medicamentos invaden el área reservada para el código de barras, y falla cerrado si no puede medir ambos elementos. Falta probar recetas sintéticas con nombres e indicaciones de distinta longitud y acordar con Fedra si se limita el contenido, se reduce dentro de un mínimo legible o se genera una segunda hoja. No se elige esa regla clínica por suposición.
 
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
