@@ -7,6 +7,7 @@ import ComboBuscador from "@/components/ComboBuscador";
 import { extraerInBody } from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fechaSinaloa } from "@/lib/tz";
+import { validarArchivoInBody } from "@/lib/inbody";
 
 // InBody guardado (claves legibles) -> métricas de la receta
 function mapInBodyGuardado(d: Record<string, unknown>): Record<string, string> {
@@ -102,6 +103,12 @@ export default function NuevaReceta({
   async function subirInBody(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const archivoValido = validarArchivoInBody(file);
+    if (!archivoValido.ok) {
+      setInbodyMsg(archivoValido.error);
+      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
+      return;
+    }
     if (!pacienteId) {
       setInbodyMsg("Selecciona un paciente primero.");
       return;

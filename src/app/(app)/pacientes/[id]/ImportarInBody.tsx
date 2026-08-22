@@ -9,6 +9,7 @@ import {
   urlDocumento,
   type InBodyDatos,
 } from "../actions";
+import { validarArchivoInBody } from "@/lib/inbody";
 
 // clave de IA -> etiqueta legible + unidad
 const CAMPOS: [keyof InBodyDatos & string, string, string][] = [
@@ -49,6 +50,12 @@ export default function ImportarInBody({
   async function onArchivo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const archivoValido = validarArchivoInBody(file);
+    if (!archivoValido.ok) {
+      setError(archivoValido.error);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     setError(null);
     setFase("procesando");
 

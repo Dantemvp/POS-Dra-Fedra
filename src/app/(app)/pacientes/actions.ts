@@ -1,6 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  INBODY_RESPONSE_FORMAT,
+  parsearRespuestaInBody,
+  validarArchivoInBody,
+  type InBodyDatos,
+} from "@/lib/inbody";
 import { createClient } from "@/lib/supabase/server";
 
 export type Result = { ok: boolean; error?: string; id?: string };
@@ -145,7 +151,7 @@ export async function urlDocumento(
   return { ok: true, url: data.signedUrl };
 }
 
-export type InBodyDatos = Record<string, number | string | null>;
+export type { InBodyDatos } from "@/lib/inbody";
 
 // Lee una foto de reporte InBody (ya subida al Storage) con OpenAI visión
 // y devuelve las métricas extraídas. El usuario confirma antes de guardar.
@@ -167,8 +173,10 @@ export async function extraerInBody(
     .download(path);
   if (dlErr || !blob)
     return { ok: false, error: "No se pudo leer la imagen." };
+  const archivoValido = validarArchivoInBody({ type: blob.type, size: blob.size });
+  if (!archivoValido.ok) return archivoValido;
   const buffer = Buffer.from(await blob.arrayBuffer());
-  const mime = blob.type || "image/jpeg";
+  const mime = blob.type;
   const dataUrl = `data:${mime};base64,${buffer.toString("base64")}`;
 
   const claves = `{"grasa_visceral_linea":null,"peso_kg":null,"masa_muscular_kg":null,"grasa_corporal_kg":null,"grasa_pct":null,"imc":null,"grasa_visceral":null,"tmb_kcal":null,"agua_total_l":null,"proteinas_kg":null,"minerales_kg":null,"masa_libre_grasa_kg":null,"relacion_cintura_cadera":null,"grado_obesidad_pct":null,"altura_cm":null,"edad":null,"puntuacion_inbody":null,"fecha_prueba":null}`;
@@ -189,26 +197,34 @@ export async function extraerInBody(
   async function llamar(
     messages: unknown[],
   ): Promise<{ ok: boolean; content?: string; error?: string }> {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages,
-        response_format: { type: "json_object" },
-        max_tokens: 800,
-        temperature: 0,
-      }),
-    });
-    const j = await res.json();
-    if (!res.ok)
-      return { ok: false, error: j?.error?.message ?? "Error de OpenAI." };
-    const content = j?.choices?.[0]?.message?.content;
-    if (!content) return { ok: false, error: "Respuesta vacía de la IA." };
-    return { ok: true, content };
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(45_000),
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages,
+          response_format: INBODY_RESPONSE_FORMAT,
+          max_tokens: 800,
+          temperature: 0,
+        }),
+      });
+      const j = await res.json().catch(() => null);
+      if (!res.ok)
+        return { ok: false, error: j?.error?.message ?? "Error de OpenAI." };
+      const content = j?.choices?.[0]?.message?.content;
+      if (!content) return { ok: false, error: "Respuesta vacía de la IA." };
+      return { ok: true, content };
+    } catch (error) {
+      const mensaje = error instanceof Error && error.name === "TimeoutError"
+        ? "OpenAI tardó más de 45 segundos."
+        : "No se pudo conectar con OpenAI.";
+      return { ok: false, error: mensaje };
+    }
   }
 
   try {
@@ -241,8 +257,10 @@ export async function extraerInBody(
       },
     ]);
 
-    const final = p2.ok && p2.content ? p2.content : p1.content!;
-    return { ok: true, datos: JSON.parse(final) as InBodyDatos };
+    if (!p2.ok || !p2.content) {
+      return { ok: false, error: `La segunda verificación falló: ${p2.error ?? "sin respuesta"}` };
+    }
+    return parsearRespuestaInBody(p2.content);
   } catch (e) {
     return { ok: false, error: String(e).slice(0, 160) };
   }

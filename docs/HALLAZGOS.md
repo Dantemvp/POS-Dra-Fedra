@@ -185,6 +185,18 @@ Ticket: FED-014
 **Impacto.** El documento fuente que leyó el modelo no queda ligado a la nota clínica que produjo, así que nadie puede cotejar lo que la IA interpretó contra lo que quedó en el expediente. Los objetos se acumulan sin que se puedan enumerar desde la base, y la única pista de a qué paciente pertenecen es la ruta. La regla que Dante confirmó el 22 de agosto de 2026, que una corrección entra como documento nuevo, conserva el anterior y queda vinculada a una bitácora, hoy no se puede implementar porque no existe la fila a la que vincularla. También bloquea proteger `inbody/` por metadatos, que es la estrategia que sí aplica a los archivos de producto.
 **Verificación.** FED-014 crea la tabla de documentos clínicos con paciente, ruta, tipo, quién subió, cuándo y a qué documento sustituye, escribe la fila dentro del mismo flujo que sube el archivo y la incluye en los disparadores de auditoría. Se comprueba que subir un InBody deja fila, que una corrección crea una fila nueva sin borrar la anterior, y que los objetos que ya existen quedan inventariados como huérfanos antes de endurecer nada.
 
+### H-020 La extracción de InBody acepta respuestas y archivos sin contrato estricto
+
+Severidad: Rojo
+Carril: E integraciones
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-016
+
+**Evidencia.** `extraerInBody()` usaba el modo antiguo `json_object`, aplicaba `JSON.parse()` y afirmaba el resultado como `InBodyDatos` sin validar claves, tipos ni que existiera una sola medición. Aceptaba cualquier tipo descargado del bucket, cuyo límite general es 50 MiB, lo convertía completo a base64 y hacía dos solicitudes sin timeout. Si la segunda corroboración fallaba, devolvía silenciosamente la primera extracción como éxito.
+**Impacto.** Un resultado con tipos inesperados o sin mediciones podía llegar a revisión y terminar guardado como historia clínica. Un archivo incompatible o excesivo podía consumir memoria y costo antes de fallar. La caída de la verificación secundaria reducía la confiabilidad sin avisar a la doctora.
+**Verificación.** FED-016 usa Structured Outputs con esquema estricto, vuelve a validar la respuesta dentro de la aplicación, rechaza claves y tipos inesperados, exige al menos un dato, limita formatos a JPG, PNG, WEBP y GIF, limita cada imagen a 10 MiB y corta cada solicitud después de 45 segundos. Si la segunda revisión falla, la operación completa falla. Queda pendiente probar el flujo con imágenes sintéticas y una clave de pruebas, nunca con expedientes reales.
+
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
 
