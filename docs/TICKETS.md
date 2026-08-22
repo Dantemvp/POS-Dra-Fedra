@@ -166,11 +166,19 @@ Solo Dante ejecuta. Se rota el token de Vercel y la credencial nueva no vuelve a
 
 Modo: Remediación · Riesgo: Rojo · Carril: F operación
 Autor: Claude · Revisor: Codex
-Estado: por abrir, no comienza todavía, cierra la primera mitad de H-002
+Estado: implementado por Claude en `claude/FED-004A-supabase-local`, pendiente de revisión de Codex, cierra la primera mitad de H-002
 
 Levantar el entorno local que `supabase/config.toml` ya declara, con las 40 migraciones aplicadas y datos sintéticos. Incluye el `supabase/seed.sql` que ese archivo referencia y que no existe: inventario con lotes y caducidades, pacientes falsos, servicios y un usuario por cada rol. Desbloquea las pruebas de RPC, de RLS desde fuera con la llave anónima local, y de concurrencia. Ni un solo registro real.
 
 Archivos permitidos: `supabase/seed.sql`, los ajustes de configuración local que haga falta en `supabase/config.toml`, y documentación propia bajo `docs/`. Fuera de alcance: `package.json`, que está reservado para FED-002; `src/`; las migraciones existentes, que no se reescriben; y producción.
+
+**Implementación.** Como esta máquina no tiene Docker ni Supabase CLI, el entorno vive en un runner de GitHub Actions: `.github/workflows/fed004a-rls.yml` descarga el CLI en una versión fija, `2.115.0`, levanta Supabase local, aplica las 40 migraciones desde cero con `supabase db reset` y carga `supabase/seed.sql`. Después comprueba que el número de migraciones aplicadas coincide con el de archivos del repositorio, que la semilla dejó un perfil por rol, sube objetos sintéticos al bucket privado y corre las pruebas de políticas desde fuera, con la llave anónima y una sesión real por cada rol.
+
+La semilla se verifica a sí misma: un bloque final comprueba que hay un usuario por rol, que todo paciente lleva el prefijo `PRUEBA`, que la existencia de cada lote es exactamente entradas menos salidas, y que ventas y cobros valen lo que suman sus renglones y lo que cubren sus pagos. Si algo no cuadra, el reset termina en error.
+
+Tres guardias impiden que esto toque el proyecto remoto. La semilla aborta si encuentra una cuenta fuera de `@fedra.test` o un paciente sin el prefijo de prueba. Las pruebas se niegan a correr si `SUPABASE_URL` no apunta a `127.0.0.1`. Y el workflow falla de entrada si existe un `project-ref`, un archivo de entorno o un `SUPABASE_ACCESS_TOKEN`.
+
+Los hallazgos abiertos quedan como pruebas ejecutables, no comentadas: las afirmaciones de H-016 y H-013 usan `it.fails`, así que corren de verdad, hoy pasan porque el sistema concede de más, y el día que FED-014 o FED-009 cierren el hueco esas pruebas empezarán a pasar y `it.fails` se pondrá roja, obligando a convertirlas en pruebas normales.
 
 ### FED-004B Proyecto remoto para vistas previas
 

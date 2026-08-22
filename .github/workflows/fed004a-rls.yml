@@ -1,0 +1,149 @@
+name: FED-004A · Supabase local y políticas
+
+# Levanta un Supabase local y aislado dentro del runner, aplica las 40
+# migraciones desde cero, carga la semilla sintética y prueba las políticas
+# desde fuera, con la llave anónima y una sesión real por rol.
+#
+# Este workflow no tiene forma de alcanzar el proyecto remoto de la doctora:
+# no recibe SUPABASE_ACCESS_TOKEN, no ejecuta `supabase link` y verifica antes
+# de empezar que no exista ningún vínculo a un proyecto.
+
+on:
+  push:
+    branches:
+      - "claude/FED-004A-**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fed004a-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  politicas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Versión fija a propósito. `latest` volvería irreproducible la corrida y
+      # un cambio del CLI aparecería como si lo hubiera roto este repositorio.
+      SUPABASE_CLI_VERSION: "2.115.0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Comprobar que no hay vínculo a ningún proyecto remoto
+        run: |
+          set -euo pipefail
+          if [ -e supabase/.temp/project-ref ]; then
+            echo "Hay un project-ref en el repositorio. Abortado."
+            exit 1
+          fi
+          if [ -e .env.local ] || [ -e .env.production ]; then
+            echo "Hay un archivo de entorno con credenciales. Abortado."
+            exit 1
+          fi
+          if [ -n "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+            echo "SUPABASE_ACCESS_TOKEN está definido. Este workflow debe correr sin él."
+            exit 1
+          fi
+          echo "Sin vínculo remoto, sin token y sin archivos de entorno."
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.tar.gz"
+          curl --fail --location --silent --show-error "$url" -o /tmp/supabase.tar.gz
+          tar -xzf /tmp/supabase.tar.gz -C /tmp supabase
+          sudo install /tmp/supabase /usr/local/bin/supabase
+          instalada="$(supabase --version)"
+          echo "CLI instalada: $instalada"
+          if [ "$instalada" != "$SUPABASE_CLI_VERSION" ]; then
+            echo "La versión instalada no es la fijada ($SUPABASE_CLI_VERSION)."
+            exit 1
+          fi
+
+      - name: Levantar Supabase local
+        run: supabase start
+
+      - name: Aplicar las 40 migraciones desde cero y sembrar
+        run: supabase db reset --local
+
+      - name: Comprobar que aplicaron las 40 migraciones
+        run: |
+          set -euo pipefail
+          aplicadas="$(supabase migration list --local | grep -cE '^ *[0-9]{14} *\|')"
+          echo "Migraciones aplicadas: $aplicadas"
+          esperadas="$(ls supabase/migrations/*.sql | wc -l)"
+          echo "Migraciones en el repositorio: $esperadas"
+          if [ "$aplicadas" -ne "$esperadas" ]; then
+            echo "No aplicaron todas las migraciones."
+            supabase migration list --local
+            exit 1
+          fi
+
+      - name: Exportar las credenciales locales
+        run: |
+          set -euo pipefail
+          supabase status -o env > /tmp/supabase.env
+          . /tmp/supabase.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+          case "$API_URL" in
+            http://127.0.0.1:*|http://localhost:*) echo "API local: $API_URL" ;;
+            *) echo "La API no es local: $API_URL"; exit 1 ;;
+          esac
+
+      - name: Comprobar que la semilla dejó datos
+        run: |
+          set -euo pipefail
+          psql "$(supabase status -o env | grep '^DB_URL=' | cut -d= -f2- | tr -d '"')" \
+            -v ON_ERROR_STOP=1 -t -A -c \
+            "select count(*) from public.usuarios where auth_uid is not null" > /tmp/n
+          n="$(cat /tmp/n)"
+          echo "Perfiles con identidad: $n"
+          if [ "$n" -ne 5 ]; then
+            echo "La semilla no dejó un usuario por rol."
+            exit 1
+          fi
+
+      - name: Subir objetos sintéticos al bucket privado
+        run: node supabase/tests/preparar-storage.mjs
+
+      - name: Typecheck de las pruebas de políticas
+        run: npx tsc --noEmit --project supabase/tests/tsconfig.json
+
+      - name: Pruebas de políticas desde fuera
+        run: npx vitest run --config supabase/tests/vitest.rls.config.mts
+
+      - name: Evidencia de que el proyecto remoto no se tocó
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "URL usada por las pruebas: ${SUPABASE_URL:-sin definir}"
+          if [ -e supabase/.temp/project-ref ]; then
+            echo "Apareció un project-ref durante la corrida."
+            exit 1
+          fi
+          echo "No existe supabase/.temp/project-ref."
+          echo "Contenedores levantados en el runner:"
+          docker ps --format '{{.Names}}'
+
+      - name: Apagar Supabase
+        if: always()
+        run: supabase stop --no-backup
