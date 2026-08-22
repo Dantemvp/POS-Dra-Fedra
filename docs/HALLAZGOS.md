@@ -186,7 +186,7 @@ Ticket: FED-014
 **Verificación.** FED-014 crea la tabla de documentos clínicos con paciente, ruta, tipo, quién subió, cuándo y a qué documento sustituye, escribe la fila dentro del mismo flujo que sube el archivo y la incluye en los disparadores de auditoría. Se comprueba que subir un InBody deja fila, que una corrección crea una fila nueva sin borrar la anterior, y que los objetos que ya existen quedan inventariados como huérfanos antes de endurecer nada.
 
 
-### H-018 El repositorio no basta para reconstruir la base
+### H-024 El repositorio no basta para reconstruir la base
 
 Severidad: Ámbar
 Carril: F operación
@@ -197,6 +197,31 @@ Ticket: ninguno todavía
 **Evidencia.** El workflow de FED-004A levanta un Supabase local y aplica desde cero las 40 migraciones del repositorio. Al terminar, la consulta `select grantee, count(*) from information_schema.role_table_grants where table_schema='public' and privilege_type='SELECT' and grantee in ('anon','authenticated','service_role')` no devuelve ni una fila: los tres roles de la API no tienen ningún privilegio sobre ninguna de las 33 tablas. La primera consulta con la llave de servicio falló con `permission denied for table pacientes`. Después de conceder los privilegios que Supabase da por omisión, los tres roles quedan con las 33 tablas y todo funciona. La corrida está en el workflow `FED-004A · Supabase local y políticas`.
 **Impacto.** Producción funciona, así que esos privilegios existen allá, pero no salieron de ninguna migración de este repositorio: se aplicaron fuera de control de versiones. Eso significa que reconstruir la base desde el repositorio, que es justo lo que haría una restauración o el proyecto de vistas previas de FED-004B, produce una base donde la API no lee nada. También significa que nadie puede revisar en el repositorio quién tiene privilegio sobre qué: la RLS está versionada y la capa de permisos que está debajo, no.
 **Verificación.** Se decide con Dante si los privilegios se declaran en una migración aditiva, y en ese caso se comprueba que el entorno de FED-004A pasa sin el paso de concesión que hoy lo compensa. Antes de escribir esa migración hay que leer en solo lectura qué privilegios tiene hoy el proyecto remoto, para declarar lo que existe y no inventar uno nuevo.
+
+### H-025 Cuatro tablas sensibles no dejan rastro al cambiar
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Claude
+Estado: Abierto
+Ticket: ninguno todavía
+
+**Evidencia.** Los disparadores de auditoría se reparten en tres arreglos literales: la migración 2 cubre `ventas`, `pagos`, `movimientos_inv`, `recetas`, `pacientes` y `productos`; la 19 agrega `cobros` y `cobro_pagos`; la 28 agrega `lotes`, `cobro_items`, `receta_items`, `servicios`, `compras`, `compra_items` e `historias_clinicas`. Quedan fuera cuatro tablas que sí se pueden editar por la API: `consultas`, que la política `clinica_consultas` abre a doctora, asistente y admin; `citas`, con la misma política; `cortes_caja`, que un admin edita; y `usuarios`, donde vive el rol de cada persona. `supabase/tests/auditoria.test.mts` sondea las cuatro contra la base reconstruida y cuenta los renglones nuevos de `audit_log`.
+**Impacto.** La nota de consulta es parte del expediente bajo la NOM-004 y se puede reescribir sin señal. Un corte de caja se puede cuadrar después del hecho. Y un cambio de rol, que es la manera de darse a uno mismo acceso clínico, no queda registrado en ninguna parte, así que la bitácora no puede responder quién dio el permiso con el que se leyó un expediente.
+**Verificación.** Se decide con Dante qué tablas entran, se agrega una migración aditiva que las incluya en el mismo `fn_audit()` y las cuatro pruebas de H-025 dejan de estar marcadas con `it.fails`.
+
+### H-026 Un admin borra y edita la bitácora de auditoría desde el navegador
+
+Severidad: Rojo
+Carril: A seguridad
+Encontró: Claude
+Estado: Abierto
+Ticket: ninguno todavía
+
+**Evidencia.** `20260529000002_rls_y_roles.sql` crea la política `admin_all_<tabla>` recorriendo `select tablename from pg_tables where schemaname='public'`, sin excluir nada. `audit_log` es una tabla de ese esquema, así que recibió una política `for all using (es_admin()) with check (es_admin())` igual que el resto. Eso concede select, insert, update y delete. `supabase/tests/auditoria.test.mts` provoca un renglón de bitácora, lo borra con la llave anónima y una sesión de admin, y comprueba que ya no está; después altera el campo `accion` de otro renglón y comprueba que quedó cambiado.
+**Impacto.** El único registro de quién tocó qué lo puede editar y borrar la misma persona a la que señalaría, sin pasar por la aplicación y sin dejar rastro de la edición, porque `audit_log` no se audita a sí misma. El `comment on table` promete trazabilidad COFEPRIS y hoy no la sostiene. Cualquier reconstrucción de un incidente parte de una fuente que el sospechoso pudo reescribir.
+**Verificación.** Se sustituye la política plana por una que conceda solamente `select` a admin y doctora, se deja la escritura a `fn_audit()`, que ya corre como `security definer`, y se comprueba desde fuera que un intento de delete y uno de update sobre `audit_log` no cambian nada. Las dos pruebas de H-026 dejan de estar marcadas con `it.fails`. Antes de escribirla hay que revisar si algún flujo de la aplicación depende hoy de poder borrar renglones.
+
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
 
