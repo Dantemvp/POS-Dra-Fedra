@@ -12,7 +12,7 @@ Estado: primera revisión de Codex con cambios solicitados, corregidos en un seg
 
 **Objetivo.** Dejar una sola fuente de verdad para los dos agentes antes de que cualquiera toque código del sistema.
 
-**Qué incluye.** `AGENTS.md` con las reglas compartidas, el semáforo de riesgo y los invariantes del dominio. `CLAUDE.md` reescrito contra el código real. `docs/HALLAZGOS.md` con formato y los seis hallazgos ya confirmados. `docs/WORKFLOW_CLAUDE_CODEX.md` con el flujo adaptado a una aplicación web. `docs/TICKETS.md`, este archivo. `.github/PULL_REQUEST_TEMPLATE.md`. Se suma `docs/PLAN_MAESTRO_FEDRA.md`, que quedaba fuera de control de versiones.
+**Qué incluye.** `AGENTS.md` con las reglas compartidas, el semáforo de riesgo y los invariantes del dominio. `CLAUDE.md` reescrito contra el código real. `docs/HALLAZGOS.md` con formato y los hallazgos registrados. `docs/WORKFLOW_CLAUDE_CODEX.md` con el flujo adaptado a una aplicación web. `docs/TICKETS.md`, este archivo. `.github/PULL_REQUEST_TEMPLATE.md`. Se suma `docs/PLAN_MAESTRO_FEDRA.md`, que quedaba fuera de control de versiones.
 
 **Fuera de alcance.** Nada de `src/`, nada de `supabase/`, ninguna credencial, ningún despliegue. No se crean workflows de integración continua porque eso es FED-002 y es de Codex.
 
@@ -58,4 +58,4 @@ Modo: Remediación · Riesgo: Rojo · Carril: F operación
 Autor: Claude · Revisor: Codex · Autoriza: Dante
 Estado: por abrir, no comienza todavía, cierra la segunda mitad de H-002
 
-Segundo proyecto de Supabase en la nube para que las vistas previas de Vercel dejen de apuntar a la base de la doctora. Crea un recurso y credenciales nuevas, así que no se toca sin autorización expresa de Dante. Conviene que espere a FED-003, porque configurar vistas previas con el token de despliegue todavía sin rotar es trabajar sobre una credencial que sabemos comprometida.
+Segundo proyecto de Supabase en la nube para que cualquier preview funcional use una base separada de la de la doctora. Primero hay que verificar en qué estado están hoy los previews, porque no lo comprobamos. Crea un recurso y credenciales nuevas, así que no se toca sin autorización expresa de Dante. Conviene que espere a FED-003, porque configurar vistas previas con el token de despliegue todavía sin rotar es trabajar sobre una credencial que sabemos comprometida.

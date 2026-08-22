@@ -36,7 +36,7 @@ Nada de código todavía. Sin esto, dos agentes trabajando en paralelo se pisan.
 - **F0-2 Memoria del repo.** Reescribir `CLAUDE.md` con el estado real y crear un `AGENTS.md` de verdad, porque hoy solo tiene la advertencia de Next.js y es lo único que Codex va a leer como contexto. Los dos agentes parten del mismo archivo.
 - **F0-3 Contrato de trabajo.** Adaptar el workflow de Bianca: semáforo de riesgo, tickets con un solo autor, revisión cruzada obligatoria, plantilla de PR, worktrees separados. Se cambia el prefijo a `FED-###`.
 - **F0-4 Tablero de hallazgos.** Un solo archivo, `docs/HALLAZGOS.md`, donde los dos escribimos con el mismo formato: identificador, severidad, evidencia, impacto, verificación. Sin esto vuelve a pasar lo de ayer, dos reportes distintos diciendo lo mismo.
-- **F0-5 Secretos.** Inventario y rotación. El token de Vercel quedó expuesto y hay que rotarlo, junto con la llave de servicio de Supabase, la de OpenAI y el par de OAuth de Google. Mientras no se roten, cualquier hallazgo de seguridad que encontremos es secundario frente a esto.
+- **F0-5 Secretos.** Inventario primero, rotación después y solo con causa. El token de Vercel se rota porque su exposición está confirmada. Las demás credenciales, que son la llave de servicio de Supabase, la de OpenAI y el par de OAuth de Google, se inventarían y se rotan solo si se confirma su exposición o si hay una razón operativa que lo pida. Antes de cualquier rotación se mapean las dependencias y se escribe el plan de reversa, porque de la llave de servicio cuelgan los dos crons y el OAuth ya tiene a la doctora conectada. Este criterio es el mismo de FED-003.
 
 ## Fase 1 · Poder probar sin tocar a las pacientes
 
