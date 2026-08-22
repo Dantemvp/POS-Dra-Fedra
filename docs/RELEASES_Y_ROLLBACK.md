@@ -29,12 +29,13 @@ Antes de quitar el sufijo `dev`:
 - Lint, typecheck, pruebas, build y auditoría de dependencias de producción pasan.
 - Los cambios rojos tienen autorización de Dante.
 - Las migraciones se probaron fuera de producción y son compatibles con la versión anterior durante la ventana de reversa.
+- La ventana mínima de reversa es de 24 horas desde el despliegue. Durante ese periodo no se elimina ni renombra nada que necesite la versión anterior.
 - Existe un respaldo fechado y su restauración fue ensayada.
 - `CHANGELOG.md` explica cambios, riesgos y pasos manuales.
 
 ## Ficha obligatoria de cada liberación
 
-Copiar esta plantilla en la bitácora operativa:
+Copiar esta plantilla como una entrada nueva en `docs/LIBERACIONES.md`:
 
 ```text
 Versión:
@@ -59,6 +60,8 @@ Resultado: aprobado | revertido | detenido
 5. Dante autoriza y ejecuta el despliegue manual.
 6. Registrar la URL inmutable de Vercel y comprobar login, pacientes, una lectura no destructiva, impresión y rutas críticas acordadas.
 7. Observar errores y conciliar las operaciones afectadas antes de declarar estable.
+
+El inventario de migraciones del commit se obtiene con `node scripts/release-metadata.mjs <tag-o-commit>` y se adjunta a la entrada. El estado efectivo de producción se consulta por separado; la lista del repositorio demuestra intención, no aplicación.
 
 ## Reversa de aplicación
 

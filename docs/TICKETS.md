@@ -32,6 +32,14 @@ Estado: implementado por Codex, pendiente de revisión
 
 Mostrar versión y commit en la aplicación, validar que manifiesto, lockfile y tag coincidan, mantener un changelog y exigir una ficha por liberación. La reversa de código usa despliegues inmutables de Vercel; la reversa con migraciones requiere compatibilidad, respaldo y restauración ensayada. No crea tags, despliega ni toca producción.
 
+### FED-013 Registrar la baseline efectiva de producción
+
+Modo: Operación · Riesgo: Rojo · Carril: F operación
+Autor: Dante · Revisores: Claude y Codex
+Estado: por ejecutar con acceso autorizado a Vercel, completa FED-012
+
+Identificar el despliegue inmutable que atiende `sistema-fedra.vercel.app`, su commit, fecha, configuración de variables de sistema y última migración efectiva. Registrar la correspondencia en `docs/LIBERACIONES.md` y ensayar que ese despliegue pueda volver a promoverse sin ejecutarlo sobre producción. Solo después se decide si corresponde crear una etiqueta histórica; nunca se etiqueta por suposición.
+
 ### FED-002 Línea base de integración continua y pruebas puras
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación

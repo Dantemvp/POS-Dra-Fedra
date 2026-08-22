@@ -31,6 +31,9 @@ jobs:
       - name: Version
         run: node scripts/check-version.mjs
 
+      - name: Release metadata
+        run: node scripts/release-metadata.mjs
+
       - name: Lint
         run: npm run lint
 

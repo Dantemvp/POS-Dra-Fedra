@@ -8,6 +8,8 @@ Este archivo sigue el formato de Keep a Changelog. Las versiones estables usan S
 
 - Versión y commit visibles en login, menú móvil y barra lateral.
 - Validación automática de consistencia entre versión, lockfile y tag.
+- Bloqueo de builds productivos sin commit o con versión preliminar.
+- Inventario reproducible de migraciones por commit o tag.
 - Procedimiento de liberación y reversa.
 
 ## [0.2.0-dev.0]

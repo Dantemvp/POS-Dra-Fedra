@@ -4,6 +4,7 @@ const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url),
 const lock = JSON.parse(
   readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"),
 );
+const changelog = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
 const semver = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 if (!semver.test(pkg.version)) {
@@ -23,6 +24,9 @@ if (process.env.GITHUB_REF_TYPE === "tag") {
   }
   if (pkg.version.includes("-")) {
     throw new Error("Una versión preliminar no se puede marcar como liberación estable.");
+  }
+  if (!changelog.includes(`## [${pkg.version}]`)) {
+    throw new Error(`CHANGELOG.md no contiene el encabezado ## [${pkg.version}].`);
   }
 }
 
