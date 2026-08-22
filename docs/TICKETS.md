@@ -84,6 +84,22 @@ La lectura de `inbody/` copia los roles que `RUTAS_ROL` ya concede a `/pacientes
 
 **Plan de reversa.** El conjunto anterior de políticas queda citado íntegro dentro de la migración nueva, de modo que restablecerlo sea otra migración hacia adelante y no una edición de lo ya aplicado. Si un flujo legítimo se rompe se restablece ese conjunto y H-016 vuelve a Abierto en el mismo movimiento, porque volver a las políticas planas reabre el agujero. La tabla de documentos clínicos es aditiva y no se retira en una reversa: quitarla perdería el rastro que la regla de negocio exige conservar.
 
+### FED-017 Resultado verificable de notificaciones push
+
+Modo: Remediación · Riesgo: Ámbar · Carril: E integraciones
+Autor: Codex · Revisor: Claude
+Estado: implementación en revisión, cierra la parte de observabilidad de H-023
+
+**Objetivo.** Evitar que una ejecución sin entregas se presente como notificación enviada y conservar suficiente diagnóstico para distinguir configuración, destinatarios, expiración y fallos del proveedor.
+
+**Qué incluye.** Resultado estructurado en `src/lib/push.ts`, mensajes operativos para la prueba manual, conteo de suscripciones expiradas y fallidas, y respuesta detallada de ambos crons. No cambia VAPID, horarios, destinatarios ni suscripciones reales.
+
+**Criterios de aceptación.** Cero entregas nunca aparece en `enviados`. Una configuración ausente o inválida se distingue de una lista vacía. Una entrega parcial conserva los dos conteos. Los endpoints 404 y 410 siguen limpiando suscripciones expiradas.
+
+**Pruebas requeridas.** Estado exitoso, parcial y fallido; mensajes para configuración ausente, cero destinatarios y proveedor rechazando. La prueba integrada pendiente usa una suscripción de prueba autorizada y verifica una entrega, una expiración 410 y una falla transitoria sin borrar la suscripción.
+
+**Plan de reversa.** Revertir el commit restaura el retorno numérico anterior. No cambia esquema, datos ni configuración externa.
+
 ### FED-002 Línea base de integración continua y pruebas puras
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación

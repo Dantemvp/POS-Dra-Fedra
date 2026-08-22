@@ -185,6 +185,18 @@ Ticket: FED-014
 **Impacto.** El documento fuente que leyó el modelo no queda ligado a la nota clínica que produjo, así que nadie puede cotejar lo que la IA interpretó contra lo que quedó en el expediente. Los objetos se acumulan sin que se puedan enumerar desde la base, y la única pista de a qué paciente pertenecen es la ruta. La regla que Dante confirmó el 22 de agosto de 2026, que una corrección entra como documento nuevo, conserva el anterior y queda vinculada a una bitácora, hoy no se puede implementar porque no existe la fila a la que vincularla. También bloquea proteger `inbody/` por metadatos, que es la estrategia que sí aplica a los archivos de producto.
 **Verificación.** FED-014 crea la tabla de documentos clínicos con paciente, ruta, tipo, quién subió, cuándo y a qué documento sustituye, escribe la fila dentro del mismo flujo que sube el archivo y la incluye en los disparadores de auditoría. Se comprueba que subir un InBody deja fila, que una corrección crea una fila nueva sin borrar la anterior, y que los objetos que ya existen quedan inventariados como huérfanos antes de endurecer nada.
 
+### H-023 Los crons reportan notificaciones enviadas aunque salgan cero
+
+Severidad: Ámbar
+Carril: E integraciones
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-017
+
+**Evidencia.** `enviarASubs()` devolvía solamente un número y convertía en cero cuatro estados distintos: VAPID ausente o inválido, ausencia de suscripciones, proveedores rechazando todos los envíos y consultas sin datos. `api/cron/alertas` agregaba `inventario` y `agenda` al arreglo `enviados` sin revisar ese número; `resumen-dia` tampoco devolvía el resultado push.
+**Impacto.** Una ejecución de cron podía responder `ok` y afirmar que procesó una categoría aunque Fedra no recibiera nada. La operación no podía distinguir un día sin dispositivos de una configuración rota o una caída del proveedor.
+**Verificación.** FED-017 devuelve configuración, destinatarios, envíos, expiradas, fallidas y motivo. Los crons solo agregan una categoría a `enviados` si al menos un dispositivo recibió el push y exponen el diagnóstico estructurado. La prueba distingue éxito, parcial, sin configuración, sin destinatarios y fallo total. La entrega real todavía requiere una prueba controlada con un dispositivo de Dante o Fedra.
+
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
 
