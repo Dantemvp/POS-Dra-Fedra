@@ -110,6 +110,22 @@ Estado: listo para ejecutar con autorización, cierra H-013
 
 Deshabilitar el alta pública en Supabase Auth sin eliminar el flujo administrativo de `crearUsuario()`, que usa `service_role`. Antes se guarda evidencia de la configuración actual; después se prueba que un alta anónima sea rechazada, que las sesiones existentes sigan entrando y que el administrador todavía pueda crear una empleada de prueba autorizada. El cambio real y su prueba se coordinan con la doctora para no improvisar sobre producción.
 
+### FED-010 Idempotencia de ventas
+
+Modo: Remediación · Riesgo: Rojo · Carril: A dinero
+Autor: por asignar · Revisor: el otro agente
+Estado: por abrir después de FED-004A, cierra H-014 y bloquea cualquier outbox
+
+Asignar a cada venta una clave estable creada antes de enviar, guardarla con unicidad en la base y hacer idempotente `registrar_venta()`. El mismo intento repetido devuelve la venta original; una venta nueva usa otra clave. Probar pérdida de respuesta después del commit, doble clic, dos solicitudes concurrentes y reintento tras reiniciar el navegador.
+
+### FED-011 Contrato híbrido y experiencia sin conexión
+
+Modo: Diseño y remediación · Riesgo: Ámbar · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: por definir después de FED-010, cierra H-015
+
+Definir con Dante qué significa “híbrido” para Fedra: consulta de catálogo, continuidad de venta, impresión, pacientes y cortes no tienen el mismo riesgo. Primero se agrega estado de conexión y manejo claro de errores. Solo después se decide qué se guarda localmente, durante cuánto tiempo y con qué cifrado. Ningún dato clínico se cachea por accidente y ninguna venta entra a una cola sin idempotencia probada.
+
 ### FED-003 Rotación del token de despliegue
 
 Modo: Remediación · Riesgo: Rojo · Carril: F operación

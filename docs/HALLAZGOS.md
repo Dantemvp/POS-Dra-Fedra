@@ -172,6 +172,30 @@ Ticket: FED-009
 **Impacto.** Una persona externa puede crear una cuenta directamente contra Auth y recibir permisos clínicos sin aprobación del administrador. Es un camino de acceso a expedientes, no solo una cuenta inofensiva.
 **Verificación.** FED-009 deshabilita el alta pública en el proyecto remoto y demuestra que un `signUp` anónimo falla mientras `crearUsuario()` con `service_role` sigue dando de alta personal autorizado. Dante ejecuta el cambio y conserva evidencia antes/después; Codex y Claude no lo aplican por su cuenta.
 
+### H-014 Reintentar un cobro puede duplicar venta y descuento de stock
+
+Severidad: Rojo
+Carril: A dinero
+Encontró: Codex
+Estado: Abierto
+Ticket: FED-010
+
+**Evidencia.** `finalizar()` llama `cobrar()` sin un identificador estable de operación. `registrar_venta()` siempre inserta una venta nueva y no existe una restricción única de idempotencia. Si el servidor confirma la transacción pero la respuesta no llega al navegador, la interfaz conserva el carrito y el siguiente intento repite la operación completa.
+**Impacto.** Una conexión inestable puede producir dos cargos registrados y dos salidas de inventario para una sola venta física. Este riesgo debe resolverse antes de agregar una cola offline.
+**Verificación.** FED-010 genera una clave por intento lógico, la persiste con restricción única y hace que la RPC devuelva el resultado original al repetirla. La prueba corta la respuesta después del commit y reenvía la misma solicitud; debe existir una sola venta, un solo pago y una sola salida por producto.
+
+### H-015 La aplicación es instalable, pero no opera sin conexión
+
+Severidad: Ámbar
+Carril: F operación
+Encontró: Codex
+Estado: Abierto
+Ticket: FED-011
+
+**Evidencia.** Existe manifiesto PWA y `public/sw.js`, pero el service worker dice expresamente que no hace caché offline. No hay IndexedDB, outbox, detección de conectividad ni sincronización de operaciones; el registro del service worker ocurre desde la pantalla de notificaciones.
+**Impacto.** Instalar el icono no vuelve híbrido al POS. Sin red no carga la operación y una caída durante una venta deja un resultado ambiguo para la cajera.
+**Verificación.** FED-011 comienza con una definición aprobada de qué debe funcionar offline. Como mínimo debe mostrar estado de conexión y bloquear con claridad las operaciones no seguras. Una cola de ventas solo se abre después de FED-010 y debe probar reinicio, reintento, datos inválidos y recuperación sin duplicados.
+
 ### H-000 El contexto del repositorio afirmaba cosas falsas
 
 Severidad: Verde
