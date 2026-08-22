@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
 import CodigoBarrasReceta from "./CodigoBarrasReceta";
+import { edadEnFecha } from "@/lib/impresion-documento";
 
 type Item = {
   medicamento: string;
@@ -33,13 +34,6 @@ const METRICA_TOP: Record<string, number> = {
   cintura: 48.5,
 };
 
-function edadDe(fnac?: string | null): string {
-  if (!fnac) return "";
-  const d = new Date(fnac);
-  if (isNaN(d.getTime())) return "";
-  return String(Math.floor((Date.now() - d.getTime()) / 31557600000));
-}
-
 export default async function RecetaPrint({
   params,
 }: {
@@ -60,7 +54,7 @@ export default async function RecetaPrint({
   const r = data as unknown as Receta;
   const p = r.pacientes;
   const nombre = p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : "";
-  const edad = edadDe(p?.fecha_nac);
+  const edad = edadEnFecha(p?.fecha_nac, r.fecha);
   const fecha = new Date(r.fecha).toLocaleDateString("es-MX");
   const metricas = r.metricas ?? {};
 

@@ -209,6 +209,18 @@ Ticket: FED-015
 **Impacto.** Una receta con muchos medicamentos o indicaciones extensas puede invadir el folio y el código de barras o salir del área imprimible.
 **Verificación pendiente.** FED-015 bloquea la impresión cuando la medición real del navegador muestra que los medicamentos invaden el área reservada para el código de barras, y falla cerrado si no puede medir ambos elementos. Falta probar recetas sintéticas con nombres e indicaciones de distinta longitud y acordar con Fedra si se limita el contenido, se reduce dentro de un mínimo legible o se genera una segunda hoja. No se elige esa regla clínica por suposición.
 
+### H-021 La edad de una receta histórica cambiaba al reimprimirla
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-015
+
+**Evidencia.** `src/app/(app)/recetas/[id]/page.tsx` calculaba la edad restando `Date.now()` a la fecha de nacimiento y dividiendo entre 365.25 días. La fecha de la receta no participaba en el cálculo.
+**Impacto.** La misma receta mostraba una edad distinta al reimprimirse años después y podía desviarse cerca del cumpleaños, alterando un dato clínico del documento histórico.
+**Verificación.** FED-015 calcula años cumplidos usando la fecha de nacimiento y la fecha inmutable de la receta. Cubre cumpleaños exacto, día anterior, 29 de febrero, fechas imposibles y referencias anteriores al nacimiento.
+
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
 
