@@ -110,6 +110,30 @@ Ticket: pendiente de abrir
 **Impacto.** Un usuario autenticado con rol farmacia o gerente puede alterar o borrar una venta cerrada llamando directo a la API de Supabase, aunque la interfaz nunca ofrezca esa operación. Las relaciones con `on delete cascade` extienden el efecto hacia partidas y pagos, de modo que un borrado se lleva el detalle de la venta con él. Rompe el invariante de que una venta cerrada no cambia por fuera del flujo de cancelación, y puede dejar inconsistencias entre el corte guardado y el detalle consultable. Falta confirmar el comportamiento efectivo.
 **Verificación pendiente.** Confirmar políticas, grants y triggers efectivos en producción con una consulta de solo lectura al catálogo, cuando Dante lo autorice. La remediación se diseña y se prueba primero en el Supabase local de FED-004A, y no toca producción hasta que Dante autorice.
 
+### H-008 Next.js está por debajo de la versión de seguridad vigente
+
+Severidad: Rojo
+Carril: F operación
+Encontró: Codex
+Estado: Abierto
+Ticket: FED-005
+
+**Evidencia.** `package.json` fija Next 16.2.6. El reporte de `npm audit` del 22 de agosto de 2026 marca vulnerabilidades altas en esa versión, incluido bypass de Middleware/Proxy y problemas en Server Actions. La publicación oficial de seguridad de Next recomienda actualizar la línea 16.2 a 16.2.11 o posterior.
+**Impacto.** El sistema usa App Router, Middleware y Server Actions para módulos con ventas y expedientes. Una versión con bypass conocido debilita una capa de autorización y aumenta el riesgo de indisponibilidad o exposición.
+**Verificación.** FED-005 actualiza a una versión corregida de la misma línea, ejecuta lint, typecheck, pruebas, build y vuelve a revisar `npm audit`. La actualización no se mezcla con cambios funcionales ni se despliega sin revisión.
+
+### H-009 El POS permitía cobrar con efectivo recibido insuficiente
+
+Severidad: Rojo
+Carril: A dinero
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-002
+
+**Evidencia.** `src/app/(app)/ventas/pos.tsx` calculaba y mostraba el faltante cuando el efectivo recibido era menor, pero `finalizar()` continuaba llamando a `cobrar()` sin bloquear la operación.
+**Impacto.** Caja podía registrar una venta pagada aunque el efectivo capturado no alcanzara para cubrir la parte en efectivo, dejando un faltante operativo desde el momento del cobro.
+**Verificación.** FED-002 concentra el cálculo en `src/lib/dinero.ts`, bloquea `finalizar()` cuando existe faltante y cubre cambio, faltante, pagos simples y mixtos con pruebas unitarias.
+
 ### H-000 El contexto del repositorio afirmaba cosas falsas
 
 Severidad: Verde

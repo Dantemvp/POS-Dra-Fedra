@@ -18,6 +18,10 @@ Está en producción, con pacientes reales y ventas reales todos los días. Cual
 
 Quien escribe un cambio no puede ser su único revisor.
 
+## Regla de avance
+
+Priorizar funcionalidad y seguridad con análisis proporcional al riesgo. Antes de proponer una solución, evaluar causa, impacto, casos límite, efectos secundarios, reversa y mantenimiento. Evitar tanto la parálisis por análisis como los parches rápidos: elegir el cambio mínimo que resuelva la causa y permita seguir avanzando.
+
 ## Reparto de carriles
 
 Claude toma dinero, permisos, arquitectura y operación. Son los carriles A, B y F del plan maestro.

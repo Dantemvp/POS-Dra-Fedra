@@ -1,11 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
+import { resumirCaja } from "@/lib/caja";
 import { inicioDiaSinaloa, horaSinaloa } from "@/lib/tz";
 import CorteDelDia from "./CorteDelDia";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
 import VentasDelDia, { type VentaDetalle } from "./VentasDelDia";
-
-const money = (n: number) =>
-  n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
 type VentaRow = {
   id: string;
@@ -48,30 +46,6 @@ export default async function CajaPage() {
     .order("fecha", { ascending: false });
 
   const ventas = (ventasData ?? []) as unknown as VentaRow[];
-  const totalDia = ventas.reduce((s, v) => s + Number(v.total), 0);
-  // Efectivo del corte: se suma desde la tabla `pagos` (monto por método), para
-  // que una venta con pago mixto (efectivo + tarjeta) aporte solo su parte en
-  // efectivo y la caja cuadre. Ventas viejas sin filas en `pagos` caen al
-  // metodo_pago de la cabecera.
-  const efectivo = ventas.reduce((s, v) => {
-    const pagos = v.pagos ?? [];
-    if (pagos.length === 0) {
-      return s + (v.metodo_pago === "efectivo" ? Number(v.total) : 0);
-    }
-    return (
-      s +
-      pagos
-        .filter((p) => p.metodo === "efectivo")
-        .reduce((a, p) => a + Number(p.monto), 0)
-    );
-  }, 0);
-
-  // Unidades de producto que salieron por ventas en el día.
-  const productosSalidos = ventas.reduce(
-    (s, v) =>
-      s + (v.venta_items ?? []).reduce((a, it) => a + Number(it.cantidad), 0),
-    0,
-  );
 
   // Cobros del consultorio del día: ingresos + pacientes atendidos + efectivo.
   const { data: cobrosData } = await supabase
@@ -79,35 +53,14 @@ export default async function CajaPage() {
     .select("id, total, paciente_id, cobro_pagos(metodo, monto)")
     .gte("fecha", desde);
   const cobros = (cobrosData ?? []) as unknown as CobroRow[];
-  const totalCobros = cobros.reduce((s, c) => s + Number(c.total), 0);
-  const pacientesAtendidos = cobros.filter((c) => c.paciente_id).length;
-  const efectivoCobros = cobros.reduce(
-    (s, c) =>
-      s +
-      (c.cobro_pagos ?? [])
-        .filter((p) => p.metodo === "efectivo")
-        .reduce((a, p) => a + Number(p.monto), 0),
-    0,
-  );
-  // Efectivo esperado en el cajón = ventas en efectivo + cobros en efectivo.
-  const efectivoEsperado = efectivo + efectivoCobros;
-
-  // Desglose por método de todo el día (ventas + cobros).
-  const desglose: Record<string, number> = {};
-  for (const v of ventas) {
-    const pgs = v.pagos ?? [];
-    if (pgs.length === 0) {
-      const m = v.metodo_pago ?? "otro";
-      desglose[m] = (desglose[m] ?? 0) + Number(v.total);
-    } else {
-      for (const p of pgs)
-        desglose[p.metodo] = (desglose[p.metodo] ?? 0) + Number(p.monto);
-    }
-  }
-  for (const c of cobros) {
-    for (const p of c.cobro_pagos ?? [])
-      desglose[p.metodo] = (desglose[p.metodo] ?? 0) + Number(p.monto);
-  }
+  const {
+    totalVentas: totalDia,
+    totalCobros,
+    totalProductos: productosSalidos,
+    pacientesAtendidos,
+    efectivoEsperado,
+    desglose,
+  } = resumirCaja(ventas, cobros);
 
   const ventasDetalle: VentaDetalle[] = ventas.map((v) => ({
     id: v.id,

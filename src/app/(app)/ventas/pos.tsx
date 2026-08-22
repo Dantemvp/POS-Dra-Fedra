@@ -3,6 +3,11 @@
 import { useMemo, useState, useTransition } from "react";
 import { cobrar, cargarReceta } from "./actions";
 import BarcodeInput from "@/components/BarcodeInput";
+import {
+  calcularCambio,
+  calcularTotal,
+  prepararPago,
+} from "@/lib/dinero";
 import { FISCAL_FARMACIA, leyendaFacturacion } from "@/lib/fiscal";
 
 type Producto = {
@@ -112,20 +117,13 @@ export default function POS({
     return base.slice(0, 8);
   }, [busqueda, productos]);
 
-  const total = carrito.reduce((s, l) => s + l.precio * l.cantidad, 0);
+  const total = calcularTotal(carrito);
 
   // Cuánto de esta venta se cobra en efectivo (para calcular el cambio).
-  const montoEfectivo = !dividir
-    ? metodo === "efectivo"
-      ? total
-      : 0
-    : metodo === "efectivo"
-      ? Number(monto1) || 0
-      : metodo2 === "efectivo"
-        ? Math.max(0, total - (Number(monto1) || 0))
-        : 0;
+  const pagoActual = prepararPago(total, dividir, metodo, monto1, metodo2);
+  const montoEfectivo = pagoActual.ok ? pagoActual.montoEfectivo : 0;
   const recibidoNum = Number(recibido) || 0;
-  const cambio = recibidoNum - montoEfectivo;
+  const cambio = calcularCambio(recibido, montoEfectivo);
 
   function agregar(p: Producto) {
     setError(null);
@@ -168,25 +166,15 @@ export default function POS({
     setError(null);
     if (carrito.length === 0) return;
 
-    // Pago dividido: validar montos y construir el desglose para la RPC.
-    let pagos: { metodo: string; monto: number }[] | null = null;
-    if (dividir) {
-      const m1 = Math.round(Number(monto1) * 100) / 100;
-      if (!m1 || m1 <= 0 || m1 >= total) {
-        setError(
-          `El monto en ${metodo} debe ser mayor a 0 y menor al total.`,
-        );
-        return;
-      }
-      if (metodo === metodo2) {
-        setError("Elige dos métodos distintos para dividir el pago.");
-        return;
-      }
-      const m2 = Math.round((total - m1) * 100) / 100;
-      pagos = [
-        { metodo, monto: m1 },
-        { metodo: metodo2, monto: m2 },
-      ];
+    const pago = prepararPago(total, dividir, metodo, monto1, metodo2);
+    if (!pago.ok) {
+      setError(pago.error);
+      return;
+    }
+    const pagos = pago.pagos;
+    if (recibido !== "" && pago.montoEfectivo > 0 && cambio < 0) {
+      setError(`Faltan ${money(-cambio)} para completar el pago en efectivo.`);
+      return;
     }
 
     const snapshot = carrito;
@@ -216,7 +204,7 @@ export default function POS({
         pagos: pagosSel ?? undefined,
         recibido: recibidoSel,
         cambio: cambioSel,
-        total: snapshot.reduce((s, l) => s + l.precio * l.cantidad, 0),
+        total: calcularTotal(snapshot),
         metodo: pagosSel ? "mixto" : metodoSel,
         fecha: new Date().toLocaleString("es-MX"),
       });

@@ -28,11 +28,21 @@ Estado: primera revisión de Codex con cambios solicitados, corregidos en un seg
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación
 Autor: Codex · Revisor: Claude
-Estado: por abrir, no comienza hasta que FED-001 quede corregido, revisado e integrado
+Estado: implementado por Codex, pendiente de revisión de Claude
 
 Integración continua con typecheck, lint y build, sin pasos que no puedan fallar. La carpeta `.github` ya existe con la plantilla de pull request, así que lo que falta es el workflow. Pruebas de las funciones puras de dinero y fecha: el parser de CFDI en `src/lib/cfdi.ts`, el cálculo de pagos mixtos y cambio, el corte de caja y la zona horaria de `src/lib/tz.ts`. Sin base de datos, porque todavía no existe ambiente de pruebas.
 
 `package.json` queda reservado para este ticket. Ningún otro ticket lo toca mientras FED-002 esté abierto, incluido el script de typecheck que hoy no existe y que la integración continua va a necesitar.
+
+Implementación local: workflow de CI con lint, typecheck, pruebas y build; Vitest con 12 pruebas sobre CFDI, dinero, pagos mixtos, cambio, corte de caja y zona horaria; extracción mínima de lógica pura; bloqueo de cobro cuando el efectivo recibido no completa el monto requerido. Sin base de datos ni producción.
+
+### FED-005 Actualización de seguridad de Next.js
+
+Modo: Remediación · Riesgo: Rojo · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: por abrir, cierra H-008
+
+Actualizar Next desde 16.2.6 a una versión corregida y compatible, sin saltar de línea salvo que la evidencia lo exija. Ejecutar la línea base completa de FED-002 antes y después, revisar el reporte de dependencias y separar cualquier cambio requerido por el framework. No desplegar hasta que Claude revise y Dante autorice.
 
 ### FED-003 Rotación del token de despliegue
 

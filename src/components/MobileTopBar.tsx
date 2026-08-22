@@ -21,11 +21,6 @@ export default function MobileTopBar({
   const [abierto, setAbierto] = useState(false);
   const items = navParaRol(rol);
 
-  // Cierra el menú al navegar.
-  useEffect(() => {
-    setAbierto(false);
-  }, [pathname]);
-
   // Bloquea el scroll del fondo cuando el menú está abierto.
   useEffect(() => {
     document.body.style.overflow = abierto ? "hidden" : "";
@@ -54,7 +49,6 @@ export default function MobileTopBar({
       {/* Overlay + drawer */}
       {abierto && (
         <div className="fixed inset-0 z-40">
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setAbierto(false)}
@@ -83,6 +77,7 @@ export default function MobileTopBar({
                 return (
                   <Link
                     key={item.href}
+                    onClick={() => setAbierto(false)}
                     href={item.href}
                     className={`block rounded-lg px-3 py-2.5 text-[15px] transition ${
                       active
