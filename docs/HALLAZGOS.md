@@ -32,35 +32,35 @@ Severidad: Rojo
 Carril: F operación
 Encontró: Dante
 Estado: Abierto
-Ticket: pendiente de abrir
+Ticket: FED-003
 
 **Evidencia.** El token se guardó en un archivo temporal y se pegó dos veces en conversaciones de chat. Está registrado en las notas del proyecto desde junio.
 **Impacto.** Quien tenga ese token despliega a producción del sistema con el que la clínica factura y atiende pacientes. No requiere entrar a GitHub ni a Supabase.
 **Verificación.** El token viejo deja de autenticar contra el scope `dantemvps-projects` y el despliegue solo funciona con la credencial nueva, que no vuelve a pasar por chat.
 
-### H-002 No existe ambiente de pruebas
+### H-002 No hay ambiente de pruebas operable
 
 Severidad: Rojo
 Carril: F operación
 Encontró: Claude
 Estado: Abierto
-Ticket: pendiente de abrir
+Ticket: FED-004A y FED-004B
 
-**Evidencia.** Un solo proyecto de Supabase, `kxtznwgdpvbtlsedmjap`, que es el de producción. No hay proyecto espejo ni base local declarada en el repositorio.
-**Impacto.** Cualquier verificación de RLS, de las RPC de venta o de una migración se hace contra la base con los expedientes reales. Bloquea toda la Fase 1 del plan maestro.
-**Verificación.** Existe un segundo proyecto con las 40 migraciones aplicadas y datos sintéticos, y las pruebas corren ahí sin tocar producción.
+**Evidencia.** Un solo proyecto de Supabase operable, `kxtznwgdpvbtlsedmjap`, que es el de producción. El repositorio sí declara un entorno local: `supabase/config.toml` trae `project_id = "sistema-fedra"`, Postgres 17 en el puerto 54322, storage y auth habilitados, y `[db.seed]` con `sql_paths = ["./seed.sql"]`. Ese entorno nunca se ha levantado ni verificado, y `supabase/seed.sql` no existe. Tampoco existe un proyecto remoto separado que puedan usar las vistas previas de Vercel.
+**Impacto.** Cualquier verificación de RLS, de las RPC de venta o de una migración se hace hoy contra la base con los expedientes reales. Las vistas previas de Vercel apuntan a producción. Bloquea toda la Fase 1 del plan maestro.
+**Verificación.** Dos partes y se cierran por separado. FED-004A cierra cuando el entorno local levanta con las 40 migraciones aplicadas, existe `supabase/seed.sql` y una prueba corre contra esa base sin tocar producción. FED-004B cierra cuando las vistas previas apuntan a un proyecto remoto que no es el de la doctora.
 
-### H-003 El middleware no autoriza rutas
+### H-003 El control de rutas del middleware es abierto por omisión
 
 Severidad: Ámbar
 Carril: B permisos
-Encontró: Claude
+Encontró: Claude, confirmado por Codex
 Estado: Abierto
 Ticket: pendiente de abrir
 
-**Evidencia.** `src/middleware.ts` solo llama a `updateSession`, que refresca la sesión de Supabase. La revalidación de rol ocurre dentro de cada página y de cada server action.
-**Impacto.** La protección depende de que ninguna de las 19 rutas se haya quedado sin candado. Basta una omisión para exponer un módulo completo a un rol que no debería verlo.
-**Verificación.** Un inventario ruta por ruta que demuestre dónde se valida el rol, y una prueba que intente entrar a cada una con cada rol.
+**Evidencia.** `src/middleware.ts` delega en `updateSession` de `src/lib/supabase/middleware.ts`. Esa función sí autoriza: exige sesión fuera de las rutas públicas, que son `/login`, `/auth`, `/api/cron`, `/sw.js` y `/manifest.webmanifest`; consulta el rol del usuario en la tabla `usuarios`; y controla doce prefijos declarados en `RUTAS_ROL`. El comentario del propio archivo declara el comportamiento por omisión: si una ruta protegida no aparece en esa tabla, queda permitida para cualquier usuario autenticado. Hoy `/dashboard` y `/notificaciones` no tienen regla. Queda por confirmar con la regla de negocio si alguna de las dos debe restringirse, así que todavía no se afirma que sean un defecto.
+**Impacto.** El riesgo no es tanto la ruta que existe hoy como la que se agregue mañana: un módulo nuevo que nadie registre en `RUTAS_ROL` queda accesible para todo usuario con sesión y nada avisa. El middleware tampoco cubre las server actions, de modo que la autorización de escritura sigue dependiendo de que cada una revalide el rol por su cuenta.
+**Verificación.** Un inventario ruta por ruta contra `RUTAS_ROL`, una decisión de negocio escrita para las que quedan fuera, y una prueba que intente entrar a cada ruta con cada rol. La prueba necesita FED-004A, porque hoy no hay dónde correrla sin tocar producción.
 
 ### H-004 Las fotos de InBody salen hacia OpenAI
 
@@ -91,25 +91,39 @@ Ticket: pendiente de abrir
 Severidad: Ámbar
 Carril: F operación
 Encontró: Claude y Codex
-Estado: En revisión
-Ticket: FED-002
+Estado: Abierto
+Ticket: FED-002, que todavía no comienza
 
-**Evidencia.** No existe carpeta `.github`. Una búsqueda de archivos de prueba en el repositorio, excluyendo dependencias, no devuelve nada.
+**Evidencia.** No existe ningún workflow de integración continua. La carpeta `.github` existe desde FED-001 y solo contiene la plantilla de pull request. Una búsqueda de archivos de prueba en el repositorio, excluyendo dependencias, no devuelve nada.
 **Impacto.** La red de seguridad actual es typecheck manual, build y prueba a ojo. Una regresión en dinero o permisos llega a la clienta sin que nadie la detenga.
 **Verificación.** Integración continua corriendo typecheck, lint y build en cada push, más pruebas de las funciones puras de dinero y de fecha.
 
----
+### H-007 Las políticas permiten modificar o borrar ventas cerradas
 
-## Cerrados
+Severidad: Rojo
+Carril: A dinero
+Encontró: Claude, confirmado por Codex
+Estado: Abierto
+Ticket: pendiente de abrir
+
+**Evidencia.** La política `farmacia_ventas`, creada en el bucle de `supabase/migrations/20260529000002_rls_y_roles.sql`, es `for all` sobre `ventas`. La política `gerente_ventas` de `20260624000027_rol_gerente_permisos.sql` también es `for all`. Una búsqueda de triggers sobre `ventas` en las 40 migraciones no devuelve ningún `before update` ni `before delete` que proteja una venta ya cerrada. Sí existe auditoría posterior: el trigger `audit_ventas` de esa misma migración escribe en `audit_log` en cada insert, update y delete, así que el cambio deja rastro y no debe describirse como silencioso a nivel de bitácora. Confianza alta a nivel de migraciones.
+**Impacto.** Un usuario autenticado con rol farmacia o gerente puede alterar o borrar una venta cerrada llamando directo a la API de Supabase, aunque la interfaz nunca ofrezca esa operación. Las relaciones con `on delete cascade` extienden el efecto hacia partidas y pagos, de modo que un borrado se lleva el detalle de la venta con él. Rompe el invariante de que una venta cerrada no cambia por fuera del flujo de cancelación, y el corte del día que la incluía deja de cuadrar.
+**Verificación pendiente.** Confirmar políticas, grants y triggers efectivos en producción con una consulta de solo lectura al catálogo, cuando Dante lo autorice. La remediación se diseña y se prueba primero en el Supabase local de FED-004A, y no toca producción hasta que Dante autorice.
 
 ### H-000 El contexto del repositorio afirmaba cosas falsas
 
 Severidad: Verde
 Carril: F operación
 Encontró: Claude
-Estado: Cerrado en FED-001
+Estado: En revisión
 Ticket: FED-001
 
 **Evidencia.** El `CLAUDE.md` anterior declaraba Next 15 y shadcn/ui, apuntaba al commit `5dd7402` y listaba como pendientes la agenda y los permisos por rol, que llevan meses construidos. El repositorio corre Next 16.2.6 y no tiene una sola dependencia de Radix.
 **Impacto.** Los dos agentes leen ese archivo como fuente de contexto. Trabajar sobre él llevaba a decisiones tomadas con datos falsos.
-**Verificación.** `CLAUDE.md` y `AGENTS.md` reescritos contra el código real en FED-001, revisados por Codex.
+**Verificación.** `CLAUDE.md` y `AGENTS.md` reescritos contra el código real en FED-001. Cierra cuando Codex apruebe el ticket, no antes.
+
+---
+
+## Cerrados
+
+Ninguno todavía.

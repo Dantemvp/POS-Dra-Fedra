@@ -20,13 +20,13 @@ Ese tercer punto es el cuello de botella de todo lo demás. Bianca puede correr 
 
 - 99 archivos TypeScript, unas 11,800 líneas.
 - 40 migraciones SQL, unas 2,300 líneas.
-- 19 rutas de aplicación, 13 archivos con server actions, 39 componentes de cliente.
+- 21 archivos `page.tsx`, de los cuales 19 pertenecen al grupo autenticado `(app)`. 13 archivos con server actions, 46 componentes de cliente contando `src/app` y `src/components`.
 - 42 políticas de RLS declaradas en migraciones.
-- Cero pruebas automatizadas. Cero integración continua. No existe carpeta `.github`.
-- Stack real: Next 16.2.6, React 19.2.4, Supabase SSR. El `CLAUDE.md` del repo todavía dice Next 15 y apunta a un commit de hace meses.
+- Cero pruebas automatizadas. Ningún workflow de integración continua. La carpeta `.github` existe desde FED-001 y solo contiene la plantilla de pull request.
+- Stack real: Next 16.2.6, React 19.2.4, Supabase SSR. El `CLAUDE.md` anterior decía Next 15 y apuntaba a un commit de hace meses, y quedó corregido en FED-001.
 - Los dos crons sí validan `CRON_SECRET` con Bearer. Ese punto está bien resuelto.
 - La llave de servicio se usa en un solo lugar, `src/lib/supabase/admin.ts`. También está bien acotado.
-- El middleware solo refresca la sesión. No autoriza rutas por rol.
+- El middleware sí autoriza. Exige sesión fuera de las rutas públicas, consulta el rol y controla doce prefijos con `RUTAS_ROL`. El problema no es que falte, es que es abierto por omisión: lo que no está en esa tabla queda disponible para cualquier usuario con sesión.
 
 ## Fase 0 · Ordenar la casa
 
@@ -36,7 +36,7 @@ Nada de código todavía. Sin esto, dos agentes trabajando en paralelo se pisan.
 - **F0-2 Memoria del repo.** Reescribir `CLAUDE.md` con el estado real y crear un `AGENTS.md` de verdad, porque hoy solo tiene la advertencia de Next.js y es lo único que Codex va a leer como contexto. Los dos agentes parten del mismo archivo.
 - **F0-3 Contrato de trabajo.** Adaptar el workflow de Bianca: semáforo de riesgo, tickets con un solo autor, revisión cruzada obligatoria, plantilla de PR, worktrees separados. Se cambia el prefijo a `FED-###`.
 - **F0-4 Tablero de hallazgos.** Un solo archivo, `docs/HALLAZGOS.md`, donde los dos escribimos con el mismo formato: identificador, severidad, evidencia, impacto, verificación. Sin esto vuelve a pasar lo de ayer, dos reportes distintos diciendo lo mismo.
-- **F0-5 Secretos.** Inventario y rotación. El token de Vercel vive en `/tmp/.vtoken_fedra` y se pegó dos veces en chat. Hay que rotarlo, junto con la llave de servicio de Supabase, la de OpenAI y el par de OAuth de Google. Mientras no se roten, cualquier hallazgo de seguridad que encontremos es secundario frente a esto.
+- **F0-5 Secretos.** Inventario y rotación. El token de Vercel quedó expuesto y hay que rotarlo, junto con la llave de servicio de Supabase, la de OpenAI y el par de OAuth de Google. Mientras no se roten, cualquier hallazgo de seguridad que encontremos es secundario frente a esto.
 
 ## Fase 1 · Poder probar sin tocar a las pacientes
 
@@ -67,7 +67,7 @@ Seis carriles. Cada uno tiene un dueño y ningún carril comparte archivos con o
 - B1 Cuántas de las tablas tienen RLS activa en producción, no en las migraciones. Esto se responde consultando el catálogo, no leyendo archivos.
 - B2 Qué alcanza a leer la llave anónima sin sesión. Es pública, así que se prueba desde afuera.
 - B3 Cada server action revalida el rol en el servidor. Ocultar un botón no autoriza nada.
-- B4 El middleware no autoriza rutas. Verificar que cada página lo haga por su cuenta y que ninguna se quede sin candado.
+- B4 El middleware autoriza doce prefijos y es abierto por omisión. Inventariar ruta por ruta cuáles quedan fuera de `RUTAS_ROL`, confirmar con la regla de negocio cuáles deben restringirse, y verificar que cada server action revalide el rol por su cuenta, porque el middleware no las cubre.
 - B5 Escalada de rol: que un usuario no pueda modificar su propia fila de `usuarios`.
 - B6 La sesión caduca y se revoca bien al desactivar a alguien.
 

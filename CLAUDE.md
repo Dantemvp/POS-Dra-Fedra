@@ -22,7 +22,7 @@ El lector de InBody llama a GPT-4o por fetch directo a la API de OpenAI, sin SDK
 
 ## Tamaño
 
-99 archivos TypeScript con unas 11,800 líneas. 40 migraciones SQL con unas 2,300 líneas, la última es `20260628000040_google_calendar.sql`. 19 rutas de aplicación, 13 archivos con server actions, 39 componentes de cliente y 42 políticas de RLS declaradas.
+99 archivos TypeScript con unas 11,800 líneas. 40 migraciones SQL con unas 2,300 líneas, la última es `20260628000040_google_calendar.sql`. 21 archivos `page.tsx` en total, de los cuales 19 pertenecen al grupo autenticado `(app)` y los otros dos son la raíz y `/login`. 13 archivos con server actions, 46 componentes de cliente contando `src/app` y `src/components`, y 42 políticas de RLS declaradas.
 
 ## Variables de entorno que el código sí usa
 
@@ -40,7 +40,9 @@ Operación: pagos mixtos de efectivo y tarjeta con cálculo de cambio, corte del
 
 ## Dónde está la seguridad hoy
 
-La frontera real es la RLS de Postgres más la revalidación de rol dentro de cada server action. El middleware de `src/middleware.ts` solo refresca la sesión, no autoriza rutas, así que cada página se protege por su cuenta.
+La frontera real es la RLS de Postgres más la revalidación de rol dentro de cada server action. Encima de eso hay una capa de middleware que sí autoriza. `src/middleware.ts` delega en `updateSession` de `src/lib/supabase/middleware.ts`, y esa función exige sesión fuera de las rutas públicas, consulta el rol del usuario en la tabla `usuarios` y controla doce prefijos de ruta declarados en `RUTAS_ROL`.
+
+Esa capa es abierta por omisión. Una ruta autenticada que no aparece en `RUTAS_ROL` queda disponible para cualquier usuario con sesión, y el comentario del propio archivo lo declara. Hoy `/dashboard` y `/notificaciones` están en ese caso. El middleware tampoco cubre las server actions, así que cada una revalida el rol por su cuenta y ahí sigue estando la frontera que importa. El detalle vive en el hallazgo H-003.
 
 La llave de servicio se usa en un único archivo, `src/lib/supabase/admin.ts`, y de ahí cuelgan los dos crons. Los dos validan `CRON_SECRET` con un header Bearer antes de hacer nada.
 
@@ -57,7 +59,9 @@ El deploy a producción es manual y hacer push no publica nada. Requiere el toke
 
 ## Deuda conocida
 
-No hay pruebas automatizadas ni integración continua, y no existe carpeta `.github`. Tampoco hay un ambiente de pruebas: la única base de datos es la de producción, con pacientes reales adentro. Esa es la primera pieza a construir, porque sin ella cualquier verificación seria toca datos de la clienta.
+No hay pruebas automatizadas y no existe ningún workflow de integración continua. La carpeta `.github` sí existe desde FED-001, pero solo contiene la plantilla de pull request.
+
+Del ambiente de pruebas hay andamio y no hay ambiente. `supabase/config.toml` declara un entorno local completo que nunca se ha levantado ni verificado, falta el `supabase/seed.sql` que ese mismo archivo referencia, y no existe un proyecto remoto separado para las vistas previas. Mientras eso siga así, la única base de datos operable es la de producción, con pacientes reales adentro, y cualquier verificación seria toca datos de la clienta. Esa es la primera pieza a construir.
 
 ## Gotchas técnicos
 
