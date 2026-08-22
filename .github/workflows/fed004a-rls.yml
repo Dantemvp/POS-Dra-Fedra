@@ -81,19 +81,6 @@ jobs:
       - name: Aplicar las 40 migraciones desde cero y sembrar
         run: supabase db reset --local
 
-      - name: Comprobar que aplicaron las 40 migraciones
-        run: |
-          set -euo pipefail
-          aplicadas="$(supabase migration list --local | grep -cE '^ *[0-9]{14} *\|')"
-          echo "Migraciones aplicadas: $aplicadas"
-          esperadas="$(ls supabase/migrations/*.sql | wc -l)"
-          echo "Migraciones en el repositorio: $esperadas"
-          if [ "$aplicadas" -ne "$esperadas" ]; then
-            echo "No aplicaron todas las migraciones."
-            supabase migration list --local
-            exit 1
-          fi
-
       - name: Exportar las credenciales locales
         run: |
           set -euo pipefail
@@ -103,24 +90,37 @@ jobs:
             echo "SUPABASE_URL=$API_URL"
             echo "SUPABASE_ANON_KEY=$ANON_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "SUPABASE_DB_URL=$DB_URL"
           } >> "$GITHUB_ENV"
           case "$API_URL" in
             http://127.0.0.1:*|http://localhost:*) echo "API local: $API_URL" ;;
             *) echo "La API no es local: $API_URL"; exit 1 ;;
           esac
 
+      - name: Comprobar que aplicaron las 40 migraciones
+        run: |
+          set -euo pipefail
+          # Se cuenta contra la tabla de migraciones de la propia base, no
+          # contra el texto del CLI, que puede cambiar de formato.
+          aplicadas="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -t -A -c 'select count(*) from supabase_migrations.schema_migrations')"
+          esperadas="$(ls supabase/migrations/*.sql | wc -l | tr -d ' ')"
+          echo "Migraciones aplicadas: $aplicadas · en el repositorio: $esperadas"
+          if [ "$aplicadas" -ne "$esperadas" ]; then
+            echo "No aplicaron todas las migraciones."
+            psql "$SUPABASE_DB_URL" -c 'select version from supabase_migrations.schema_migrations order by version'
+            exit 1
+          fi
+
       - name: Comprobar que la semilla dejó datos
         run: |
           set -euo pipefail
-          psql "$(supabase status -o env | grep '^DB_URL=' | cut -d= -f2- | tr -d '"')" \
-            -v ON_ERROR_STOP=1 -t -A -c \
-            "select count(*) from public.usuarios where auth_uid is not null" > /tmp/n
-          n="$(cat /tmp/n)"
+          n="$(psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -t -A -c 'select count(*) from public.usuarios where auth_uid is not null')"
           echo "Perfiles con identidad: $n"
           if [ "$n" -ne 5 ]; then
             echo "La semilla no dejó un usuario por rol."
             exit 1
           fi
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c 'select rol, email from public.usuarios order by rol'
 
       - name: Subir objetos sintéticos al bucket privado
         run: node supabase/tests/preparar-storage.mjs
