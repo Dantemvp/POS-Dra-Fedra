@@ -7,6 +7,7 @@ import type { Rol } from "@/lib/auth";
 import { navParaRol } from "@/components/nav";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
+import { APP_VERSION } from "@/lib/version";
 
 // Barra superior + menú lateral deslizable. Solo se muestra en pantallas
 // chicas (md:hidden); en escritorio manda el Sidebar fijo.
@@ -93,6 +94,9 @@ export default function MobileTopBar({
 
             <div className="border-t border-zinc-200 px-3 py-3">
               <LogoutButton />
+              <p className="mt-3 px-1 text-[10px] text-zinc-400">
+                {APP_VERSION.etiqueta}
+              </p>
             </div>
           </aside>
         </div>

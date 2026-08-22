@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { APP_VERSION } from "@/lib/version";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -83,6 +84,9 @@ export default function LoginPage() {
             {loading ? "Entrando…" : "Iniciar sesión"}
           </button>
         </form>
+        <p className="mt-6 text-center text-[10px] text-zinc-400">
+          {APP_VERSION.etiqueta}
+        </p>
       </div>
     </div>
   );

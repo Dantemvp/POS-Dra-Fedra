@@ -24,6 +24,14 @@ Estado: primera revisión de Codex con cambios solicitados, corregidos en un seg
 
 ## Siguientes
 
+### FED-012 Versionado y reversa verificable
+
+Modo: Remediación · Riesgo: Ámbar · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: implementado por Codex, pendiente de revisión
+
+Mostrar versión y commit en la aplicación, validar que manifiesto, lockfile y tag coincidan, mantener un changelog y exigir una ficha por liberación. La reversa de código usa despliegues inmutables de Vercel; la reversa con migraciones requiere compatibilidad, respaldo y restauración ensayada. No crea tags, despliega ni toca producción.
+
 ### FED-002 Línea base de integración continua y pruebas puras
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación
