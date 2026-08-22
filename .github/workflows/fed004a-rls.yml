@@ -122,6 +122,21 @@ jobs:
           fi
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c 'select rol, email from public.usuarios order by rol'
 
+      - name: Diagnóstico y GRANT de los roles de la API
+        run: |
+          set -euo pipefail
+          consulta="select grantee, count(*) as tablas from information_schema.role_table_grants where table_schema='public' and privilege_type='SELECT' and grantee in ('anon','authenticated','service_role') group by grantee order by grantee"
+          echo "Privilegios ANTES:"
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c "$consulta"
+          # En este entorno las tablas nacen de las migraciones y no heredan los
+          # privilegios por omisión que Supabase concede a los roles de la API.
+          # Sin este GRANT cada consulta fallaría por permiso de tabla, y las
+          # pruebas de políticas pasarían sin evaluar una sola política.
+          # Restringir sigue siendo trabajo de RLS, que está activo en todas.
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c "grant usage on schema public to anon, authenticated, service_role; grant all on all tables in schema public to anon, authenticated, service_role; grant all on all sequences in schema public to anon, authenticated, service_role; grant all on all functions in schema public to anon, authenticated, service_role;"
+          echo "Privilegios DESPUÉS:"
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c "$consulta"
+
       - name: Subir objetos sintéticos al bucket privado
         run: node supabase/tests/preparar-storage.mjs
 

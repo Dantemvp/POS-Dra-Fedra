@@ -48,10 +48,19 @@ export async function sesion(rol: Rol): Promise<SupabaseClient> {
   return cliente;
 }
 
-// Cuántas filas ve esta sesión en una tabla. RLS no devuelve error cuando
-// niega la lectura: devuelve cero filas. Por eso se cuenta, no se atrapa.
+// Cuántas filas ve esta sesión en una tabla.
+//
+// RLS no devuelve error cuando niega la lectura: devuelve cero filas. Por eso
+// se cuenta en vez de atrapar. Pero un error SÍ importa: si faltara un GRANT,
+// la consulta fallaría y devolver cero haría que estas pruebas pasaran por la
+// razón equivocada, midiendo permisos de tabla en vez de políticas.
 export async function filasVisibles(cliente: SupabaseClient, tabla: string): Promise<number> {
   const { count, error } = await cliente.from(tabla).select("*", { count: "exact", head: true });
-  if (error) return 0;
+  if (error) {
+    throw new Error(
+      `Consultar "${tabla}" falló con "${error.message}". Eso no es RLS negando: ` +
+        `es un error de la consulta, y dejaría estas pruebas verdes sin haber probado nada.`,
+    );
+  }
   return count ?? 0;
 }
