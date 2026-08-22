@@ -180,6 +180,10 @@ Tres guardias impiden que esto toque el proyecto remoto. La semilla aborta si en
 
 Los hallazgos abiertos quedan como pruebas ejecutables, no comentadas: las afirmaciones de H-016 y H-013 usan `it.fails`, así que corren de verdad, hoy pasan porque el sistema concede de más, y el día que FED-014 o FED-009 cierren el hueco esas pruebas empezarán a pasar y `it.fails` se pondrá roja, obligando a convertirlas en pruebas normales.
 
+**Segundo incremento: la bitácora.** `supabase/tests/auditoria.test.mts` mide la auditoría por su efecto y no por el catálogo: hace un cambio real por la API con la sesión del rol que puede hacerlo y cuenta los renglones nuevos de `audit_log`. Así aparecieron H-025, cuatro tablas sensibles sin disparador, y H-026, la política plana que deja a un admin borrar la bitácora que lo señala.
+
+Cada sonda se afirma en dos pruebas separadas: una normal que exige que la escritura haya ocurrido, y una `it.fails` sobre el rastro. Sin esa separación, una escritura negada por RLS haría fallar la prueba, `it.fails` la daría por buena, y quedaría un hallazgo "confirmado" sin haber medido nada. Es exactamente la trampa que ya escondió H-024 detrás de un helper que devolvía cero ante cualquier error.
+
 ### FED-004B Proyecto remoto para vistas previas
 
 Modo: Remediación · Riesgo: Rojo · Carril: F operación
