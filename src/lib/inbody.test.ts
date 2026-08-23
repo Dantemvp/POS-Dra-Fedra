@@ -8,7 +8,7 @@ import {
   validarArchivoInBody,
 } from "./inbody";
 
-describe("configuraci�n de OpenAI para InBody", () => {
+describe("configuracion de OpenAI para InBody", () => {
   it("fija un modelo compatible con json_schema", () => {
     expect(INBODY_OPENAI_MODEL).toBe("gpt-4o-2024-08-06");
   });
