@@ -32,6 +32,7 @@ export const INBODY_MIME_PERMITIDOS = [
   "image/gif",
 ] as const;
 export const INBODY_MAX_BYTES = 10 * 1024 * 1024;
+export const INBODY_OPENAI_MODEL = "gpt-4o-2024-08-06";
 
 export type ArchivoInBody = { type: string; size: number };
 

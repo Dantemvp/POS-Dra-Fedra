@@ -2,10 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
   INBODY_MAX_BYTES,
   INBODY_NUMERIC_KEYS,
+  INBODY_OPENAI_MODEL,
   INBODY_TEXT_KEYS,
   parsearRespuestaInBody,
   validarArchivoInBody,
 } from "./inbody";
+
+describe("configuraci�n de OpenAI para InBody", () => {
+  it("fija un modelo compatible con json_schema", () => {
+    expect(INBODY_OPENAI_MODEL).toBe("gpt-4o-2024-08-06");
+  });
+});
 
 function respuestaValida(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({

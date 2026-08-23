@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  INBODY_OPENAI_MODEL,
   INBODY_RESPONSE_FORMAT,
   parsearRespuestaInBody,
   validarArchivoInBody,
@@ -206,7 +207,7 @@ export async function extraerInBody(
         },
         signal: AbortSignal.timeout(45_000),
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: INBODY_OPENAI_MODEL,
           messages,
           response_format: INBODY_RESPONSE_FORMAT,
           max_tokens: 800,

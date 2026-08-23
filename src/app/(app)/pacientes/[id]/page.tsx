@@ -9,6 +9,8 @@ import HistoriaCard from "./HistoriaCard";
 import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
 import ReviewGoogle from "./ReviewGoogle";
 
+export const maxDuration = 120;
+
 // Edad en años a partir de la fecha de nacimiento.
 function edadDe(fnac: string | null): string | null {
   if (!fnac) return null;
