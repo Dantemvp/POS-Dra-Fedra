@@ -54,6 +54,14 @@ describe("planificarPaginas", () => {
     ]);
   });
 
+  it("no desperdicia una hoja intentando proteger un bloque que nunca cabe", () => {
+    expect(planificarPaginas(1600, 700, [{ inicio: 180, fin: 1500 }])).toEqual([
+      { inicio: 0, alto: 700 },
+      { inicio: 700, alto: 700 },
+      { inicio: 1400, alto: 200 },
+    ]);
+  });
+
   it("rechaza alturas que no permiten avanzar", () => {
     expect(() => planificarPaginas(0, 700)).toThrow("altoTotal");
     expect(() => planificarPaginas(700, 0)).toThrow("altoMaximo");

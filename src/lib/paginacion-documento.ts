@@ -33,7 +33,7 @@ export function planificarPaginas(
       inicio: Math.max(0, Math.min(altoTotal, inicio)),
       fin: Math.max(0, Math.min(altoTotal, fin)),
     }))
-    .filter(({ inicio, fin }) => fin > inicio)
+    .filter(({ inicio, fin }) => fin > inicio && fin - inicio <= altoMaximo)
     .sort((a, b) => a.inicio - b.inicio || a.fin - b.fin);
 
   const paginas: SegmentoPagina[] = [];
