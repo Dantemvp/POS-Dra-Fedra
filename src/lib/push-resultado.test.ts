@@ -29,18 +29,18 @@ describe("resultado de notificaciones push", () => {
       .toBe("Se enviaron 1 de 2 notificaciones.");
   });
 
-  it("explica c�mo recuperar una suscripci�n caducada", () => {
-    expect(
-      mensajePush({
-        ...base,
-        destinatarios: 1,
-        enviadas: 0,
-        expiradas: 1,
-        fallidas: 0,
-        motivo: "fallos_envio",
-      }),
-    ).toBe(
-      "La suscripci�n de este dispositivo caduc�. Desactiva y vuelve a activar las notificaciones.",
+  it("explica como recuperar una suscripcion caducada sin texto corrupto", () => {
+    const mensaje = mensajePush({
+      ...base,
+      destinatarios: 1,
+      enviadas: 0,
+      expiradas: 1,
+      fallidas: 0,
+      motivo: "fallos_envio",
+    });
+    expect(mensaje).toBe(
+      "La suscripción de este dispositivo caducó. Desactiva y vuelve a activar las notificaciones.",
     );
+    expect(mensaje).not.toContain("\uFFFD");
   });
 });

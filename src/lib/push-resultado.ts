@@ -20,7 +20,7 @@ export function mensajePush(resultado: PushResultado): string {
         resultado.expiradas > 0 &&
         resultado.fallidas === 0
       ) {
-        return "La suscripci�n de este dispositivo caduc�. Desactiva y vuelve a activar las notificaciones.";
+        return "La suscripción de este dispositivo caducó. Desactiva y vuelve a activar las notificaciones.";
       }
       return resultado.enviadas > 0
         ? `Se enviaron ${resultado.enviadas} de ${resultado.destinatarios} notificaciones.`
