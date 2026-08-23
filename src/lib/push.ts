@@ -100,6 +100,7 @@ async function enviarASubs(subs: SubRow[], payload: Push): Promise<PushResultado
 
 // Envía a TODOS los dispositivos de los usuarios con alguno de los roles dados.
 export async function enviarARoles(roles: Rol[], payload: Push): Promise<PushResultado> {
+  if (!configurar()) return sinEnvio("sin_configuracion");
   const admin = createAdminClient();
   const { data: usuarios, error: usuariosError } = await admin
     .from("usuarios")
@@ -122,6 +123,7 @@ export async function enviarARoles(roles: Rol[], payload: Push): Promise<PushRes
 
 // Envía a los dispositivos de un usuario concreto (por su auth_uid).
 export async function enviarAUsuario(authUid: string, payload: Push): Promise<PushResultado> {
+  if (!configurar()) return sinEnvio("sin_configuracion");
   const admin = createAdminClient();
   const { data: subs, error } = await admin
     .from("push_subscriptions")

@@ -15,6 +15,13 @@ export function mensajePush(resultado: PushResultado): string {
     case "error_consulta":
       return "No se pudieron consultar las suscripciones.";
     case "fallos_envio":
+      if (
+        resultado.enviadas === 0 &&
+        resultado.expiradas > 0 &&
+        resultado.fallidas === 0
+      ) {
+        return "La suscripci�n de este dispositivo caduc�. Desactiva y vuelve a activar las notificaciones.";
+      }
       return resultado.enviadas > 0
         ? `Se enviaron ${resultado.enviadas} de ${resultado.destinatarios} notificaciones.`
         : "El proveedor rechazó todas las notificaciones.";
