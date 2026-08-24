@@ -1,8 +1,10 @@
 name: CI
 
 on:
-  push:
   pull_request:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -30,6 +32,9 @@ jobs:
 
       - name: Version
         run: node scripts/check-version.mjs
+
+      - name: UTF-8
+        run: node scripts/check-utf8.mjs
 
       - name: Release metadata
         run: node scripts/release-metadata.mjs

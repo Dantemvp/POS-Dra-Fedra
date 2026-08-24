@@ -8,15 +8,13 @@ name: FED-004A · Supabase local y políticas
 # no recibe SUPABASE_ACCESS_TOKEN, no ejecuta `supabase link` y verifica antes
 # de empezar que no exista ningún vínculo a un proyecto.
 
-# Una corrida por pull request, y una al entrar el cambio a la rama de
-# integración o a main. Antes `push` sobre la rama de trabajo y `pull_request`
-# disparaban las dos, y cada empujón levantaba dos Supabase para probar el
-# mismo commit.
+# Una corrida por pull request y otra al entrar el cambio a main. La rama de
+# integración ya tiene un pull request abierto, así que incluirla también en
+# `push` duplicaría el mismo trabajo.
 on:
   pull_request:
   push:
     branches:
-      - codex/fedra-integration
       - main
   workflow_dispatch:
 
