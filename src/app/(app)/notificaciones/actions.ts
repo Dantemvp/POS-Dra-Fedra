@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { enviarAUsuario } from "@/lib/push";
+import { mensajePush } from "@/lib/push-resultado";
 
 export type Result = { ok: boolean; error?: string };
 
@@ -59,17 +60,12 @@ export async function enviarPrueba(): Promise<Result> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sin sesión." };
 
-  const n = await enviarAUsuario(user.id, {
+  const resultado = await enviarAUsuario(user.id, {
     title: "Notificación de prueba ✅",
     body: "Tus notificaciones del Sistema Fedra están funcionando.",
     url: "/notificaciones",
     tag: "prueba",
   });
-  if (n === 0)
-    return {
-      ok: false,
-      error:
-        "No se envió. Verifica que activaste las notificaciones en este dispositivo.",
-    };
+  if (resultado.enviadas === 0) return { ok: false, error: mensajePush(resultado) };
   return { ok: true };
 }

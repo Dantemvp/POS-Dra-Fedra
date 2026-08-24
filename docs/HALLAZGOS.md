@@ -243,6 +243,17 @@ Ticket: FED-016
 **Evidencia.** `extraerInBody()` usaba el modo antiguo `json_object`, aplicaba `JSON.parse()` y afirmaba el resultado como `InBodyDatos` sin validar claves, tipos ni que existiera una sola medición. Aceptaba cualquier tipo descargado del bucket, cuyo límite general es 50 MiB, lo convertía completo a base64 y hacía dos solicitudes sin timeout. Si la segunda corroboración fallaba, devolvía silenciosamente la primera extracción como éxito.
 **Impacto.** Un resultado con tipos inesperados o sin mediciones podía llegar a revisión y terminar guardado como historia clínica. Un archivo incompatible o excesivo podía consumir memoria y costo antes de fallar. La caída de la verificación secundaria reducía la confiabilidad sin avisar a la doctora.
 **Verificación.** FED-016 usa Structured Outputs con esquema estricto, vuelve a validar la respuesta dentro de la aplicación, rechaza claves y tipos inesperados, exige al menos un dato, limita formatos a JPG, PNG, WEBP y GIF, limita cada imagen a 10 MiB y corta cada solicitud después de 45 segundos. Si la segunda revisión falla, la operación completa falla. Queda pendiente probar el flujo con imágenes sintéticas y una clave de pruebas, nunca con expedientes reales.
+### H-023 Los crons reportan notificaciones enviadas aunque salgan cero
+
+Severidad: Ámbar
+Carril: E integraciones
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-017
+
+**Evidencia.** `enviarASubs()` devolvía solamente un número y convertía en cero cuatro estados distintos: VAPID ausente o inválido, ausencia de suscripciones, proveedores rechazando todos los envíos y consultas sin datos. `api/cron/alertas` agregaba `inventario` y `agenda` al arreglo `enviados` sin revisar ese número; `resumen-dia` tampoco devolvía el resultado push.
+**Impacto.** Una ejecución de cron podía responder `ok` y afirmar que procesó una categoría aunque Fedra no recibiera nada. La operación no podía distinguir un día sin dispositivos de una configuración rota o una caída del proveedor.
+**Verificación.** FED-017 devuelve configuración, destinatarios, envíos, expiradas, fallidas y motivo. Los crons solo agregan una categoría a `enviados` si al menos un dispositivo recibió el push y exponen el diagnóstico estructurado. La prueba distingue éxito, parcial, sin configuración, sin destinatarios y fallo total. La entrega real todavía requiere una prueba controlada con un dispositivo de Dante o Fedra.
 
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente

@@ -118,6 +118,21 @@ Estado: implementación en revisión, cierra la parte estructural de H-020; prue
 **Pruebas requeridas.** JSON inválido, arreglo, campos desconocidos, tipos incorrectos, valores negativos y no finitos, respuesta vacía, formatos no admitidos, archivo vacío y mayor de 10 MiB. Después de FED-004A y FED-014: éxito de dos pasadas, timeout, error en segunda pasada y vínculo entre imagen, extracción y revisión humana.
 
 **Plan de reversa.** Revertir el commit restaura el modo JSON anterior y elimina límites y timeout. No cambia datos ni migraciones, pero reabre H-020.
+### FED-017 Resultado verificable de notificaciones push
+
+Modo: Remediación · Riesgo: Ámbar · Carril: E integraciones
+Autor: Codex · Revisor: Claude
+Estado: implementación en revisión, cierra la parte de observabilidad de H-023
+
+**Objetivo.** Evitar que una ejecución sin entregas se presente como notificación enviada y conservar suficiente diagnóstico para distinguir configuración, destinatarios, expiración y fallos del proveedor.
+
+**Qué incluye.** Resultado estructurado en `src/lib/push.ts`, mensajes operativos para la prueba manual, conteo de suscripciones expiradas y fallidas, y respuesta detallada de ambos crons. No cambia VAPID, horarios, destinatarios ni suscripciones reales.
+
+**Criterios de aceptación.** Cero entregas nunca aparece en `enviados`. Una configuración ausente o inválida se distingue de una lista vacía. Una entrega parcial conserva los dos conteos. Los endpoints 404 y 410 siguen limpiando suscripciones expiradas.
+
+**Pruebas requeridas.** Estado exitoso, parcial y fallido; mensajes para configuración ausente, cero destinatarios y proveedor rechazando. La prueba integrada pendiente usa una suscripción de prueba autorizada y verifica una entrega, una expiración 410 y una falla transitoria sin borrar la suscripción.
+
+**Plan de reversa.** Revertir el commit restaura el retorno numérico anterior. No cambia esquema, datos ni configuración externa.
 
 ### FED-002 Línea base de integración continua y pruebas puras
 
