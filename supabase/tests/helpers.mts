@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { exigirSupabaseLocal, requerido } from "../../scripts/guardia-supabase.mjs";
 
 // Estas pruebas hablan con Supabase como lo haría un extraño: por la API, con
 // la llave anónima y una sesión real por rol. No leen los archivos de
@@ -9,26 +10,18 @@ export type Rol = (typeof ROLES)[number];
 
 const PASSWORD = "Prueba-FED004A!";
 
-function requerido(nombre: string): string {
-  const v = process.env[nombre];
-  if (!v) {
-    throw new Error(
-      `Falta ${nombre}. Estas pruebas solo corren contra el Supabase local de FED-004A.`,
-    );
-  }
-  return v;
-}
+// La guarda vive en un solo archivo, `scripts/guardia-supabase.mjs`, y
+// `scripts/check-guardia.mjs` la somete a casos adversarios en cada corrida de
+// integración continua. Antes esta expresión estaba copiada aquí y en
+// `preparar-storage.mjs`: dos copias que podían divergir y ningún caso que las
+// probara.
+const CONTEXTO = "FED-004A (pruebas de políticas)";
 
-export const API_URL = requerido("SUPABASE_URL");
-export const ANON_KEY = requerido("SUPABASE_ANON_KEY");
-
-// Guardia: si la URL no es local, no se corre nada. El proyecto remoto de la
-// doctora no se toca ni por accidente ni por una variable mal puesta.
-if (!/^https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)(:\d+)?$/.test(API_URL.replace(/\/$/, ""))) {
-  throw new Error(
-    `SUPABASE_URL apunta a "${API_URL}", que no es local. FED-004A se niega a correr fuera de 127.0.0.1.`,
-  );
-}
+export const API_URL = exigirSupabaseLocal(
+  requerido("SUPABASE_URL", CONTEXTO),
+  CONTEXTO,
+);
+export const ANON_KEY = requerido("SUPABASE_ANON_KEY", CONTEXTO);
 
 export function clienteAnonimo(): SupabaseClient {
   return createClient(API_URL, ANON_KEY, {

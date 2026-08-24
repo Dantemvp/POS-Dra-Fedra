@@ -355,6 +355,42 @@ Ticket: FED-001
 **Impacto.** Los dos agentes leen ese archivo como fuente de contexto. Trabajar sobre él llevaba a decisiones tomadas con datos falsos.
 **Verificación.** `CLAUDE.md` y `AGENTS.md` reescritos contra el código real en FED-001. Cierra cuando Codex apruebe el ticket, no antes.
 
+### H-027 La guarda que impide alcanzar producción estaba duplicada y sin prueba
+
+Severidad: Ámbar
+Carril: F operación
+Encontró: Claude
+Estado: En revisión
+Ticket: FED-018
+
+**Evidencia.** La expresión que decide si `SUPABASE_URL` es local vivía copiada en `supabase/tests/helpers.mts:27` y en `supabase/tests/preparar-storage.mjs:13`, esta última junto a la llave de servicio. Ninguna prueba la ejercitaba. Sometida a 21 formas adversarias sobre `bf9ab03`, la lógica resultó correcta: rechaza userinfo, sufijos, fragmento, query, IP en octal y en decimal, y falla cerrado en todas las ambiguas. El defecto no es la expresión, es que hay dos y ninguna tiene quien la rompa.
+**Impacto.** Dos copias de un candado divergen. Un punto de entrada nuevo que olvide pegarla queda sin protección y nada avisa, y el camino que abre termina en el proyecto con los expedientes reales. Es la misma clase del typecheck con `|| echo` que en Bianca dejó pasar dos pantallas en blanco: se ve, tranquiliza y no puede fallar.
+**Verificación.** FED-018 deja una sola definición en `scripts/guardia-supabase.mjs` y `scripts/check-guardia.mjs` la somete a 28 casos en cada corrida de integración continua, tratando como fatales sólo las desviaciones permisivas. Comprobado por mutación: desanclar la expresión y compararla por subcadena ponen el verificador en rojo con el detalle de qué URL aceptó de más.
+
+### H-028 Ningún módulo que importara `@/` se podía probar
+
+Severidad: Ámbar
+Carril: F operación
+Encontró: Claude
+Estado: En revisión
+Ticket: FED-018
+
+**Evidencia.** `vitest.config.mts` no declaraba el alias `@`. Cualquier archivo bajo `src/` que importara `@/lib/...` fallaba al resolverse. Por eso `src/lib/push.ts`, que es donde vive la entrega de notificaciones, no tenía una sola prueba, mientras que `push-resultado.ts`, que es puro, sí. Lo mismo alcanza a `src/lib/auth.ts` y a `src/lib/google/calendar.ts`.
+**Impacto.** La lógica con más partes móviles quedaba fuera de la red. Los escenarios de FED-017 se verificaron a mano en worktrees desechables y se perdían al cerrarlos, así que la integración continua podía estar verde sin haber ejercitado el código que decide si una notificación se entrega o si una suscripción se borra.
+**Verificación.** FED-018 declara el alias y añade diez pruebas de `push.ts`. Sometidas a mutación: tratar cualquier error como suscripción muerta mata dos, que `sinEnvio()` siempre reporte configurado mata dos, y quitar el filtro de `auth_uid` nulo mata una, después de corregir esa prueba, que en su primera versión pasaba sin medir nada porque los dos caminos terminaban en `sin_destinatarios`.
+
+### H-029 El cierre automático del día excluye las ventas de las últimas tres horas
+
+Severidad: Ámbar
+Carril: A dinero
+Encontró: Claude
+Estado: Abierto
+Ticket: pendiente de abrir, requiere confirmación de Fedra
+
+**Evidencia.** `vercel.json` programa `/api/cron/resumen-dia` con `0 4 * * *`, que es UTC. Sinaloa es UTC-7 todo el año, así que el cron corre a las 21:00 hora local. La ventana que arma la ruta es correcta: `inicioDiaSinaloa()` devuelve el día de Sinaloa al que pertenece ese instante, comprobado sobre 400 días sin un solo desfase y con la frontera exacta en 07:00Z. El problema no es la ventana, es la hora a la que se mide: el resumen del día se calcula cuando al día le faltan tres horas.
+**Impacto.** Si la farmacia opera después de las 21:00, el aviso de cierre que reciben admin, doctora y gerente subestima el día, y esas ventas no aparecen en ninguna notificación. No corrompe ningún dato: el corte de caja y los reportes siguen siendo correctos, porque usan su propia frontera. Es un aviso que engaña, no una cifra mal guardada.
+**Verificación.** Depende de una regla de negocio que no está escrita: a qué hora cierra de verdad la farmacia. Si cierra antes de las 21:00, no hay nada que corregir y conviene dejarlo anotado. Si cierra después, el cron se mueve a una hora posterior al cierre real y se comprueba con una venta tardía que sí entra al resumen.
+
 ---
 
 ## Cerrados

@@ -6,13 +6,11 @@
 // de la doctora ni se descarga nada de producción.
 import { createClient } from "@supabase/supabase-js";
 import { writeFileSync } from "node:fs";
+import { exigirSupabaseLocal, requerido } from "../../scripts/guardia-supabase.mjs";
 
-const API_URL = process.env.SUPABASE_URL;
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!API_URL || !SERVICE) throw new Error("Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.");
-if (!/^https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)(:\d+)?$/.test(API_URL.replace(/\/$/, ""))) {
-  throw new Error(`SUPABASE_URL apunta a "${API_URL}", que no es local. Abortado.`);
-}
+const CONTEXTO = "FED-004A (preparar storage)";
+const API_URL = exigirSupabaseLocal(requerido("SUPABASE_URL", CONTEXTO), CONTEXTO);
+const SERVICE = requerido("SUPABASE_SERVICE_ROLE_KEY", CONTEXTO);
 
 const admin = createClient(API_URL, SERVICE, { auth: { persistSession: false } });
 
