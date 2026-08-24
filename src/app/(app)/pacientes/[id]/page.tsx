@@ -248,6 +248,7 @@ export default async function PacienteDetalle({
 
       <ImportarInBody
         pacienteId={p.id}
+        pacienteNombre={`${p.nombre} ${p.apellidos ?? ""}`.trim()}
         inbodyTipoId={tipos.find((t) => t.nombre === "InBody")?.id ?? null}
       />
 

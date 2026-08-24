@@ -6,12 +6,22 @@ import {
   INBODY_TEXT_KEYS,
   parsearRespuestaInBody,
   rutaInBody,
+  mensajeConfirmacionInBody,
   validarArchivoInBody,
 } from "./inbody";
 
 describe("configuracion de OpenAI para InBody", () => {
   it("fija un modelo compatible con json_schema", () => {
     expect(INBODY_OPENAI_MODEL).toBe("gpt-4o-2024-08-06");
+  });
+});
+
+describe("confirmacion de paciente antes de subir", () => {
+  it("nombra explícitamente el expediente que recibirá el documento", () => {
+    const mensaje = mensajeConfirmacionInBody("  María López  ");
+    expect(mensaje).toContain("María López");
+    expect(mensaje).toContain("¿Confirmas");
+    expect(mensaje).not.toContain("  María");
   });
 });
 

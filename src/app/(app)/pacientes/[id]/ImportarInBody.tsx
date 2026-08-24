@@ -10,7 +10,11 @@ import {
   urlDocumento,
   type InBodyDatos,
 } from "../actions";
-import { rutaInBody, validarArchivoInBody } from "@/lib/inbody";
+import {
+  mensajeConfirmacionInBody,
+  rutaInBody,
+  validarArchivoInBody,
+} from "@/lib/inbody";
 
 // clave de IA -> etiqueta legible + unidad
 const CAMPOS: [keyof InBodyDatos & string, string, string][] = [
@@ -35,9 +39,11 @@ const etiquetaCompleta = (label: string, unit: string) =>
 
 export default function ImportarInBody({
   pacienteId,
+  pacienteNombre,
   inbodyTipoId,
 }: {
   pacienteId: string;
+  pacienteNombre: string;
   inbodyTipoId: string | null;
 }) {
   const router = useRouter();
@@ -59,6 +65,11 @@ export default function ImportarInBody({
     const archivoValido = validarArchivoInBody(file);
     if (!archivoValido.ok) {
       setError(archivoValido.error);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+    if (!window.confirm(mensajeConfirmacionInBody(pacienteNombre))) {
+      setError("Carga cancelada. Verifica el nombre de la paciente antes de intentarlo otra vez.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }

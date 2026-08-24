@@ -296,3 +296,5 @@ Un ensayo del procedimiento completo con un documento sintético, hecho por algu
 **Fuera de alcance.** Cualquier cambio a las políticas de FED-014, que quedan como están. El paso dos de FED-014, que es el movimiento de los objetos de producto.
 
 **Invariantes.** El retiro sigue siendo excepcional y sigue pasando por la llave de servicio y por una persona. No se expone como RPC ni como server action: una función que el cliente pueda invocar es el borrado que la regla prohíbe, con otro nombre.
+
+**Regla operativa autorizada por Dante.** Antes de subir un InBody, la pantalla muestra el nombre completo de la paciente cuyo expediente está abierto y exige confirmación explícita. El alta posterior ya registra en `documentos_clinicos` quién lo subió y cuándo, y `fn_audit()` conserva el evento. La comparación del nombre visible mediante IA será una segunda barrera, no una reasignación automática, y se diseña después de probar los formatos reales anonimizados.

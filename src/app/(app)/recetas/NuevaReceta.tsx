@@ -10,7 +10,11 @@ import {
 } from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fechaSinaloa } from "@/lib/tz";
-import { rutaInBody, validarArchivoInBody } from "@/lib/inbody";
+import {
+  mensajeConfirmacionInBody,
+  rutaInBody,
+  validarArchivoInBody,
+} from "@/lib/inbody";
 
 // InBody guardado (claves legibles) -> métricas de la receta
 function mapInBodyGuardado(d: Record<string, unknown>): Record<string, string> {
@@ -87,6 +91,17 @@ export default function NuevaReceta({
   function cargarUltimoInBody() {
     if (!pacienteId) {
       setInbodyMsg("Selecciona un paciente primero.");
+      return;
+    }
+    const pacienteNombre = pacientes.find((paciente) => paciente.id === pacienteId)?.nombre;
+    if (!pacienteNombre) {
+      setInbodyMsg("No se encontró la paciente seleccionada. Vuelve a seleccionarla.");
+      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
+      return;
+    }
+    if (!window.confirm(mensajeConfirmacionInBody(pacienteNombre))) {
+      setInbodyMsg("Carga cancelada. Verifica el nombre de la paciente antes de intentarlo otra vez.");
+      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
       return;
     }
     setInbodyMsg(null);
