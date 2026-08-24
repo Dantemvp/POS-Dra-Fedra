@@ -41,14 +41,59 @@ if (existsSync(refPath)) {
 }
 
 // 2. Archivos de entorno con credenciales.
-const envs = [".env", ".env.local", ".env.production", ".env.development.local"].filter(existsSync);
+//
+// No basta con saber que existen: hay que leer a donde apuntan. El vinculo del
+// CLI (`supabase/.temp/project-ref`) gobierna lo que hace `supabase`, pero la
+// aplicacion que abre la persona que prueba no lee ese archivo: `next dev` lee
+// el `.env.local`. Comprobar solo el vinculo aprueba un entorno donde el CLI
+// mira al tester y el navegador mira a otra parte.
+const ARCHIVOS_ENV = [".env", ".env.local", ".env.production", ".env.development.local"];
+const CLAVES_URL = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL"];
+
+/** Lee las URLs de Supabase declaradas dentro de un archivo de entorno. */
+function urlsDeclaradas(archivo) {
+  const encontradas = [];
+  for (const linea of readFileSync(archivo, "utf8").split(/\r?\n/)) {
+    const limpia = linea.trim();
+    if (!limpia || limpia.startsWith("#")) continue;
+    const sep = limpia.indexOf("=");
+    if (sep < 0) continue;
+    const clave = limpia.slice(0, sep).trim().replace(/^export\s+/, "");
+    if (!CLAVES_URL.includes(clave)) continue;
+    const valor = limpia.slice(sep + 1).trim().replace(/^["']|["']$/g, "");
+    if (valor) encontradas.push([clave, valor]);
+  }
+  return encontradas;
+}
+
+const envs = ARCHIVOS_ENV.filter(existsSync);
 if (envs.length > 0) {
-  if (remoto) avisos.push(`Existen archivos de entorno esperables para el tester remoto: ${envs.join(", ")}.`);
-  else {
+  if (!remoto) {
     problemas.push(
       `Existen archivos de entorno: ${envs.join(", ")}. ` +
         `"next dev" puede cargarlos y alcanzar un proyecto remoto. Muévelos fuera del repositorio durante la prueba local.`,
     );
+  }
+  // En los dos modos se revisa el contenido, no solo la existencia.
+  for (const archivo of envs) {
+    const declaradas = urlsDeclaradas(archivo);
+    if (declaradas.length === 0) {
+      avisos.push(`${archivo} no declara ninguna URL de Supabase.`);
+      continue;
+    }
+    for (const [clave, valor] of declaradas) {
+      const limpia = valor.replace(/\/$/, "");
+      const aceptada = remoto ? limpia === TESTER_URL : esSupabaseLocal(limpia);
+      if (aceptada) {
+        ok.push(`${archivo} declara ${clave} hacia el destino permitido.`);
+      } else {
+        problemas.push(
+          `${archivo} declara ${clave}="${valor}", que no es el destino permitido en este modo. ` +
+            `"next dev" lo carga solo, asi que el navegador hablaria con ese proyecto aunque el CLI apunte a otro. ` +
+            (remoto ? `El unico destino permitido es ${TESTER_URL}.` : `Solo se acepta un Supabase local.`),
+        );
+      }
+    }
   }
 } else {
   ok.push("No hay archivos de entorno en el repositorio.");
