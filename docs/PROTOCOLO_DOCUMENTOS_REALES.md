@@ -84,3 +84,11 @@ Se quedan en la carpeta fuera del repositorio hasta que Dante confirme que ya no
 **Necesita a Fedra.** Si autoriza el uso de estos documentos para validar formatos, y si alguno corresponde a una paciente que deba ser avisada.
 
 **Necesita a Dante.** Si las muestras anonimizadas se versionan en `docs/muestras/` o se quedan también fuera del repositorio. Versionarlas ayuda a que las pruebas de impresión sean reproducibles; no versionarlas reduce la superficie. Mi recomendación es versionarlas sólo después de que alguien distinto de quien anonimizó repita las cuatro comprobaciones, porque quien tachó ya sabe qué decía y su ojo lo completa.
+
+## Lo que bloquea la entrada de un documento real
+
+FED-019, que es donde vive la operación del retiro clínico. El mecanismo ya existe y está probado: un documento mal asignado se saca de circulación sin destruirlo, con motivo, responsable y bitácora inmutable, según `docs/RETIRO_DOCUMENTO_CLINICO.md`. Lo que falta es la operación alrededor, y es lo que hace la diferencia el día del error.
+
+Falta la autorización escrita de Fedra sobre que un documento clínico no se borra nunca y sobre quién puede pedir un retiro. Falta la pantalla que muestre un documento retirado como retirado, porque hoy se vería como un archivo roto. Falta recorrer los objetos huérfanos que ya estén en el tester, antes de que se mezclen con los reales. Y falta ensayar el procedimiento completo con un documento sintético, hecho por alguien distinto de quien escribió el script.
+
+Mientras los documentos sean sintéticos, equivocarse no cuesta nada. Con el primer InBody real, un error de captura deja el dato clínico de una paciente dentro del expediente de otra, y ahí ya no hay ensayo.
