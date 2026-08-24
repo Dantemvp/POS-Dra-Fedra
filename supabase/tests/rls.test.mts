@@ -1,5 +1,11 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { clienteAnonimo, filasVisibles, sesion, type Rol } from "./helpers.mjs";
+import {
+  clienteAnonimo,
+  filasVisibles,
+  nadaVisibleSinSesion,
+  sesion,
+  type Rol,
+} from "./helpers.mjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const clientes = {} as Record<Rol, SupabaseClient>;
@@ -56,7 +62,10 @@ describe("sin sesión no se ve nada", () => {
   const tablas = ["pacientes", "historias_clinicas", "recetas", "ventas", "cobros", "usuarios"];
   for (const tabla of tablas) {
     it(`anónimo no lee ${tabla}`, async () => {
-      expect(await filasVisibles(clienteAnonimo(), tabla)).toBe(0);
+      const comoNego = await nadaVisibleSinSesion(clienteAnonimo(), tabla);
+      expect(comoNego, `"${tabla}" no negó a una sesión anónima`).toMatch(
+        /cero filas|privilegio negado/,
+      );
     });
   }
 });

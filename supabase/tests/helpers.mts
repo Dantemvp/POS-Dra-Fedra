@@ -57,3 +57,37 @@ export async function filasVisibles(cliente: SupabaseClient, tabla: string): Pro
   }
   return count ?? 0;
 }
+
+// Cómo niega la base a una sesión sin sesión.
+//
+// Desde `20260824020537` hay dos formas y las dos son negar. Si la política de
+// la tabla no llama a ningún auxiliar, RLS niega devolviendo cero filas. Si lo
+// llama, y casi todas llaman a `current_rol()`, PostgreSQL corta antes con
+// 42501: `anon` ya no tiene permiso para ejecutar esa función. Mientras el paso
+// de GRANT de la integración continua le devolvía ese permiso, sólo se veía la
+// primera forma, y por eso este cambio apareció hasta que ese GRANT se quitó.
+//
+// Se consulta sin `head`, a propósito. Una petición HEAD no trae cuerpo, así
+// que el error llegaba con el mensaje vacío y era imposible distinguir un
+// privilegio negado de una consulta rota.
+//
+// Devuelve cómo negó, para que la prueba lo afirme en vez de conformarse con
+// que algo falló.
+export async function nadaVisibleSinSesion(
+  cliente: SupabaseClient,
+  tabla: string,
+): Promise<"cero filas" | "privilegio negado"> {
+  const { data, error } = await cliente.from(tabla).select("*").limit(1);
+  if (!error) {
+    if ((data ?? []).length > 0) {
+      throw new Error(`"${tabla}" le devolvió filas a una sesión anónima.`);
+    }
+    return "cero filas";
+  }
+  if (error.code === "42501") return "privilegio negado";
+  throw new Error(
+    `Consultar "${tabla}" sin sesión falló con "${error.message}" (código ${error.code ?? "sin código"}). ` +
+      `Eso no es RLS negando ni un privilegio negado: es un error de la consulta, y dejaría ` +
+      `esta prueba verde sin haber probado nada.`,
+  );
+}

@@ -477,6 +477,24 @@ Ticket: FED-014
 **Impacto.** Ese retiro se quedaba sin sellar para siempre y no había forma de completarlo con el script. `movido_en` nulo es justamente la señal de "esto se interrumpió, revísalo", así que la consulta de retiros a medias habría reportado un problema que ya no lo era, y el operador no habría tenido más camino que escribir SQL a mano sobre una bitácora que el disparador protege.
 **Verificación.** El script ahora empieza por la bitácora y después resuelve el estado de los dos extremos. Con el objeto en el origen, mueve y sella. Con el objeto ya en cuarentena, sólo sella. Con objeto en los dos, o en ninguno, se detiene y pide revisión a mano en vez de adivinar. Las cuatro ramas están probadas ejecutando el script de verdad con `node` desde `documentos-clinicos-adversario.test.mts`, incluida la interrupción exacta entre `move()` y el sello. Y `path_original` pasó a ser único, así que la base tampoco admite dos retiros del mismo objeto, cosa que el script ya rechazaba por su cuenta.
 
+### H-037 Sin el GRANT de la integración continua, la base niega a `anon` de otra manera
+
+Severidad: Verde
+Carril: B permisos
+Encontró: Claude, al corregir H-035
+Estado: Abierto, con la decisión pendiente
+Ticket: pendiente de abrir
+
+**Evidencia.** Quitado el `grant all on all functions` del workflow, seis pruebas de `rls.test.mts` se pusieron rojas de golpe: `anónimo no lee pacientes`, `historias_clinicas`, `recetas`, `ventas`, `cobros` y `usuarios`. No es que la sesión anónima empezara a ver algo. Es que dejó de ver de otra forma. Casi todas esas políticas llaman a `current_rol()`, y `20260824020537` le revocó a `anon` el permiso de ejecutarla, así que PostgreSQL corta con 42501 antes de que RLS llegue a decidir. Antes devolvía cero filas; ahora devuelve un error.
+
+El defecto de la prueba se sumaba al de la medición: `filasVisibles()` consultaba con `head: true`, y una petición HEAD no trae cuerpo, así que el error llegaba con el mensaje vacío y era imposible distinguir un privilegio negado de una consulta rota.
+
+**Impacto.** Ninguno sobre lo que se puede ver, que es lo que importa: las dos formas niegan y ninguna devuelve una fila. Es un cambio de comportamiento en producción que nadie decidió: cuando estas migraciones se apliquen, una petición anónima al REST contra una tabla protegida va a responder 403 en lugar de una lista vacía. Hoy no rompe nada, porque la aplicación no consulta esas tablas sin sesión. Se registra porque es exactamente la clase de consecuencia que H-035 impedía ver, y porque conviene que sea una decisión y no una sorpresa el día del despliegue.
+
+**Verificación.** `nadaVisibleSinSesion()` en `supabase/tests/helpers.mts` acepta las dos formas de negar y sólo esas dos: cero filas, o el código 42501. Cualquier otro error sigue rompiendo la prueba con el mensaje y el código a la vista, para que un fallo de consulta no vuelva a pasar por una negación. Consulta sin `head` para que el mensaje llegue.
+
+**Lo que falta decidir.** Si se prefiere que `anon` siga recibiendo una lista vacía, la salida es devolverle el `execute` sobre `current_rol()`, que para una sesión sin identidad devuelve nulo y no revela nada. Es un renglón en una migración nueva. No lo hago por mi cuenta porque revierte una decisión deliberada de la migración de endurecimiento, y quien la escribió tiene que opinar.
+
 ---
 
 ## Cerrados
