@@ -1,19 +1,20 @@
 -- ============================================================================
--- FED-004A · Semilla sintética para el entorno local.
+-- FED-004A · Semilla sintética para entornos aislados de prueba.
 --
 -- Todo lo que hay aquí es inventado. Ni un solo dato viene de la operación de
 -- la doctora. Los correos usan el TLD reservado `.test` (RFC 2606), que no
 -- puede existir en internet, y todo paciente lleva el prefijo `PRUEBA` en el
 -- nombre para que sea imposible confundirlo con una persona real.
 --
--- Este archivo se ejecuta con `supabase db reset` sobre la base local. Nunca
--- se ejecuta contra el proyecto remoto: el guardia de abajo aborta si
--- encuentra cualquier rastro de datos que no sean sintéticos.
+-- Este archivo se ejecuta normalmente con `supabase db reset` sobre la base
+-- local. También puede cargarse en un proyecto remoto dedicado exclusivamente
+-- a pruebas, después de verificar su project ref fuera de esta transacción.
+-- El guardia de abajo aborta si encuentra rastros de datos no sintéticos.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- Guardia. Si esta base tiene una sola cuenta o un solo paciente que no sea de
--- prueba, no es local y la semilla se niega a escribir.
+-- prueba, no es un entorno aislado y la semilla se niega a escribir.
 -- ----------------------------------------------------------------------------
 do $$
 declare
@@ -24,14 +25,14 @@ begin
     from auth.users where email is null or email not like '%@fedra.test';
   if v_cuentas > 0 then
     raise exception
-      'FED-004A abortado: la base tiene % cuenta(s) fuera de @fedra.test. Esta semilla solo corre en local.', v_cuentas;
+      'FED-004A abortado: la base tiene % cuenta(s) fuera de @fedra.test. Esta semilla solo corre en entornos aislados.', v_cuentas;
   end if;
 
   select count(*) into v_pacientes
     from public.pacientes where coalesce(nombre, '') not like 'PRUEBA %';
   if v_pacientes > 0 then
     raise exception
-      'FED-004A abortado: la base tiene % paciente(s) que no son de prueba. Esta semilla solo corre en local.', v_pacientes;
+      'FED-004A abortado: la base tiene % paciente(s) que no son de prueba. Esta semilla solo corre en entornos aislados.', v_pacientes;
   end if;
 end $$;
 
