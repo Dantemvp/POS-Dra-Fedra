@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { API_URL, clienteAnonimo, sesion } from "./helpers.mjs";
 
@@ -534,5 +536,222 @@ describe("los huérfanos se ven", () => {
     const { data, error } = await clientes.farmacia.from("inbody_huerfanos").select("path");
     expect(error, "consultar no debe romperse; la vista se resuelve con sus permisos").toBeNull();
     expect(data ?? [], "farmacia enumeró objetos clínicos por la vista").toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. El retiro se retoma donde se haya cortado
+//
+// Los tres pasos del retiro son tres escrituras distintas y las dos junturas se
+// pueden cortar. Estas pruebas corren el script de verdad, con `node`, en vez
+// de imitar lo que hace: si el script cambia y deja de recuperarse, quien lo
+// nota es esta prueba y no la persona que estaba retirando un documento.
+// ---------------------------------------------------------------------------
+describe("el retiro se retoma donde se haya cortado", () => {
+  const MOTIVO = "Prueba sintetica de FED-014 sobre la recuperacion del retiro interrumpido";
+  const SCRIPT = fileURLToPath(new URL("../../scripts/retiro-clinico.mjs", import.meta.url));
+
+  function correrRetiro(ruta: string): { ok: boolean; salida: string } {
+    const args = [
+      SCRIPT,
+      "--path",
+      ruta,
+      "--motivo",
+      MOTIVO,
+      "--responsable",
+      "Dra. Fedra Aldama",
+      "--confirmo",
+    ];
+    try {
+      return { ok: true, salida: execFileSync(process.execPath, args, { encoding: "utf8" }) };
+    } catch (e) {
+      const err = e as { stdout?: string; stderr?: string };
+      return { ok: false, salida: `${err.stdout ?? ""}${err.stderr ?? ""}` };
+    }
+  }
+
+  /** Deja un estudio subido y registrado, listo para retirar. */
+  async function documentoParaRetirar(): Promise<string> {
+    const ruta = `inbody/${manifiesto.pacienteId}/${crypto.randomUUID()}.png`;
+    const { error: eUp } = await admin.storage
+      .from("archivos")
+      .upload(ruta, PNG_1X1, { contentType: "image/png" });
+    expect(eUp).toBeNull();
+    const { error: eDoc } = await admin
+      .from("documentos_clinicos")
+      .insert({ paciente_id: manifiesto.pacienteId, path: ruta, tipo: "inbody" });
+    expect(eDoc).toBeNull();
+    return ruta;
+  }
+
+  async function retiroDe(ruta: string) {
+    const { data } = await admin
+      .from("retiros_clinicos")
+      .select("id, path_cuarentena, movido_en")
+      .eq("path_original", ruta);
+    return data ?? [];
+  }
+
+  async function existeObjeto(ruta: string): Promise<boolean> {
+    const { data } = await admin.storage.from("archivos").download(ruta);
+    return data !== null && data !== undefined;
+  }
+
+  it("retira un documento de principio a fin", async () => {
+    const ruta = await documentoParaRetirar();
+
+    const corrida = correrRetiro(ruta);
+    expect(corrida.ok, `el script fallo:\n${corrida.salida}`).toBe(true);
+
+    const retiros = await retiroDe(ruta);
+    expect(retiros, "debe quedar exactamente un retiro").toHaveLength(1);
+    expect(retiros[0].movido_en, "el retiro quedo sin sellar").not.toBeNull();
+    expect(await existeObjeto(ruta), "el objeto sigue en su ruta original").toBe(false);
+    expect(
+      await existeObjeto(retiros[0].path_cuarentena as string),
+      "el objeto no llego a cuarentena",
+    ).toBe(true);
+  }, 60_000);
+
+  it("retoma el retiro que se cortó entre el registro y el movimiento", async () => {
+    const ruta = await documentoParaRetirar();
+    const id = crypto.randomUUID();
+    const destino = `cuarentena/${id}/interrumpido-antes.png`;
+    // El estado exacto en el que queda un proceso que murió después de escribir
+    // la bitácora y antes de tocar el bucket.
+    const { error } = await admin.from("retiros_clinicos").insert({
+      id,
+      path_original: ruta,
+      path_cuarentena: destino,
+      motivo: MOTIVO,
+      responsable: "Dra. Fedra Aldama",
+    });
+    expect(error).toBeNull();
+
+    const corrida = correrRetiro(ruta);
+    expect(corrida.ok, `el script no retomo el retiro:\n${corrida.salida}`).toBe(true);
+    expect(corrida.salida).toContain("retomando");
+
+    const retiros = await retiroDe(ruta);
+    expect(retiros, "abrio un retiro nuevo en vez de retomar el que habia").toHaveLength(1);
+    expect(retiros[0].id).toBe(id);
+    expect(retiros[0].movido_en).not.toBeNull();
+    expect(await existeObjeto(ruta)).toBe(false);
+    expect(await existeObjeto(destino), "no movio el objeto al destino ya registrado").toBe(true);
+  }, 60_000);
+
+  it("retoma el retiro que se cortó entre el movimiento y el sello", async () => {
+    const ruta = await documentoParaRetirar();
+    const id = crypto.randomUUID();
+    const destino = `cuarentena/${id}/interrumpido-despues.png`;
+    const { error } = await admin.from("retiros_clinicos").insert({
+      id,
+      path_original: ruta,
+      path_cuarentena: destino,
+      motivo: MOTIVO,
+      responsable: "Dra. Fedra Aldama",
+    });
+    expect(error).toBeNull();
+
+    // La interrupción exacta que pidió la revisión: el objeto YA se movió y el
+    // sello nunca llegó a escribirse. Antes de este arreglo el script se detenía
+    // en "no existe el objeto", porque preguntaba por los bytes antes de mirar
+    // la bitácora, y ese retiro se quedaba sin sellar para siempre.
+    const { error: eMover } = await admin.storage.from("archivos").move(ruta, destino);
+    expect(eMover).toBeNull();
+
+    const corrida = correrRetiro(ruta);
+    expect(corrida.ok, `el script no pudo sellar un retiro ya movido:\n${corrida.salida}`).toBe(true);
+    expect(corrida.salida).toContain("Sólo falta el sello");
+
+    const retiros = await retiroDe(ruta);
+    expect(retiros).toHaveLength(1);
+    expect(retiros[0].id).toBe(id);
+    expect(retiros[0].movido_en, "el sello no se puso").not.toBeNull();
+    expect(await existeObjeto(destino), "el objeto se movio de mas").toBe(true);
+  }, 60_000);
+
+  it("se detiene si hay objeto en los dos extremos", async () => {
+    const ruta = await documentoParaRetirar();
+    const id = crypto.randomUUID();
+    const destino = `cuarentena/${id}/ambiguo.png`;
+    await admin.from("retiros_clinicos").insert({
+      id,
+      path_original: ruta,
+      path_cuarentena: destino,
+      motivo: MOTIVO,
+      responsable: "Dra. Fedra Aldama",
+    });
+    // Una copia en el destino sin que el origen se haya retirado: el script no
+    // puede saber cuál de los dos es el bueno, y adivinar sería peor que parar.
+    await admin.storage.from("archivos").upload(destino, PNG_1X1, { contentType: "image/png" });
+
+    const corrida = correrRetiro(ruta);
+    expect(corrida.ok, "el script siguio adelante con un estado ambiguo").toBe(false);
+    expect(corrida.salida).toContain("a mano");
+
+    const retiros = await retiroDe(ruta);
+    expect(retiros[0].movido_en, "sello un retiro que no pudo completar").toBeNull();
+    expect(await existeObjeto(ruta), "borro el objeto original en un estado ambiguo").toBe(true);
+  }, 60_000);
+
+  it("no retira dos veces la misma ruta", async () => {
+    const ruta = await documentoParaRetirar();
+    expect(correrRetiro(ruta).ok).toBe(true);
+
+    const segunda = correrRetiro(ruta);
+    expect(segunda.ok, "el script acepto retirar dos veces el mismo documento").toBe(false);
+    expect(segunda.salida).toContain("ya se retiró");
+
+    expect(await retiroDe(ruta), "quedo mas de un retiro para la misma ruta").toHaveLength(1);
+  }, 60_000);
+
+  it("la base tampoco admite dos retiros de la misma ruta", async () => {
+    const ruta = `inbody/${manifiesto.pacienteId}/${crypto.randomUUID()}.png`;
+    const primero = crypto.randomUUID();
+    const segundo = crypto.randomUUID();
+
+    const uno = await admin.from("retiros_clinicos").insert({
+      id: primero,
+      path_original: ruta,
+      path_cuarentena: `cuarentena/${primero}/uno.png`,
+      motivo: MOTIVO,
+      responsable: "Dra. Fedra Aldama",
+    });
+    expect(uno.error).toBeNull();
+
+    // El script ya lo impide, pero el candado no puede vivir sólo en el script:
+    // dos filas para el mismo objeto serían dos motivos distintos para el mismo
+    // hecho, y ninguno de los dos sería la explicación.
+    const dos = await admin.from("retiros_clinicos").insert({
+      id: segundo,
+      path_original: ruta,
+      path_cuarentena: `cuarentena/${segundo}/dos.png`,
+      motivo: MOTIVO,
+      responsable: "Dra. Fedra Aldama",
+    });
+    expect(dos.error, "la base acepto dos retiros de la misma ruta").not.toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 7. Los privilegios de ejecución, vistos desde la API (H-035)
+//
+// `supabase/tests/privilegios-funciones.sql` los mide contra el catálogo. Esto
+// los mide por donde entra un extraño. Las dos pruebas van juntas a propósito:
+// sola, la primera pasaría también si la función no estuviera expuesta, que es
+// pasar por la razón equivocada.
+// ---------------------------------------------------------------------------
+describe("la llave anónima no ejecuta funciones privilegiadas", () => {
+  it("current_rol() le está negada", async () => {
+    const { data, error } = await clienteAnonimo().rpc("current_rol");
+    expect(error, "la llave anonima ejecuto current_rol()").not.toBeNull();
+    expect(data).toBeNull();
+  });
+
+  it("y una sesión con rol sí la ejecuta", async () => {
+    const { data, error } = await clientes.doctora.rpc("current_rol");
+    expect(error, "una sesion legitima no pudo ejecutar current_rol()").toBeNull();
+    expect(data).toBe("doctora");
   });
 });

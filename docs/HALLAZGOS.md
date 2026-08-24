@@ -456,12 +456,26 @@ Ticket: FED-014, con la parte de operación en FED-019
 Severidad: Verde
 Carril: F operación
 Encontró: Claude
-Estado: Abierto
-Ticket: pendiente de abrir
+Estado: En revisión
+Ticket: FED-014
 
 **Evidencia.** El paso "Diagnóstico y GRANT de los roles de la API" de `fed004a-rls.yml` corre después de las migraciones y ejecuta `grant all on all functions in schema public to anon, authenticated, service_role`. `20260824020537_harden_privileged_objects.sql` acaba de revocar `execute` a `anon` sobre `current_rol()`, `cancelar_cobro()`, `registrar_cobro()` y las demás, y ese GRANT se lo devuelve. Lo mismo ocurre con los `revoke` de FED-014.
 **Impacto.** No hay riesgo en producción: el GRANT vive sólo en el runner y la base real conserva lo que dicen las migraciones. El problema es de medición. Ninguna prueba puede demostrar hoy que una sesión anónima no ejecuta una función privilegiada, porque en el entorno donde corren las pruebas sí puede, y una prueba que lo afirmara pasaría o fallaría por una razón que no es la del código.
-**Verificación.** Acotar el GRANT a tablas y secuencias, que es lo que las pruebas de políticas necesitan de verdad, y dejar los privilegios de funciones tal como los dejan las migraciones. Después, una prueba que intente ejecutar `current_rol()` con la llave anónima y espere el rechazo.
+**Verificación.** El GRANT quedó acotado a tablas y secuencias, que es lo que las pruebas de políticas necesitan de verdad; los privilegios de funciones se quedan como los dejan las migraciones, porque PostgreSQL ya concede `execute` a PUBLIC en cada función nueva y lo que hace falta es que los `revoke` sobrevivan. Se mide de dos maneras. `supabase/tests/privilegios-funciones.sql` compara con `has_function_privilege` el estado real de `anon`, `authenticated` y `service_role` contra 35 expectativas declaradas, imprime la matriz completa aunque pase, y falla nombrando cada desviación; comprueba también que la firma exista, para que una función renombrada no haga pasar por buena una expectativa de "no puede". Y desde la API, una sesión anónima intenta ejecutar `current_rol()` y recibe el rechazo, con la prueba pareja al lado de una sesión con rol que sí la ejecuta, porque sola pasaría igual si la función no estuviera expuesta.
+
+De paso quedó decidido lo que era un resto: las funciones de disparador ahora también están revocadas para `service_role`. `20260824020537` declaró en su comentario que no son endpoints RPC y sólo las quitó de `public`, `anon` y `authenticated`. PostgreSQL no comprueba ese privilegio al disparar un trigger, así que la auditoría sigue escribiéndose igual, y eso lo miden por efecto las pruebas de `auditoria.test.mts`.
+
+### H-036 El retiro clínico no se podía retomar si se cortaba después de mover el objeto
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-014
+
+**Evidencia.** La primera versión de `scripts/retiro-clinico.mjs` comprobaba la existencia del objeto en su ruta original antes de mirar la bitácora, y moría con "no existe el objeto" si no lo encontraba. El retiro son tres escrituras: registrar, mover y sellar. Si el proceso se cortaba entre la segunda y la tercera, el objeto ya estaba en `cuarentena/` y su ruta original ya no tenía nada, así que volver a correr el comando se detenía antes de llegar al sello.
+**Impacto.** Ese retiro se quedaba sin sellar para siempre y no había forma de completarlo con el script. `movido_en` nulo es justamente la señal de "esto se interrumpió, revísalo", así que la consulta de retiros a medias habría reportado un problema que ya no lo era, y el operador no habría tenido más camino que escribir SQL a mano sobre una bitácora que el disparador protege.
+**Verificación.** El script ahora empieza por la bitácora y después resuelve el estado de los dos extremos. Con el objeto en el origen, mueve y sella. Con el objeto ya en cuarentena, sólo sella. Con objeto en los dos, o en ninguno, se detiene y pide revisión a mano en vez de adivinar. Las cuatro ramas están probadas ejecutando el script de verdad con `node` desde `documentos-clinicos-adversario.test.mts`, incluida la interrupción exacta entre `move()` y el sello. Y `path_original` pasó a ser único, así que la base tampoco admite dos retiros del mismo objeto, cosa que el script ya rechazaba por su cuenta.
 
 ---
 

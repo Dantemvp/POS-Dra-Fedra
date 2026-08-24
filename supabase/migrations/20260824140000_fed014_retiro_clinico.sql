@@ -32,7 +32,12 @@ create table if not exists public.retiros_clinicos (
   -- Puede ser nulo: un objeto huérfano, anterior a `documentos_clinicos`,
   -- también se puede retirar y su retiro también tiene que constar.
   documento_id    uuid references public.documentos_clinicos(id) on delete restrict,
-  path_original   text not null,
+  -- Único a propósito. Un documento se retira una vez: si hiciera falta
+  -- retirarlo otra vez es que el primer retiro no se completó, y entonces lo
+  -- que corresponde es retomar ese, no abrir uno nuevo. Dos filas para el
+  -- mismo objeto significarían dos motivos distintos para el mismo hecho, y
+  -- ninguno de los dos sería la explicación.
+  path_original   text not null unique,
   path_cuarentena text not null unique,
   -- Por qué se retiró, con palabras de quien lo autorizó. Un motivo de tres
   -- letras no es un motivo, y dentro de un año nadie va a recordar el caso.
@@ -124,7 +129,8 @@ begin
   return new;
 end $$;
 
-revoke execute on function public.fn_retiros_clinicos_inmutable() from public, anon, authenticated;
+revoke execute on function public.fn_retiros_clinicos_inmutable()
+  from public, anon, authenticated, service_role;
 
 drop trigger if exists retiros_clinicos_inmutable on public.retiros_clinicos;
 create trigger retiros_clinicos_inmutable

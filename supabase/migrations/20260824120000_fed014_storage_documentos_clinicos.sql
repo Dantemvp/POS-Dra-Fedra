@@ -124,6 +124,16 @@ $$;
 revoke execute on function public.existe_objeto_archivos(text) from public, anon;
 grant execute on function public.existe_objeto_archivos(text) to authenticated, service_role;
 
+-- Las funciones de disparador tampoco son endpoints para la llave de servicio.
+-- `20260824020537_harden_privileged_objects.sql` las revocó de `public`, `anon`
+-- y `authenticated` y declaró en su comentario que no son RPC. Dejó fuera a
+-- `service_role`, que en este esquema no las necesita: PostgreSQL no comprueba
+-- el privilegio de ejecución al disparar un trigger, así que la auditoría sigue
+-- escribiéndose igual. Se completa aquí para que sea una decisión y no un resto,
+-- y para que `supabase/tests/privilegios-funciones.sql` pueda afirmarlo.
+revoke execute on function public.fn_audit() from service_role;
+revoke execute on function public.handle_new_user() from service_role;
+
 -- ----------------------------------------------------------------------------
 -- 1. Tabla de documentos clínicos (H-017)
 --

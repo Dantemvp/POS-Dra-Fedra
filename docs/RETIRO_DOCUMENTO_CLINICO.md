@@ -45,7 +45,17 @@ Necesita `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` en el ambiente. Sin `--con
 
 El script registra el retiro **antes** de mover el objeto, y sella al final. El orden no es casual: si algo se corta a la mitad, lo que queda es un retiro sin sellar y visible, no un archivo desaparecido sin explicación.
 
-Volver a correr el mismo comando con la misma ruta retoma ese retiro en lugar de abrir otro. Si el objeto ya no está en su ruta original pero tampoco llegó a cuarentena, el script se detiene y pide revisión a mano: en ese punto ya no puede saber qué pasó y prefiere no inventar.
+Volver a correr el mismo comando con la misma ruta retoma ese retiro en lugar de abrir otro, y hace sólo lo que falte. El script no empieza preguntando por el archivo: empieza por la bitácora, y después mira en cuál de los dos extremos están los bytes. Son cuatro estados posibles y los cuatro están cubiertos.
+
+Si el objeto sigue en su ruta original, lo mueve y sella. Es el corte entre el registro y el movimiento.
+
+Si el objeto ya está en cuarentena, sólo sella. Es el corte entre el movimiento y el sello, y es el que costaba caro: preguntando primero por el archivo, el script moría con "no existe el objeto" y ese retiro se quedaba sin sellar para siempre.
+
+Si hay un objeto en los dos extremos, se detiene. En ese punto no puede saber cuál de los dos es el bueno, y adivinar sería peor que parar.
+
+Si no hay objeto en ninguno de los dos, también se detiene. El retiro sin sellar es entonces la evidencia de que ahí pasó algo, y es justo lo que hay que investigar.
+
+Un documento se retira una vez. Si ya existe un retiro sellado para esa ruta, el script se niega y dice cuál fue, y la base lo niega también porque `path_original` es único. Dos filas para el mismo objeto serían dos motivos distintos para el mismo hecho, y ninguno de los dos sería la explicación.
 
 Para encontrar retiros a medias:
 
