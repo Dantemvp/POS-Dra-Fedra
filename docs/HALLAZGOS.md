@@ -165,7 +165,7 @@ Ticket: FED-007
 Severidad: Rojo
 Carril: C pacientes
 Encontró: Claude
-Estado: Abierto
+Estado: En revisión
 Ticket: FED-014
 
 **Evidencia.** `supabase/migrations/20260529000010_storage_policies.sql` crea cuatro políticas sobre `storage.objects`, `archivos_select`, `archivos_insert`, `archivos_update` y `archivos_delete`. Las cuatro son `to authenticated using (bucket_id = 'archivos')` y ninguna distingue rol ni ruta. El bucket es privado según `20260529000009_archivos_productos.sql:8`, así que exige una sesión y nada más. Los estudios de InBody se suben desde el navegador con la llave anónima y la sesión del usuario a `inbody/{pacienteId}/{marca-de-tiempo}-{nombre}`, en `src/app/(app)/pacientes/[id]/ImportarInBody.tsx:57` y `src/app/(app)/recetas/NuevaReceta.tsx:112`. Los archivos de producto van a `{productoId}/{marca-de-tiempo}-{nombre}` en `src/app/(app)/inventario/[id]/Archivos.tsx:41`. La tabla de metadatos `producto_archivos` sí tiene políticas por rol en esa misma migración; los bytes en Storage no tienen ninguna. Con la sesión que ya abre la aplicación, un `list()` sobre el bucket enumera todo sin adivinar rutas, y `remove()` y `upload()` con sobrescritura alcanzan cualquier objeto.
@@ -178,7 +178,7 @@ Ticket: FED-014
 Severidad: Ámbar
 Carril: C pacientes
 Encontró: Claude
-Estado: Abierto
+Estado: En revisión
 Ticket: FED-014
 
 **Evidencia.** El estudio de InBody se sube a `inbody/{pacienteId}/{marca-de-tiempo}-{nombre}` desde `src/app/(app)/pacientes/[id]/ImportarInBody.tsx:57` y `src/app/(app)/recetas/NuevaReceta.tsx:112`, y esa ruta solo se usa en el momento para firmar la URL y para que `extraerInBody()` lea el archivo. Lo que se persiste después es `crearHistoria(pacienteId, inbodyTipoId, datos)` con los valores ya extraídos. La ruta nunca se guarda. La única tabla del esquema con columna `path` es `producto_archivos`, en `20260529000009_archivos_productos.sql:17`, y pertenece a productos. Ninguna fila de la base apunta a un objeto bajo `inbody/`.
@@ -390,6 +390,110 @@ Ticket: pendiente de abrir, requiere confirmación de Fedra
 **Evidencia.** `vercel.json` programa `/api/cron/resumen-dia` con `0 4 * * *`, que es UTC. Sinaloa es UTC-7 todo el año, así que el cron corre a las 21:00 hora local. La ventana que arma la ruta es correcta: `inicioDiaSinaloa()` devuelve el día de Sinaloa al que pertenece ese instante, comprobado sobre 400 días sin un solo desfase y con la frontera exacta en 07:00Z. El problema no es la ventana, es la hora a la que se mide: el resumen del día se calcula cuando al día le faltan tres horas.
 **Impacto.** Si la farmacia opera después de las 21:00, el aviso de cierre que reciben admin, doctora y gerente subestima el día, y esas ventas no aparecen en ninguna notificación. No corrompe ningún dato: el corte de caja y los reportes siguen siendo correctos, porque usan su propia frontera. Es un aviso que engaña, no una cifra mal guardada.
 **Verificación.** Depende de una regla de negocio que no está escrita: a qué hora cierra de verdad la farmacia. Si cierra antes de las 21:00, no hay nada que corregir y conviene dejarlo anotado. Si cierra después, el cron se mueve a una hora posterior al cierre real y se comprueba con una venta tardía que sí entra al resumen.
+
+### H-030 El preflight remoto aprobaba un `.env.local` hacia otro proyecto
+
+Severidad: Rojo
+Carril: F operación
+Encontró: Claude
+Estado: En revisión
+Ticket: FED-018
+
+**Evidencia.** El modo `--remoto` de `scripts/preflight-tester.mjs` comprueba `supabase/.temp/project-ref`, que gobierna al CLI, y degrada la existencia de archivos de entorno a simple aviso porque en el tester remoto son esperables. Nunca leía su contenido. Reproducido sobre `cf31fac`: con el vínculo apuntando a `mvevriyiyuurjmwileoh` y un `.env.local` declarando otro proyecto, y sin variables en la terminal, que es el caso normal de quien prueba, el preflight imprime "el destino comprobado es mvevriyiyuurjmwileoh, no producción" y sale con 0.
+**Impacto.** `next dev` no lee el `project-ref`: lee el `.env.local`. El CLI podía apuntar al tester mientras el navegador de quien prueba hablaba con otro proyecto, incluido el de la doctora, y la comprobación que existe justamente para impedirlo daba luz verde. Es peor que no tener preflight, porque afirma una garantía que no comprobó.
+**Verificación.** Los dos modos leen ahora el contenido de los archivos de entorno y comparan la URL declarada contra el destino permitido. Comprobado: el caso de arriba falla; el `.env.local` que apunta al tester aprueba; una URL comentada no cuenta; se toleran comillas y barra final; y el modo local conserva su regla más estricta, que es rechazar el archivo por existir.
+
+### H-031 `fn_audit()` quedó fuera del endurecimiento de `search_path`
+
+Severidad: Verde
+Carril: B permisos
+Encontró: Claude
+Estado: Abierto
+Ticket: pendiente de abrir
+
+**Evidencia.** `20260824020537_harden_privileged_objects.sql` fija `set search_path = ''` en `current_rol()` y `es_admin()`, y declara en su propio comentario que los helpers de autorización no deben aceptar un `search_path` controlable por el llamador. `fn_audit()`, creada en `20260529000002_rls_y_roles.sql:109`, sigue siendo `security definer` sin `search_path` fijo y resuelve `usuarios` y `audit_log` sin calificar. La migración sí le revocó `execute`, que era el otro riesgo.
+**Impacto.** Bajo y no explotable hoy: para aprovecharlo haría falta poder crear un esquema o una tabla que gane en la resolución, y `authenticated` no tiene ese permiso en este esquema. Se registra porque es la misma clase que la migración vino a cerrar y conviene que no quede una excepción sin explicar.
+**Verificación.** Recrear `fn_audit()` con `set search_path = ''` y los objetos calificados, y comprobar que los disparadores de auditoría siguen escribiendo, con las sondas de `supabase/tests/auditoria.test.mts` que ya miden por efecto.
+
+### H-032 `farmacia_producto_archivos` dejaba borrar metadatos a los roles lectores
+
+Severidad: Ámbar
+Carril: D farmacia
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-014
+
+**Evidencia.** La política era una sola `for all` con `using (current_rol() in ('farmacia','admin','doctora','asistente'))` y `with check (current_rol() in ('farmacia','admin'))`, desde `20260529000009_archivos_productos.sql:30`. En PostgreSQL, DELETE evalúa `using` y nunca `with check`: el `with check` sólo decide qué fila puede quedar escrita, y un DELETE no escribe ninguna. La primera versión de FED-014 conservó la forma y le añadió `gerente` al `using`, así que la amplió sin verlo.
+**Impacto.** Doctora, asistente y, con el cambio de FED-014, gerente podían borrar la fila de metadatos de un archivo de producto desde cualquier sesión, sin pasar por la aplicación. La fila borrada deja el objeto en el bucket sin nada que lo nombre, y con las políticas nuevas ese objeto sigue siendo alcanzable pero ya no aparece en ninguna pantalla. La misma trampa afectaba al `using` de UPDATE.
+**Verificación.** La política queda partida en cuatro: `select` para los cinco roles lectores, e `insert`, `update` y `delete` sólo para farmacia y admin. `supabase/tests/documentos-clinicos-adversario.test.mts` intenta el borrado, la modificación y el alta con cada uno de los tres roles lectores y comprueba el estado final con `service_role`, porque un DELETE negado por RLS no devuelve error: devuelve cero filas y se ve igual que uno que funcionó.
+
+### H-033 El alta de `documentos_clinicos` sólo comprobaba el rol
+
+Severidad: Rojo
+Carril: C pacientes
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-014
+
+**Evidencia.** La primera versión de la política de alta era `with check (current_rol() in ('admin','doctora','asistente'))` y nada más. La server action mandaba valores honestos, pero la frontera no es la server action: cualquiera con la llave anónima y una sesión válida escribe contra PostgREST el cuerpo que quiera. Con esa política pasaban una fila con `paciente_id` de A y ruta de B, una ruta de producto, una ruta inexistente, un `subido_por` con el uuid de otra persona y un `sustituye_a` apuntando al documento de otra paciente.
+**Impacto.** El rastro que H-017 vino a crear se podía escribir mal a propósito y quedaba firmado con el nombre de alguien más. Un expediente puede terminar señalando el estudio de otra paciente, y la bitácora no serviría para reconstruir nada porque su contenido lo eligió quien escribió.
+**Verificación.** Lo que no depende de quién escribe pasó a ser restricción de la tabla, así que también vale para la llave de servicio: una comprobación de que la ruta es exactamente `inbody/{paciente_id}/{archivo}`, y una llave foránea compuesta contra `(id, paciente_id)` que obliga a que una corrección sea de la misma paciente. Lo que sí depende de quién escribe se quedó en la política: rol, `subido_por = usuario_actual_id()` y existencia real del objeto en el bucket. Nueve mutantes en `documentos-clinicos-adversario.test.mts`, cada uno comprobando con `service_role` que no quedó fila.
+
+### H-034 Un estudio subido a la paciente equivocada no tenía salida
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Dante y Codex
+Estado: En revisión
+Ticket: FED-014, con la parte de operación en FED-019
+
+**Evidencia.** La regla "nadie borra ni sustituye un documento clínico" se implementa por ausencia de política de update y de delete sobre `inbody/`. Protege la evidencia, y deja sin atender el error de captura: si alguien sube el estudio de la paciente A al expediente de la B, ese archivo queda legible para admin, doctora, asistente y gerente para siempre. `sustituye_a` corrige el dato, no retira el archivo.
+**Impacto.** Deja de ser conservación de evidencia y pasa a ser una fuga de datos de una paciente hacia el expediente de otra, sostenida por una regla que se escribió para lo contrario. Con documentos reales adentro es también un problema de la NOM-004 y de datos personales, no sólo de higiene.
+**Verificación.** Retiro administrativo, no borrado: el objeto se mueve al prefijo `cuarentena/`, que no aparece en ninguna política del bucket y por lo tanto no lo alcanza ningún rol, ni siquiera admin. La fila de `documentos_clinicos` no se toca. Queda una bitácora en `retiros_clinicos` con motivo obligatorio de al menos veinte caracteres, responsable y sello, inmutable por disparador y no sólo por RLS, así que tampoco la reescribe la llave de servicio que la escribió. Lo ejecuta `scripts/retiro-clinico.mjs` a mano, fuera de la aplicación. Comprobado con los cinco roles y sin sesión, y con `service_role` como testigo de que el objeto sigue existiendo.
+
+### H-035 La integración continua vuelve a conceder lo que la migración de endurecimiento revoca
+
+Severidad: Verde
+Carril: F operación
+Encontró: Claude
+Estado: En revisión
+Ticket: FED-014
+
+**Evidencia.** El paso "Diagnóstico y GRANT de los roles de la API" de `fed004a-rls.yml` corre después de las migraciones y ejecuta `grant all on all functions in schema public to anon, authenticated, service_role`. `20260824020537_harden_privileged_objects.sql` acaba de revocar `execute` a `anon` sobre `current_rol()`, `cancelar_cobro()`, `registrar_cobro()` y las demás, y ese GRANT se lo devuelve. Lo mismo ocurre con los `revoke` de FED-014.
+**Impacto.** No hay riesgo en producción: el GRANT vive sólo en el runner y la base real conserva lo que dicen las migraciones. El problema es de medición. Ninguna prueba puede demostrar hoy que una sesión anónima no ejecuta una función privilegiada, porque en el entorno donde corren las pruebas sí puede, y una prueba que lo afirmara pasaría o fallaría por una razón que no es la del código.
+**Verificación.** El GRANT quedó acotado a tablas y secuencias, que es lo que las pruebas de políticas necesitan de verdad; los privilegios de funciones se quedan como los dejan las migraciones, porque PostgreSQL ya concede `execute` a PUBLIC en cada función nueva y lo que hace falta es que los `revoke` sobrevivan. Se mide de dos maneras. `supabase/tests/privilegios-funciones.sql` compara con `has_function_privilege` el estado real de `anon`, `authenticated` y `service_role` contra 35 expectativas declaradas, imprime la matriz completa aunque pase, y falla nombrando cada desviación; comprueba también que la firma exista, para que una función renombrada no haga pasar por buena una expectativa de "no puede". Y desde la API, una sesión anónima intenta ejecutar `current_rol()` y recibe el rechazo, con la prueba pareja al lado de una sesión con rol que sí la ejecuta, porque sola pasaría igual si la función no estuviera expuesta.
+
+De paso quedó decidido lo que era un resto: las funciones de disparador ahora también están revocadas para `service_role`. `20260824020537` declaró en su comentario que no son endpoints RPC y sólo las quitó de `public`, `anon` y `authenticated`. PostgreSQL no comprueba ese privilegio al disparar un trigger, así que la auditoría sigue escribiéndose igual, y eso lo miden por efecto las pruebas de `auditoria.test.mts`.
+
+### H-036 El retiro clínico no se podía retomar si se cortaba después de mover el objeto
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-014
+
+**Evidencia.** La primera versión de `scripts/retiro-clinico.mjs` comprobaba la existencia del objeto en su ruta original antes de mirar la bitácora, y moría con "no existe el objeto" si no lo encontraba. El retiro son tres escrituras: registrar, mover y sellar. Si el proceso se cortaba entre la segunda y la tercera, el objeto ya estaba en `cuarentena/` y su ruta original ya no tenía nada, así que volver a correr el comando se detenía antes de llegar al sello.
+**Impacto.** Ese retiro se quedaba sin sellar para siempre y no había forma de completarlo con el script. `movido_en` nulo es justamente la señal de "esto se interrumpió, revísalo", así que la consulta de retiros a medias habría reportado un problema que ya no lo era, y el operador no habría tenido más camino que escribir SQL a mano sobre una bitácora que el disparador protege.
+**Verificación.** El script ahora empieza por la bitácora y después resuelve el estado de los dos extremos. Con el objeto en el origen, mueve y sella. Con el objeto ya en cuarentena, sólo sella. Con objeto en los dos, o en ninguno, se detiene y pide revisión a mano en vez de adivinar. Las cuatro ramas están probadas ejecutando el script de verdad con `node` desde `documentos-clinicos-adversario.test.mts`, incluida la interrupción exacta entre `move()` y el sello. Y `path_original` pasó a ser único, así que la base tampoco admite dos retiros del mismo objeto, cosa que el script ya rechazaba por su cuenta.
+
+### H-037 Sin el GRANT de la integración continua, la base niega a `anon` de otra manera
+
+Severidad: Verde
+Carril: B permisos
+Encontró: Claude, al corregir H-035
+Estado: Abierto, con la decisión pendiente
+Ticket: pendiente de abrir
+
+**Evidencia.** Quitado el `grant all on all functions` del workflow, seis pruebas de `rls.test.mts` se pusieron rojas de golpe: `anónimo no lee pacientes`, `historias_clinicas`, `recetas`, `ventas`, `cobros` y `usuarios`. No es que la sesión anónima empezara a ver algo. Es que dejó de ver de otra forma. Casi todas esas políticas llaman a `current_rol()`, y `20260824020537` le revocó a `anon` el permiso de ejecutarla, así que PostgreSQL corta con 42501 antes de que RLS llegue a decidir. Antes devolvía cero filas; ahora devuelve un error.
+
+El defecto de la prueba se sumaba al de la medición: `filasVisibles()` consultaba con `head: true`, y una petición HEAD no trae cuerpo, así que el error llegaba con el mensaje vacío y era imposible distinguir un privilegio negado de una consulta rota.
+
+**Impacto.** Ninguno sobre lo que se puede ver, que es lo que importa: las dos formas niegan y ninguna devuelve una fila. Es un cambio de comportamiento en producción que nadie decidió: cuando estas migraciones se apliquen, una petición anónima al REST contra una tabla protegida va a responder 403 en lugar de una lista vacía. Hoy no rompe nada, porque la aplicación no consulta esas tablas sin sesión. Se registra porque es exactamente la clase de consecuencia que H-035 impedía ver, y porque conviene que sea una decisión y no una sorpresa el día del despliegue.
+
+**Verificación.** `nadaVisibleSinSesion()` en `supabase/tests/helpers.mts` acepta las dos formas de negar y sólo esas dos: cero filas, o el código 42501. Cualquier otro error sigue rompiendo la prueba con el mensaje y el código a la vista, para que un fallo de consulta no vuelva a pasar por una negación. Consulta sin `head` para que el mensaje llegue.
+
+**Lo que falta decidir.** Si se prefiere que `anon` siga recibiendo una lista vacía, la salida es devolverle el `execute` sobre `current_rol()`, que para una sesión sin identidad devuelve nulo y no revela nada. Es un renglón en una migración nueva. No lo hago por mi cuenta porque revierte una decisión deliberada de la migración de endurecimiento, y quien la escribió tiene que opinar.
 
 ---
 

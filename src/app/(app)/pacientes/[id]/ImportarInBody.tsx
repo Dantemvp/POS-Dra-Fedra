@@ -5,11 +5,12 @@ import { useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   extraerInBody,
+  registrarDocumentoClinico,
   crearHistoria,
   urlDocumento,
   type InBodyDatos,
 } from "../actions";
-import { validarArchivoInBody } from "@/lib/inbody";
+import { rutaInBody, validarArchivoInBody } from "@/lib/inbody";
 
 // clave de IA -> etiqueta legible + unidad
 const CAMPOS: [keyof InBodyDatos & string, string, string][] = [
@@ -45,6 +46,11 @@ export default function ImportarInBody({
   const [docUrl, setDocUrl] = useState<string | null>(null);
   const [valores, setValores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  // Ruta de una foto que ya está en el bucket y todavía no tiene fila. Mientras
+  // tenga valor, la pantalla ofrece reintentar el registro contra esa misma
+  // ruta. Es lo que impide que una subida a medias se quede callada: sin
+  // política de borrado sobre `inbody/`, ese objeto ya no lo retira nadie.
+  const [pendiente, setPendiente] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   async function onArchivo(e: React.ChangeEvent<HTMLInputElement>) {
@@ -57,10 +63,13 @@ export default function ImportarInBody({
       return;
     }
     setError(null);
+    setPendiente(null);
     setFase("procesando");
 
     const supabase = createClient();
-    const path = `inbody/${pacienteId}/${Date.now()}-${file.name}`;
+    // La ruta se calcula una sola vez y el reintento la reusa: el objeto no se
+    // sube dos veces y el vínculo con la paciente no se pierde.
+    const path = rutaInBody(pacienteId, file.type);
     const { error: upErr } = await supabase.storage
       .from("archivos")
       .upload(path, file);
@@ -70,6 +79,28 @@ export default function ImportarInBody({
       setFase("idle");
       return;
     }
+    await registrarYLeer(path);
+  }
+
+  // La fila que liga el objeto con la paciente se escribe dentro del mismo
+  // flujo que sube el archivo (FED-014). Si falla, la foto ya está guardada y
+  // lo único que falta es el registro, así que se ofrece reintentarlo en vez de
+  // dejar un estudio sin rastro, que es justo lo que H-017 vino a cerrar.
+  async function registrarYLeer(path: string) {
+    setError(null);
+    setFase("procesando");
+    const reg = await registrarDocumentoClinico(pacienteId, path);
+    if (!reg.ok) {
+      setPendiente(path);
+      setError(
+        `${reg.error ?? "No se pudo registrar el documento clínico."} ` +
+          "La foto ya quedó guardada: reintenta el registro, no la vuelvas a subir.",
+      );
+      setFase("idle");
+      return;
+    }
+    setPendiente(null);
+
     // URL firmada para mostrar la foto y poder cotejarla contra lo que leyó la IA.
     const doc = await urlDocumento(path);
     setDocUrl(doc.ok ? (doc.url ?? null) : null);
@@ -145,6 +176,15 @@ export default function ImportarInBody({
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
+      )}
+
+      {pendiente && fase === "idle" && (
+        <button
+          onClick={() => registrarYLeer(pendiente)}
+          className="mt-3 rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800"
+        >
+          Reintentar el registro
+        </button>
       )}
 
       {fase === "revision" && (

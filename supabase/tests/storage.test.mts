@@ -4,11 +4,17 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ANON_KEY, API_URL, clienteAnonimo, sesion } from "./helpers.mjs";
 
 // Las pruebas marcadas con `it.fails` NO están saltadas: se ejecutan y afirman
-// lo que el contrato exige. Hoy fallan porque el sistema todavía concede de
-// más, y por eso `it.fails` las da por buenas. El día que FED-014 cierre el
-// hueco, la prueba empezará a pasar, `it.fails` se pondrá roja, y alguien
-// tendrá que venir a convertirla en un `it` normal. Es la forma de dejar un
-// hallazgo abierto ejecutándose en vez de comentado.
+// lo que el contrato exige. Fallan mientras el sistema concede de más, y por
+// eso `it.fails` las da por buenas. Cuando el hueco se cierra, la prueba
+// empieza a pasar, `it.fails` se pone roja, y alguien tiene que venir a
+// convertirla en un `it` normal. Es la forma de dejar un hallazgo abierto
+// ejecutándose en vez de comentado.
+//
+// Las cuatro de H-016 ya hicieron ese recorrido: FED-014 cerró el bucket por
+// ruta y rol, así que aquí son `it` normales. El detalle del contrato nuevo,
+// incluida la regla de que nadie sustituye ni borra, vive en
+// `documentos-clinicos.test.mts`. La de H-013 sigue en `it.fails` porque el
+// alta pública la cierra FED-009, que ejecuta Dante.
 
 const manifiesto = JSON.parse(
   readFileSync(new URL("./manifiesto-storage.json", import.meta.url), "utf8"),
@@ -64,25 +70,25 @@ describe("la doctora sí trabaja con el documento", () => {
   });
 });
 
-describe("H-016 · el contrato que hoy no se cumple", () => {
-  it.fails("farmacia NO debería enumerar documentos clínicos", async () => {
+describe("H-016 · el contrato, ya cumplido por FED-014", () => {
+  it("farmacia NO enumera documentos clínicos", async () => {
     const { data } = await farmacia.storage.from("archivos").list(`inbody/${manifiesto.pacienteId}`);
     expect(data ?? [], "farmacia enumera el expediente y no debería").toHaveLength(0);
   });
 
-  it.fails("farmacia NO debería descargar un estudio de una paciente", async () => {
+  it("farmacia NO descarga un estudio de una paciente", async () => {
     const { data } = await farmacia.storage.from("archivos").download(manifiesto.rutaClinica);
     expect(data, "farmacia se baja el estudio y no debería").toBeNull();
   });
 
-  it.fails("farmacia NO debería firmar una URL de un documento clínico", async () => {
+  it("farmacia NO firma una URL de un documento clínico", async () => {
     const { data } = await farmacia.storage
       .from("archivos")
       .createSignedUrl(manifiesto.rutaClinica, 60);
     expect(data?.signedUrl, "farmacia firma acceso al expediente y no debería").toBeFalsy();
   });
 
-  it.fails("nadie NO debería poder borrar un documento clínico", async () => {
+  it("nadie puede borrar un documento clínico", async () => {
     // Se usa un objeto desechable para no romper las demás pruebas si el
     // borrado sí ocurre, que es justamente lo que pasa hoy.
     const ruta = `inbody/${manifiesto.pacienteId}/desechable-${Date.now()}.png`;

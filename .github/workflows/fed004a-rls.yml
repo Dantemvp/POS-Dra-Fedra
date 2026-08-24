@@ -136,9 +136,20 @@ jobs:
           # Sin este GRANT cada consulta fallaría por permiso de tabla, y las
           # pruebas de políticas pasarían sin evaluar una sola política.
           # Restringir sigue siendo trabajo de RLS, que está activo en todas.
-          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c "grant usage on schema public to anon, authenticated, service_role; grant all on all tables in schema public to anon, authenticated, service_role; grant all on all sequences in schema public to anon, authenticated, service_role; grant all on all functions in schema public to anon, authenticated, service_role;"
+          #
+          # Las FUNCIONES quedan deliberadamente fuera de este GRANT. Antes se
+          # incluían, y eso le devolvía a `anon` el `execute` que la migración de
+          # endurecimiento acababa de quitarle: la corrida terminaba en verde
+          # afirmando una protección que en ese mismo entorno no existía. Es
+          # H-035. PostgreSQL ya concede `execute` a PUBLIC en cada función nueva,
+          # así que lo que las pruebas necesitan lo tienen, y lo que las
+          # migraciones revocan se queda revocado.
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c "grant usage on schema public to anon, authenticated, service_role; grant all on all tables in schema public to anon, authenticated, service_role; grant all on all sequences in schema public to anon, authenticated, service_role;"
           echo "Privilegios DESPUÉS:"
           psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c "$consulta"
+
+      - name: Privilegios de ejecución de funciones
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/privilegios-funciones.sql
 
       - name: Subir objetos sintéticos al bucket privado
         run: node supabase/tests/preparar-storage.mjs

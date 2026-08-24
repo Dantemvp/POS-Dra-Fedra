@@ -5,6 +5,7 @@ import {
   INBODY_OPENAI_MODEL,
   INBODY_TEXT_KEYS,
   parsearRespuestaInBody,
+  rutaInBody,
   validarArchivoInBody,
 } from "./inbody";
 
@@ -72,5 +73,46 @@ describe("parsearRespuestaInBody", () => {
       ...Object.fromEntries(INBODY_TEXT_KEYS.map((key) => [key, null])),
     });
     expect(parsearRespuestaInBody(vacia).ok).toBe(false);
+  });
+});
+
+// La forma de esta ruta no es cosmética: `documentos_clinicos` tiene una
+// restricción que exige exactamente `inbody/{paciente_id}/{archivo}`, y la
+// política de alta del bucket rechaza cualquier otra. Una ruta mal armada no
+// falla al subir, falla al registrar, y para entonces el objeto ya está
+// guardado donde nadie lo puede borrar.
+describe("ruta de un estudio dentro del bucket", () => {
+  const paciente = "27e8af7e-5565-4791-b714-70ed415e0242";
+
+  it("arma exactamente tres segmentos bajo inbody", () => {
+    const partes = rutaInBody(paciente, "image/jpeg").split("/");
+    expect(partes).toHaveLength(3);
+    expect(partes[0]).toBe("inbody");
+    expect(partes[1]).toBe(paciente);
+    expect(partes[2]).not.toBe("");
+  });
+
+  it("traduce el tipo del archivo a una extensión conocida", () => {
+    expect(rutaInBody(paciente, "image/jpeg").endsWith(".jpg")).toBe(true);
+    expect(rutaInBody(paciente, "image/png").endsWith(".png")).toBe(true);
+    expect(rutaInBody(paciente, "image/webp").endsWith(".webp")).toBe(true);
+    expect(rutaInBody(paciente, "image/gif").endsWith(".gif")).toBe(true);
+  });
+
+  it("no repite la ruta entre dos capturas seguidas", () => {
+    // Con una marca de tiempo, dos capturas en el mismo milisegundo desde dos
+    // pestañas colisionaban contra la unicidad de `path`.
+    const rutas = new Set(
+      Array.from({ length: 50 }, () => rutaInBody(paciente, "image/png")),
+    );
+    expect(rutas.size).toBe(50);
+  });
+
+  it("no deja que el nombre del archivo entre a la ruta", () => {
+    // Un nombre con diagonal metería un cuarto segmento y volvería la ruta
+    // irregistrable. El nombre lo pone el sistema, no quien sube.
+    const ruta = rutaInBody(paciente, "image/png");
+    expect(ruta.split("/")).toHaveLength(3);
+    expect(ruta).not.toContain(" ");
   });
 });

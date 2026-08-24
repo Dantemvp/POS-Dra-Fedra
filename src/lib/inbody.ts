@@ -36,6 +36,35 @@ export const INBODY_OPENAI_MODEL = "gpt-4o-2024-08-06";
 
 export type ArchivoInBody = { type: string; size: number };
 
+const EXTENSION_POR_MIME: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+
+// Ruta de un estudio dentro del bucket `archivos`.
+//
+// La forma es exactamente `inbody/{paciente}/{archivo}` porque así lo exige la
+// restricción de `documentos_clinicos` desde FED-014, y la política de alta del
+// bucket rechaza cualquier otra cosa. Tres decisiones que no son de estilo:
+//
+//   el nombre lo pone el sistema y no la persona. Un archivo llamado
+//   "INBODY (2)/final.jpg" metería una diagonal de más y volvería la ruta
+//   irregistrable, y un nombre de archivo es dato de quien sube;
+//
+//   lleva un uuid y no una marca de tiempo, porque dos capturas en el mismo
+//   milisegundo desde dos pestañas colisionarían y la segunda chocaría contra
+//   la unicidad de `path`;
+//
+//   se calcula UNA vez por intento y se conserva. El registro que falló se
+//   reintenta contra la misma ruta, y por eso el reintento no duplica el objeto
+//   ni pierde el vínculo con la paciente.
+export function rutaInBody(pacienteId: string, mime: string): string {
+  const extension = EXTENSION_POR_MIME[mime] ?? "bin";
+  return `inbody/${pacienteId}/${crypto.randomUUID()}.${extension}`;
+}
+
 export function validarArchivoInBody(
   archivo: ArchivoInBody,
 ): { ok: true } | { ok: false; error: string } {

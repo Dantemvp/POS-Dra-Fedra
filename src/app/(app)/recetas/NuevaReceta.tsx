@@ -4,10 +4,13 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { crearReceta, ultimoInBody, type ItemReceta } from "./actions";
 import ComboBuscador from "@/components/ComboBuscador";
-import { extraerInBody } from "../pacientes/actions";
+import {
+  extraerInBody,
+  registrarDocumentoClinico,
+} from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fechaSinaloa } from "@/lib/tz";
-import { validarArchivoInBody } from "@/lib/inbody";
+import { rutaInBody, validarArchivoInBody } from "@/lib/inbody";
 
 // InBody guardado (claves legibles) -> métricas de la receta
 function mapInBodyGuardado(d: Record<string, unknown>): Record<string, string> {
@@ -77,6 +80,8 @@ export default function NuevaReceta({
   const [metricas, setMetricas] = useState<Record<string, string>>({});
   const [inbodyMsg, setInbodyMsg] = useState<string | null>(null);
   const [inbodyLoading, setInbodyLoading] = useState(false);
+  // Ruta ya subida que todavía no tiene fila en documentos_clinicos.
+  const [inbodyPendiente, setInbodyPendiente] = useState<string | null>(null);
   const inbodyInputRef = useRef<HTMLInputElement>(null);
 
   function cargarUltimoInBody() {
@@ -114,9 +119,12 @@ export default function NuevaReceta({
       return;
     }
     setInbodyMsg(null);
+    setInbodyPendiente(null);
     setInbodyLoading(true);
     const supabase = createClient();
-    const path = `inbody/${pacienteId}/${Date.now()}-${file.name}`;
+    // Una sola ruta por intento, para que el reintento del registro no suba el
+    // objeto otra vez. Ver `rutaInBody` en `src/lib/inbody.ts`.
+    const path = rutaInBody(pacienteId, file.type);
     const { error: upErr } = await supabase.storage
       .from("archivos")
       .upload(path, file);
@@ -126,6 +134,26 @@ export default function NuevaReceta({
       setInbodyLoading(false);
       return;
     }
+    await registrarYLeerInBody(pacienteId, path);
+  }
+
+  // Misma regla que en la ficha de la paciente: el rastro se escribe dentro del
+  // flujo que sube el archivo, no después. Y si el registro falla, la foto ya
+  // está en el bucket y nadie puede retirarla, así que se ofrece reintentar el
+  // registro en lugar de dejarla huérfana en silencio.
+  async function registrarYLeerInBody(paciente: string, path: string) {
+    setInbodyLoading(true);
+    const reg = await registrarDocumentoClinico(paciente, path);
+    if (!reg.ok) {
+      setInbodyPendiente(path);
+      setInbodyMsg(
+        `${reg.error ?? "No se pudo registrar el documento clínico."} ` +
+          "La foto ya quedó guardada: reintenta el registro, no la vuelvas a subir.",
+      );
+      setInbodyLoading(false);
+      return;
+    }
+    setInbodyPendiente(null);
     const res = await extraerInBody(path);
     setInbodyLoading(false);
     if (!res.ok || !res.datos) {
@@ -230,6 +258,15 @@ export default function NuevaReceta({
           </label>
         </div>
         {inbodyMsg && <p className="mb-2 text-xs text-zinc-500">{inbodyMsg}</p>}
+        {inbodyPendiente && !inbodyLoading && (
+          <button
+            type="button"
+            onClick={() => registrarYLeerInBody(pacienteId, inbodyPendiente)}
+            className="mb-2 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
+          >
+            Reintentar el registro
+          </button>
+        )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {METRICAS.map(([key, label]) => (
             <div key={key}>
