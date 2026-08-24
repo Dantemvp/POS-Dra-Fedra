@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { planificarPaginas } from "@/lib/paginacion-documento";
 
 // Carta en puntos
 const PAGE_W = 612;
@@ -49,17 +50,27 @@ export default function PrintButton({ filename = "historia-clinica" }: { filenam
     // Escala: el ancho capturado mapea a CONTENT_W puntos
     const pxPerPt = canvas.width / CONTENT_W; // px de canvas por punto
     const sliceHpx = CONTENT_H * pxPerPt; // alto de cada página en px de canvas
-    const paginas = Math.max(1, Math.ceil(canvas.height / sliceHpx));
+    const bodyRect = body.getBoundingClientRect();
+    const escalaCaptura = bodyRect.height > 0 ? canvas.height / bodyRect.height : 1;
+    const rangosProtegidos = Array.from(
+      body.querySelectorAll<HTMLElement>("[data-pdf-block]"),
+    ).map((elemento) => {
+      const rect = elemento.getBoundingClientRect();
+      return {
+        inicio: (rect.top - bodyRect.top) * escalaCaptura,
+        fin: (rect.bottom - bodyRect.top) * escalaCaptura,
+      };
+    });
+    const paginas = planificarPaginas(canvas.height, sliceHpx, rangosProtegidos);
 
     const pdf = new jsPDF({ unit: "pt", format: "letter" });
 
-    for (let p = 0; p < paginas; p++) {
+    for (let p = 0; p < paginas.length; p++) {
       if (p > 0) pdf.addPage();
       // 1) Membrete completo de la hoja
       pdf.addImage(membrete, "PNG", 0, 0, PAGE_W, PAGE_H);
       // 2) Porción del contenido recortada a una hoja
-      const sy = p * sliceHpx;
-      const hpx = Math.min(sliceHpx, canvas.height - sy);
+      const { inicio: sy, alto: hpx } = paginas[p];
       const slice = document.createElement("canvas");
       slice.width = canvas.width;
       slice.height = hpx;
