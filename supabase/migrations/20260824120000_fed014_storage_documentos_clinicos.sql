@@ -101,7 +101,15 @@ create trigger audit_documentos_clinicos
 -- `split_part` sobre `inbody/...` devuelve `inbody`, que simplemente no empata
 -- con ningún id: la comparación es entre textos y no puede reventar por un cast.
 -- ----------------------------------------------------------------------------
-create or replace function public.es_objeto_de_producto(nombre text)
+-- El parametro se llama `p_ruta` y no `ruta` ni `nombre` por una razon que ya
+-- costo una corrida de integracion continua: `public.productos` tiene una
+-- columna `nombre`, y dentro del `from` de esta consulta una referencia
+-- desnuda a `nombre` la resuelve PostgreSQL contra la COLUMNA, no contra el
+-- parametro. La comparacion quedaba "el uuid del producto contra su propio
+-- nombre", siempre falsa, y ninguna ruta de producto era alcanzable. Es el
+-- mismo gotcha de ambiguedad que `CLAUDE.md` ya documenta para las RPC con
+-- RETURNING, y por eso el resto del repositorio usa el prefijo `p_`.
+create or replace function public.es_objeto_de_producto(p_ruta text)
 returns boolean
 language sql
 stable
@@ -111,7 +119,7 @@ as $$
   select exists (
     select 1
     from public.productos p
-    where p.id::text = split_part(nombre, '/', 1)
+    where p.id::text = split_part(p_ruta, '/', 1)
   );
 $$;
 
