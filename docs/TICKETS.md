@@ -279,7 +279,7 @@ Segundo proyecto de Supabase en la nube para que cualquier preview funcional use
 
 Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
 Autor: Codex · Revisor: Claude · Autoriza: Dante
-Estado: por abrir. **Bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
+Estado: en implementación por Codex. **Bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
 
 **Por qué es bloqueante.** FED-014 dejó el mecanismo: el objeto se puede sacar de circulación sin destruirlo y el retiro queda registrado y es inmutable. Lo que no dejó es la operación alrededor, y sin ella el mecanismo existe pero nadie sabe cuándo usarlo. Mientras los documentos sean sintéticos eso no cuesta nada. En el momento en que entre el primer InBody real, un error de captura se vuelve un dato clínico de una paciente dentro del expediente de otra, y ahí ya no hay ensayo.
 

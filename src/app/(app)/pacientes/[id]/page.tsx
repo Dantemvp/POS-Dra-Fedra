@@ -8,6 +8,11 @@ import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
 import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
 import ReviewGoogle from "./ReviewGoogle";
+import DocumentosClinicos from "./DocumentosClinicos";
+import {
+  estadoDocumentoClinico,
+  type RetiroClinico,
+} from "@/lib/documentos-clinicos";
 
 export const maxDuration = 120;
 
@@ -79,6 +84,8 @@ export default async function PacienteDetalle({
   const supabase = await createClient();
   const usuario = await getUsuarioActual();
   const esAdmin = usuario?.rol === "admin";
+  const puedeAdoptar = ["admin", "doctora", "asistente"].includes(usuario?.rol ?? "");
+  const puedeVerRetiros = usuario?.rol === "admin" || usuario?.rol === "doctora";
 
   const { data: paciente } = await supabase
     .from("pacientes")
@@ -121,6 +128,39 @@ export default async function PacienteDetalle({
     .order("fecha", { ascending: false });
 
   const historias = (histData ?? []) as unknown as Historia[];
+
+  const { data: documentosData } = await supabase
+    .from("documentos_clinicos")
+    .select("id, path, tipo, creado_en")
+    .eq("paciente_id", id)
+    .order("creado_en", { ascending: false });
+
+  const pathsDocumentos = (documentosData ?? []).map((d) => d.path);
+  const { data: retirosData } = puedeVerRetiros && pathsDocumentos.length > 0
+    ? await supabase
+        .from("retiros_clinicos")
+        .select("documento_id, path_original, motivo, responsable, solicitado_en, movido_en")
+        .in("path_original", pathsDocumentos)
+    : { data: [] };
+
+  const retiros = (retirosData ?? []) as RetiroClinico[];
+  const documentos = await Promise.all(
+    (documentosData ?? []).map(async (documento) => {
+      const estado = estadoDocumentoClinico(documento, retiros);
+      let url: string | null = null;
+      if (estado.estado === "activo") {
+        const firmada = await supabase.storage.from("archivos").createSignedUrl(documento.path, 300);
+        url = firmada.data?.signedUrl ?? null;
+      }
+      return { ...documento, url, estado };
+    }),
+  );
+
+  const { data: huerfanosData } = await supabase
+    .from("inbody_huerfanos")
+    .select("path, created_at")
+    .eq("paciente_id", id)
+    .order("created_at", { ascending: false });
 
   // Fase actual del tratamiento (de la última receta).
   const { data: ultRecetaArr } = await supabase
@@ -209,6 +249,13 @@ export default async function PacienteDetalle({
       <ImportarInBody
         pacienteId={p.id}
         inbodyTipoId={tipos.find((t) => t.nombre === "InBody")?.id ?? null}
+      />
+
+      <DocumentosClinicos
+        pacienteId={p.id}
+        documentos={documentos}
+        huerfanos={huerfanosData ?? []}
+        puedeAdoptar={puedeAdoptar}
       />
 
       <NuevaHistoria pacienteId={p.id} tipos={tipos} />
