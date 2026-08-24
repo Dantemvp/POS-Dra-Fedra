@@ -26,6 +26,24 @@ Estado: primera revisión de Codex con cambios solicitados, corregidos en un seg
 
 Esta sección conserva los contratos por identificador y por momento de registro; no se ejecuta de arriba abajo. El orden operativo vigente es: consolidar la rama canónica, FED-009, FED-004A, FED-014, rediseñar FED-006 y FED-007, FED-008, FED-010 y después FED-011. FED-013 se ejecuta en una ventana controlada con acceso a Vercel. FED-003 y FED-004B requieren autorización específica para credenciales o recursos remotos.
 
+### FED-018 Aceptación del tester y guardas anti-producción
+
+Modo: Auditoría y remediación · Riesgo: Ámbar · Carril: F operación
+Autor: Claude · Revisor: Codex
+Estado: implementado sobre `bf9ab03`, pendiente de revisión de Codex; cierra H-027 y H-028, abre H-029
+
+**Objetivo.** Que el tester tenga un contrato de aceptación escrito y que ninguna prueba, script o procedimiento pueda alcanzar el Supabase de la doctora.
+
+**Qué incluye.** `scripts/guardia-supabase.mjs` como única definición de "esta URL es local", consumida por `helpers.mts` y `preparar-storage.mjs`. `scripts/check-guardia.mjs` con 28 casos adversarios, en la integración continua. `scripts/preflight-tester.mjs`, que lleva a la máquina del tester el preflight que hoy sólo vive dentro de `fed004a-rls.yml`. El alias `@` en `vitest.config.mts` y diez pruebas de `src/lib/push.ts`. `docs/MATRIZ_ACEPTACION_TESTER.md` y `docs/AUDITORIA_MIGRACION_POS.md`.
+
+**Fuera de alcance.** `package.json`, que sigue reservado a FED-002, así que no se agregaron scripts de npm y los verificadores se invocan con `node`. Ninguna migración, ningún cambio en `supabase/migrations/`, ninguna credencial, ningún despliegue y ninguna corrección de los hallazgos rojos abiertos.
+
+**Invariantes.** La guarda falla cerrado: rechazar un local legítimo estorba, aceptar un remoto toca un expediente. Sólo las desviaciones permisivas son fatales.
+
+**Verificación hecha.** Toda prueba nueva se sometió a mutación y se documentó cuál mutante mata cada una. La primera versión de la prueba del filtro de `auth_uid` nulo sobrevivió a su mutante y se corrigió.
+
+**Plan de reversa.** Tres commits en rama propia. Revertirlos deja `bf9ab03` intacto: los archivos nuevos se quitan y los dos puntos de entrada vuelven a su expresión copiada, que hoy es correcta.
+
 ### FED-012 Versionado y reversa verificable
 
 Modo: Remediación · Riesgo: Ámbar · Carril: F operación
