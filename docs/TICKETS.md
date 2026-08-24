@@ -101,6 +101,23 @@ Estado: implementación en revisión; corrige H-018 y contiene H-019 con bloqueo
 **Pruebas requeridas.** Pruebas unitarias del planificador y prueba visual pendiente en Chromium de historias sintéticas de una, dos y tres hojas. Para receta: casos de uno, cinco y diez medicamentos, indicaciones multilínea, nombre largo y código de barras legible.
 
 **Plan de reversa.** Revertir el commit restaura los cortes fijos anteriores. No cambia datos ni archivos clínicos almacenados.
+### FED-016 Validación estricta de la lectura InBody
+
+Modo: Remediación · Riesgo: Rojo · Carril: E integraciones
+Autor: Codex · Revisor: Claude
+Estado: implementación en revisión, cierra la parte estructural de H-020; prueba integrada pendiente de FED-004A y FED-014
+
+**Objetivo.** Impedir que un archivo incompatible, una respuesta libre de la IA o una corroboración fallida se trate como una extracción clínica válida.
+
+**Qué incluye.** Lista cerrada de formatos, máximo operativo de 10 MiB en cliente y servidor, timeout de 45 segundos, Structured Outputs con esquema estricto, validación local independiente del proveedor y fallo de toda la operación si la segunda lectura no concluye. No se fijan rangos médicos para las métricas sin que Fedra los confirme.
+
+**Archivos permitidos.** El módulo puro `src/lib/inbody.ts`, sus pruebas y los dos flujos existentes de carga y extracción. La tabla y bitácora de documentos siguen perteneciendo a FED-014.
+
+**Invariantes.** La doctora siempre revisa los datos contra la imagen antes de guardarlos. Ningún objeto, arreglo, clave desconocida, número negativo o no finito entra como medición. Un fallo no borra el archivo clínico; FED-014 conserva y registra su estado.
+
+**Pruebas requeridas.** JSON inválido, arreglo, campos desconocidos, tipos incorrectos, valores negativos y no finitos, respuesta vacía, formatos no admitidos, archivo vacío y mayor de 10 MiB. Después de FED-004A y FED-014: éxito de dos pasadas, timeout, error en segunda pasada y vínculo entre imagen, extracción y revisión humana.
+
+**Plan de reversa.** Revertir el commit restaura el modo JSON anterior y elimina límites y timeout. No cambia datos ni migraciones, pero reabre H-020.
 
 ### FED-002 Línea base de integración continua y pruebas puras
 

@@ -232,6 +232,17 @@ Ticket: FED-015
 **Evidencia.** La receta y la historia usaban `new Date(fecha).toLocaleDateString("es-MX")` sin declarar zona horaria. Vercel opera en UTC, mientras la clínica usa `America/Mazatlan`. Un documento creado entre las 00:00 y las 06:59 UTC pertenece todavía al día anterior en Sinaloa.
 **Impacto.** Una receta o historia podía imprimir una fecha distinta del día clínico real, y esa misma fecha equivocada alimentaba el cálculo histórico de edad.
 **Verificación.** FED-015 usa `fechaSinaloa()` para mostrar ambos documentos y `ymdSinaloa()` como referencia del cálculo de edad. La prueba cubre los dos lados de la frontera de las 07:00 UTC.
+### H-020 La extracción de InBody acepta respuestas y archivos sin contrato estricto
+
+Severidad: Rojo
+Carril: E integraciones
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-016
+
+**Evidencia.** `extraerInBody()` usaba el modo antiguo `json_object`, aplicaba `JSON.parse()` y afirmaba el resultado como `InBodyDatos` sin validar claves, tipos ni que existiera una sola medición. Aceptaba cualquier tipo descargado del bucket, cuyo límite general es 50 MiB, lo convertía completo a base64 y hacía dos solicitudes sin timeout. Si la segunda corroboración fallaba, devolvía silenciosamente la primera extracción como éxito.
+**Impacto.** Un resultado con tipos inesperados o sin mediciones podía llegar a revisión y terminar guardado como historia clínica. Un archivo incompatible o excesivo podía consumir memoria y costo antes de fallar. La caída de la verificación secundaria reducía la confiabilidad sin avisar a la doctora.
+**Verificación.** FED-016 usa Structured Outputs con esquema estricto, vuelve a validar la respuesta dentro de la aplicación, rechaza claves y tipos inesperados, exige al menos un dato, limita formatos a JPG, PNG, WEBP y GIF, limita cada imagen a 10 MiB y corta cada solicitud después de 45 segundos. Si la segunda revisión falla, la operación completa falla. Queda pendiente probar el flujo con imágenes sintéticas y una clave de pruebas, nunca con expedientes reales.
 
 
 ### H-012 La RPC de cobros confía cantidades y precios del cliente
