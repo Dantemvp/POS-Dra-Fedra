@@ -64,7 +64,7 @@ Identificar el despliegue inmutable que atiende `sistema-fedra.vercel.app`, su c
 
 Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
 Autor: Claude · Revisor: Codex · Autoriza: Dante
-Estado: implementado sobre `cf31fac` en `claude/FED-014-storage-documentos`, pendiente de revisión de Codex; cierra H-016 y H-017
+Estado: implementado sobre `cf31fac` en `claude/FED-014-storage-documentos`, segunda vuelta tras la revisión de Codex, pendiente de su revisión final; cierra H-016, H-017, H-032, H-033 y H-034, y abre FED-019
 
 **Cambio de diseño respecto al plan original, y por qué.** El plan decía resolver las rutas de producto con un `exists` contra `producto_archivos.path`. No funciona para el alta: la aplicación sube el objeto primero y crea la fila después, en `src/app/(app)/inventario/[id]/Archivos.tsx`, así que una política de insert que exigiera la fila bloquearía toda subida legítima. Además dejaría inalcanzable cualquier objeto cuya fila no se llegó a crear, que es justo el huérfano que este ticket viene a evitar. Se resuelve por el primer segmento de la ruta contra `productos`, con la función `es_objeto_de_producto()`, que sirve igual para las cuatro operaciones y es lo único que cambia cuando el paso dos mueva los objetos a `productos/{id}/...`.
 
@@ -107,6 +107,15 @@ La lectura de `inbody/` copia los roles que `RUTAS_ROL` ya concede a `/pacientes
 **Por qué las pruebas no se escriben todavía.** Sin FED-004A no hay contra qué ejecutarlas, y una prueba que solo se salta a sí misma es la versión en pruebas del typecheck con `|| echo` que ya costó dos pantallas en blanco en Bianca. La lista de arriba es el contrato de aceptación y se implementa junto con FED-004A, donde puede fallar de verdad.
 
 **Plan de reversa.** El conjunto anterior de políticas queda citado íntegro dentro de la migración nueva, de modo que restablecerlo sea otra migración hacia adelante y no una edición de lo ya aplicado. Si un flujo legítimo se rompe se restablece ese conjunto y H-016 vuelve a Abierto en el mismo movimiento, porque volver a las políticas planas reabre el agujero. La tabla de documentos clínicos es aditiva y no se retira en una reversa: quitarla perdería el rastro que la regla de negocio exige conservar.
+
+**Segunda vuelta, después de la revisión de Codex.** La revisión encontró dos bloqueos de autorización que la primera versión no cubría, y los dos eran de la misma clase: la política miraba el rol y confiaba en que quien escribe es la aplicación. Quedan como H-032 y H-033. El tercer punto, el estudio subido a la paciente equivocada, lo abrió Dante y es H-034.
+
+Lo que cambió. Las reglas de integridad que no dependen de quién escribe pasaron a ser restricciones de la tabla, así que valen también para la llave de servicio: la ruta tiene que ser exactamente `inbody/{paciente_id}/{archivo}`, y una corrección tiene que ser de la misma paciente, sostenido por una llave foránea compuesta contra `(id, paciente_id)`. Las que sí dependen de quién escribe se quedaron en la política de alta: rol, `subido_por = usuario_actual_id()` y existencia real del objeto en el bucket. La política de `producto_archivos` se partió en cuatro, porque una sola `for all` no restringe el borrado. Y el alta del bucket ahora exige que la paciente exista, para no fabricar objetos que después nadie podría registrar ni retirar.
+
+El flujo de subida quedó idempotente y recuperable. La ruta se calcula una vez por intento, con un uuid en lugar de una marca de tiempo, y el reintento del registro reusa esa misma ruta: no sube el objeto dos veces y no pierde el vínculo con la paciente. `registrarDocumentoClinico` devuelve el registro que ya existe en vez de fallar, así que se puede reintentar tantas veces como haga falta, y la pantalla ofrece el reintento en lugar de dejar la foto sin rastro. Los que ya quedaron huérfanos, y los que vengan de antes de esta migración, se ven en la vista `inbody_huerfanos`, que se resuelve con los permisos de quien la consulta.
+
+El retiro administrativo vive en `20260824140000_fed014_retiro_clinico.sql` y en `scripts/retiro-clinico.mjs`, y el procedimiento está en `docs/RETIRO_DOCUMENTO_CLINICO.md`. Lo que no entra aquí y queda en FED-019: la pantalla que muestra un documento retirado como retirado en vez de como archivo roto, el inventario y la adopción de los huérfanos que ya existan en el tester, y la autorización escrita de Fedra. FED-019 es bloqueante antes de subir un solo documento real.
+
 
 ### FED-015 Impresión confiable de historias y recetas
 
@@ -265,3 +274,25 @@ Autor: Claude · Revisor: Codex · Autoriza: Dante
 Estado: por abrir, no comienza todavía, cierra la segunda mitad de H-002
 
 Segundo proyecto de Supabase en la nube para que cualquier preview funcional use una base separada de la de la doctora. Primero hay que verificar en qué estado están hoy los previews, porque no lo comprobamos. Crea un recurso y credenciales nuevas, así que no se toca sin autorización expresa de Dante. Conviene que espere a FED-003, porque configurar vistas previas con el token de despliegue todavía sin rotar es trabajar sobre una credencial que sabemos comprometida.
+
+### FED-019 Operación del retiro clínico y adopción de huérfanos
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: Codex · Revisor: Claude · Autoriza: Dante
+Estado: por abrir. **Bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
+
+**Por qué es bloqueante.** FED-014 dejó el mecanismo: el objeto se puede sacar de circulación sin destruirlo y el retiro queda registrado y es inmutable. Lo que no dejó es la operación alrededor, y sin ella el mecanismo existe pero nadie sabe cuándo usarlo. Mientras los documentos sean sintéticos eso no cuesta nada. En el momento en que entre el primer InBody real, un error de captura se vuelve un dato clínico de una paciente dentro del expediente de otra, y ahí ya no hay ensayo.
+
+**Qué incluye.**
+
+Autorización escrita de Fedra sobre tres cosas: que un documento clínico no se borra nunca, que el retiro excepcional existe y quién puede pedirlo, y qué se le dice a la paciente cuando ocurre. Sin esa autorización el procedimiento es una decisión nuestra sobre datos que no son nuestros.
+
+La pantalla. Hoy, retirado un documento, la fila de `documentos_clinicos` sigue apuntando a una ruta que ya no responde, y quien la mire va a ver un archivo roto en vez de un documento retirado. La ficha de la paciente tiene que decir que se retiró, cuándo y con qué motivo, y para admin y doctora, que son quienes leen `retiros_clinicos`.
+
+El inventario de huérfanos ya existe como vista, `inbody_huerfanos`, y todavía no lo consume ninguna pantalla. Falta la lista y el botón de adoptar, que registra el objeto contra la paciente que dice su ruta, y falta recorrer los que ya estén en el tester antes de que se mezclen con los reales.
+
+Un ensayo del procedimiento completo con un documento sintético, hecho por alguien que no sea quien escribió el script, cronometrado y anotado. Un procedimiento de emergencia que nunca se ensayó no cuenta, igual que un respaldo que nunca se restauró.
+
+**Fuera de alcance.** Cualquier cambio a las políticas de FED-014, que quedan como están. El paso dos de FED-014, que es el movimiento de los objetos de producto.
+
+**Invariantes.** El retiro sigue siendo excepcional y sigue pasando por la llave de servicio y por una persona. No se expone como RPC ni como server action: una función que el cliente pueda invocar es el borrado que la regla prohíbe, con otro nombre.

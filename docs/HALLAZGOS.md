@@ -415,6 +415,54 @@ Ticket: pendiente de abrir
 **Impacto.** Bajo y no explotable hoy: para aprovecharlo haría falta poder crear un esquema o una tabla que gane en la resolución, y `authenticated` no tiene ese permiso en este esquema. Se registra porque es la misma clase que la migración vino a cerrar y conviene que no quede una excepción sin explicar.
 **Verificación.** Recrear `fn_audit()` con `set search_path = ''` y los objetos calificados, y comprobar que los disparadores de auditoría siguen escribiendo, con las sondas de `supabase/tests/auditoria.test.mts` que ya miden por efecto.
 
+### H-032 `farmacia_producto_archivos` dejaba borrar metadatos a los roles lectores
+
+Severidad: Ámbar
+Carril: D farmacia
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-014
+
+**Evidencia.** La política era una sola `for all` con `using (current_rol() in ('farmacia','admin','doctora','asistente'))` y `with check (current_rol() in ('farmacia','admin'))`, desde `20260529000009_archivos_productos.sql:30`. En PostgreSQL, DELETE evalúa `using` y nunca `with check`: el `with check` sólo decide qué fila puede quedar escrita, y un DELETE no escribe ninguna. La primera versión de FED-014 conservó la forma y le añadió `gerente` al `using`, así que la amplió sin verlo.
+**Impacto.** Doctora, asistente y, con el cambio de FED-014, gerente podían borrar la fila de metadatos de un archivo de producto desde cualquier sesión, sin pasar por la aplicación. La fila borrada deja el objeto en el bucket sin nada que lo nombre, y con las políticas nuevas ese objeto sigue siendo alcanzable pero ya no aparece en ninguna pantalla. La misma trampa afectaba al `using` de UPDATE.
+**Verificación.** La política queda partida en cuatro: `select` para los cinco roles lectores, e `insert`, `update` y `delete` sólo para farmacia y admin. `supabase/tests/documentos-clinicos-adversario.test.mts` intenta el borrado, la modificación y el alta con cada uno de los tres roles lectores y comprueba el estado final con `service_role`, porque un DELETE negado por RLS no devuelve error: devuelve cero filas y se ve igual que uno que funcionó.
+
+### H-033 El alta de `documentos_clinicos` sólo comprobaba el rol
+
+Severidad: Rojo
+Carril: C pacientes
+Encontró: Codex
+Estado: En revisión
+Ticket: FED-014
+
+**Evidencia.** La primera versión de la política de alta era `with check (current_rol() in ('admin','doctora','asistente'))` y nada más. La server action mandaba valores honestos, pero la frontera no es la server action: cualquiera con la llave anónima y una sesión válida escribe contra PostgREST el cuerpo que quiera. Con esa política pasaban una fila con `paciente_id` de A y ruta de B, una ruta de producto, una ruta inexistente, un `subido_por` con el uuid de otra persona y un `sustituye_a` apuntando al documento de otra paciente.
+**Impacto.** El rastro que H-017 vino a crear se podía escribir mal a propósito y quedaba firmado con el nombre de alguien más. Un expediente puede terminar señalando el estudio de otra paciente, y la bitácora no serviría para reconstruir nada porque su contenido lo eligió quien escribió.
+**Verificación.** Lo que no depende de quién escribe pasó a ser restricción de la tabla, así que también vale para la llave de servicio: una comprobación de que la ruta es exactamente `inbody/{paciente_id}/{archivo}`, y una llave foránea compuesta contra `(id, paciente_id)` que obliga a que una corrección sea de la misma paciente. Lo que sí depende de quién escribe se quedó en la política: rol, `subido_por = usuario_actual_id()` y existencia real del objeto en el bucket. Nueve mutantes en `documentos-clinicos-adversario.test.mts`, cada uno comprobando con `service_role` que no quedó fila.
+
+### H-034 Un estudio subido a la paciente equivocada no tenía salida
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Dante y Codex
+Estado: En revisión
+Ticket: FED-014, con la parte de operación en FED-019
+
+**Evidencia.** La regla "nadie borra ni sustituye un documento clínico" se implementa por ausencia de política de update y de delete sobre `inbody/`. Protege la evidencia, y deja sin atender el error de captura: si alguien sube el estudio de la paciente A al expediente de la B, ese archivo queda legible para admin, doctora, asistente y gerente para siempre. `sustituye_a` corrige el dato, no retira el archivo.
+**Impacto.** Deja de ser conservación de evidencia y pasa a ser una fuga de datos de una paciente hacia el expediente de otra, sostenida por una regla que se escribió para lo contrario. Con documentos reales adentro es también un problema de la NOM-004 y de datos personales, no sólo de higiene.
+**Verificación.** Retiro administrativo, no borrado: el objeto se mueve al prefijo `cuarentena/`, que no aparece en ninguna política del bucket y por lo tanto no lo alcanza ningún rol, ni siquiera admin. La fila de `documentos_clinicos` no se toca. Queda una bitácora en `retiros_clinicos` con motivo obligatorio de al menos veinte caracteres, responsable y sello, inmutable por disparador y no sólo por RLS, así que tampoco la reescribe la llave de servicio que la escribió. Lo ejecuta `scripts/retiro-clinico.mjs` a mano, fuera de la aplicación. Comprobado con los cinco roles y sin sesión, y con `service_role` como testigo de que el objeto sigue existiendo.
+
+### H-035 La integración continua vuelve a conceder lo que la migración de endurecimiento revoca
+
+Severidad: Verde
+Carril: F operación
+Encontró: Claude
+Estado: Abierto
+Ticket: pendiente de abrir
+
+**Evidencia.** El paso "Diagnóstico y GRANT de los roles de la API" de `fed004a-rls.yml` corre después de las migraciones y ejecuta `grant all on all functions in schema public to anon, authenticated, service_role`. `20260824020537_harden_privileged_objects.sql` acaba de revocar `execute` a `anon` sobre `current_rol()`, `cancelar_cobro()`, `registrar_cobro()` y las demás, y ese GRANT se lo devuelve. Lo mismo ocurre con los `revoke` de FED-014.
+**Impacto.** No hay riesgo en producción: el GRANT vive sólo en el runner y la base real conserva lo que dicen las migraciones. El problema es de medición. Ninguna prueba puede demostrar hoy que una sesión anónima no ejecuta una función privilegiada, porque en el entorno donde corren las pruebas sí puede, y una prueba que lo afirmara pasaría o fallaría por una razón que no es la del código.
+**Verificación.** Acotar el GRANT a tablas y secuencias, que es lo que las pruebas de políticas necesitan de verdad, y dejar los privilegios de funciones tal como los dejan las migraciones. Después, una prueba que intente ejecutar `current_rol()` con la llave anónima y espere el rechazo.
+
 ---
 
 ## Cerrados
