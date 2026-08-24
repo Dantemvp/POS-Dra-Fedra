@@ -139,6 +139,37 @@ export async function eliminarHistoria(
   return { ok: true };
 }
 
+// Deja la fila que liga el objeto de Storage con la paciente (FED-014, H-017).
+//
+// Hasta ahora la ruta del estudio se usaba para firmar la URL y leerlo, y se
+// descartaba: ninguna fila de la base apuntaba a un objeto bajo `inbody/`, asi
+// que no se podia cotejar lo que interpreto el modelo contra lo que quedo en el
+// expediente. Esta fila es tambien aquello a lo que se cuelga la bitacora.
+//
+// `sustituyeA` es el documento que esta correccion viene a corregir. El
+// anterior se conserva: la tabla solo admite alta.
+export async function registrarDocumentoClinico(
+  pacienteId: string,
+  path: string,
+  sustituyeA?: string,
+): Promise<Result> {
+  const supabase = await createClient();
+  const uid = await usuarioId(supabase);
+  const { data, error } = await supabase
+    .from("documentos_clinicos")
+    .insert({
+      paciente_id: pacienteId,
+      path,
+      tipo: "inbody",
+      subido_por: uid,
+      sustituye_a: sustituyeA ?? null,
+    })
+    .select("id")
+    .single();
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, id: data?.id };
+}
+
 // URL firmada para ver un documento guardado (ej. foto del InBody).
 export async function urlDocumento(
   path: string,

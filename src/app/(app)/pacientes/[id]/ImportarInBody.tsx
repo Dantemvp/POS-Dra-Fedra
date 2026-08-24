@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   extraerInBody,
+  registrarDocumentoClinico,
   crearHistoria,
   urlDocumento,
   type InBodyDatos,
@@ -67,6 +68,15 @@ export default function ImportarInBody({
     if (inputRef.current) inputRef.current.value = "";
     if (upErr) {
       setError(upErr.message);
+      setFase("idle");
+      return;
+    }
+    // La fila que liga el objeto con la paciente se escribe dentro del mismo
+    // flujo que sube el archivo (FED-014). Si falla, se avisa y no se sigue:
+    // un estudio sin rastro es justo lo que H-017 vino a cerrar.
+    const reg = await registrarDocumentoClinico(pacienteId, path);
+    if (!reg.ok) {
+      setError(reg.error ?? "No se pudo registrar el documento clínico.");
       setFase("idle");
       return;
     }

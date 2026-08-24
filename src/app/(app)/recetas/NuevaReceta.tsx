@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { crearReceta, ultimoInBody, type ItemReceta } from "./actions";
 import ComboBuscador from "@/components/ComboBuscador";
-import { extraerInBody } from "../pacientes/actions";
+import {
+  extraerInBody,
+  registrarDocumentoClinico,
+} from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fechaSinaloa } from "@/lib/tz";
 import { validarArchivoInBody } from "@/lib/inbody";
@@ -123,6 +126,14 @@ export default function NuevaReceta({
     if (inbodyInputRef.current) inbodyInputRef.current.value = "";
     if (upErr) {
       setInbodyMsg(upErr.message);
+      setInbodyLoading(false);
+      return;
+    }
+    // Misma regla que en la ficha de la paciente: el rastro se escribe dentro
+    // del flujo que sube el archivo, no después.
+    const reg = await registrarDocumentoClinico(pacienteId, path);
+    if (!reg.ok) {
+      setInbodyMsg(reg.error ?? "No se pudo registrar el documento clínico.");
       setInbodyLoading(false);
       return;
     }
