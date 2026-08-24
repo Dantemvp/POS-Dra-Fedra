@@ -165,7 +165,7 @@ Ticket: FED-007
 Severidad: Rojo
 Carril: C pacientes
 Encontró: Claude
-Estado: Abierto
+Estado: En revisión
 Ticket: FED-014
 
 **Evidencia.** `supabase/migrations/20260529000010_storage_policies.sql` crea cuatro políticas sobre `storage.objects`, `archivos_select`, `archivos_insert`, `archivos_update` y `archivos_delete`. Las cuatro son `to authenticated using (bucket_id = 'archivos')` y ninguna distingue rol ni ruta. El bucket es privado según `20260529000009_archivos_productos.sql:8`, así que exige una sesión y nada más. Los estudios de InBody se suben desde el navegador con la llave anónima y la sesión del usuario a `inbody/{pacienteId}/{marca-de-tiempo}-{nombre}`, en `src/app/(app)/pacientes/[id]/ImportarInBody.tsx:57` y `src/app/(app)/recetas/NuevaReceta.tsx:112`. Los archivos de producto van a `{productoId}/{marca-de-tiempo}-{nombre}` en `src/app/(app)/inventario/[id]/Archivos.tsx:41`. La tabla de metadatos `producto_archivos` sí tiene políticas por rol en esa misma migración; los bytes en Storage no tienen ninguna. Con la sesión que ya abre la aplicación, un `list()` sobre el bucket enumera todo sin adivinar rutas, y `remove()` y `upload()` con sobrescritura alcanzan cualquier objeto.
@@ -178,7 +178,7 @@ Ticket: FED-014
 Severidad: Ámbar
 Carril: C pacientes
 Encontró: Claude
-Estado: Abierto
+Estado: En revisión
 Ticket: FED-014
 
 **Evidencia.** El estudio de InBody se sube a `inbody/{pacienteId}/{marca-de-tiempo}-{nombre}` desde `src/app/(app)/pacientes/[id]/ImportarInBody.tsx:57` y `src/app/(app)/recetas/NuevaReceta.tsx:112`, y esa ruta solo se usa en el momento para firmar la URL y para que `extraerInBody()` lea el archivo. Lo que se persiste después es `crearHistoria(pacienteId, inbodyTipoId, datos)` con los valores ya extraídos. La ruta nunca se guarda. La única tabla del esquema con columna `path` es `producto_archivos`, en `20260529000009_archivos_productos.sql:17`, y pertenece a productos. Ninguna fila de la base apunta a un objeto bajo `inbody/`.
@@ -390,6 +390,30 @@ Ticket: pendiente de abrir, requiere confirmación de Fedra
 **Evidencia.** `vercel.json` programa `/api/cron/resumen-dia` con `0 4 * * *`, que es UTC. Sinaloa es UTC-7 todo el año, así que el cron corre a las 21:00 hora local. La ventana que arma la ruta es correcta: `inicioDiaSinaloa()` devuelve el día de Sinaloa al que pertenece ese instante, comprobado sobre 400 días sin un solo desfase y con la frontera exacta en 07:00Z. El problema no es la ventana, es la hora a la que se mide: el resumen del día se calcula cuando al día le faltan tres horas.
 **Impacto.** Si la farmacia opera después de las 21:00, el aviso de cierre que reciben admin, doctora y gerente subestima el día, y esas ventas no aparecen en ninguna notificación. No corrompe ningún dato: el corte de caja y los reportes siguen siendo correctos, porque usan su propia frontera. Es un aviso que engaña, no una cifra mal guardada.
 **Verificación.** Depende de una regla de negocio que no está escrita: a qué hora cierra de verdad la farmacia. Si cierra antes de las 21:00, no hay nada que corregir y conviene dejarlo anotado. Si cierra después, el cron se mueve a una hora posterior al cierre real y se comprueba con una venta tardía que sí entra al resumen.
+
+### H-030 El preflight remoto aprobaba un `.env.local` hacia otro proyecto
+
+Severidad: Rojo
+Carril: F operación
+Encontró: Claude
+Estado: En revisión
+Ticket: FED-018
+
+**Evidencia.** El modo `--remoto` de `scripts/preflight-tester.mjs` comprueba `supabase/.temp/project-ref`, que gobierna al CLI, y degrada la existencia de archivos de entorno a simple aviso porque en el tester remoto son esperables. Nunca leía su contenido. Reproducido sobre `cf31fac`: con el vínculo apuntando a `mvevriyiyuurjmwileoh` y un `.env.local` declarando otro proyecto, y sin variables en la terminal, que es el caso normal de quien prueba, el preflight imprime "el destino comprobado es mvevriyiyuurjmwileoh, no producción" y sale con 0.
+**Impacto.** `next dev` no lee el `project-ref`: lee el `.env.local`. El CLI podía apuntar al tester mientras el navegador de quien prueba hablaba con otro proyecto, incluido el de la doctora, y la comprobación que existe justamente para impedirlo daba luz verde. Es peor que no tener preflight, porque afirma una garantía que no comprobó.
+**Verificación.** Los dos modos leen ahora el contenido de los archivos de entorno y comparan la URL declarada contra el destino permitido. Comprobado: el caso de arriba falla; el `.env.local` que apunta al tester aprueba; una URL comentada no cuenta; se toleran comillas y barra final; y el modo local conserva su regla más estricta, que es rechazar el archivo por existir.
+
+### H-031 `fn_audit()` quedó fuera del endurecimiento de `search_path`
+
+Severidad: Verde
+Carril: B permisos
+Encontró: Claude
+Estado: Abierto
+Ticket: pendiente de abrir
+
+**Evidencia.** `20260824020537_harden_privileged_objects.sql` fija `set search_path = ''` en `current_rol()` y `es_admin()`, y declara en su propio comentario que los helpers de autorización no deben aceptar un `search_path` controlable por el llamador. `fn_audit()`, creada en `20260529000002_rls_y_roles.sql:109`, sigue siendo `security definer` sin `search_path` fijo y resuelve `usuarios` y `audit_log` sin calificar. La migración sí le revocó `execute`, que era el otro riesgo.
+**Impacto.** Bajo y no explotable hoy: para aprovecharlo haría falta poder crear un esquema o una tabla que gane en la resolución, y `authenticated` no tiene ese permiso en este esquema. Se registra porque es la misma clase que la migración vino a cerrar y conviene que no quede una excepción sin explicar.
+**Verificación.** Recrear `fn_audit()` con `set search_path = ''` y los objetos calificados, y comprobar que los disparadores de auditoría siguen escribiendo, con las sondas de `supabase/tests/auditoria.test.mts` que ya miden por efecto.
 
 ---
 

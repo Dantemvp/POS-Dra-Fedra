@@ -64,7 +64,13 @@ Identificar el despliegue inmutable que atiende `sistema-fedra.vercel.app`, su c
 
 Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
 Autor: Claude · Revisor: Codex · Autoriza: Dante
-Estado: diseño acordado, sin SQL escrito; regla de negocio confirmada por Dante el 22 de agosto de 2026; espera FED-004A para probarse; cierra H-016 y H-017
+Estado: implementado sobre `cf31fac` en `claude/FED-014-storage-documentos`, pendiente de revisión de Codex; cierra H-016 y H-017
+
+**Cambio de diseño respecto al plan original, y por qué.** El plan decía resolver las rutas de producto con un `exists` contra `producto_archivos.path`. No funciona para el alta: la aplicación sube el objeto primero y crea la fila después, en `src/app/(app)/inventario/[id]/Archivos.tsx`, así que una política de insert que exigiera la fila bloquearía toda subida legítima. Además dejaría inalcanzable cualquier objeto cuya fila no se llegó a crear, que es justo el huérfano que este ticket viene a evitar. Se resuelve por el primer segmento de la ruta contra `productos`, con la función `es_objeto_de_producto()`, que sirve igual para las cuatro operaciones y es lo único que cambia cuando el paso dos mueva los objetos a `productos/{id}/...`.
+
+**Nadie borra ni sustituye un documento clínico.** Implementado por ausencia de política de update y de delete sobre `inbody/`. Sin política, RLS niega. Es la única forma que no depende de que alguien recuerde la excepción.
+
+**Lo que no se pudo verificar en esta máquina.** No hay Docker, ni CLI de Supabase, ni `psql`, así que la migración y las pruebas de políticas no se ejecutaron localmente. Su primera corrida real es la del workflow `fed004a-rls.yml` en el pull request. Se declara para que nadie lo lea como verificado.
 
 **Objetivo.** Reemplazar las cuatro políticas planas de `storage.objects` sobre el bucket `archivos` por un conjunto que distinga ruta y rol, sin permiso por omisión, y dejar rastro de los documentos clínicos.
 
