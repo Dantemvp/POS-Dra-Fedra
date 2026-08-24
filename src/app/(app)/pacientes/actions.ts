@@ -142,32 +142,95 @@ export async function eliminarHistoria(
 // Deja la fila que liga el objeto de Storage con la paciente (FED-014, H-017).
 //
 // Hasta ahora la ruta del estudio se usaba para firmar la URL y leerlo, y se
-// descartaba: ninguna fila de la base apuntaba a un objeto bajo `inbody/`, asi
-// que no se podia cotejar lo que interpreto el modelo contra lo que quedo en el
-// expediente. Esta fila es tambien aquello a lo que se cuelga la bitacora.
+// descartaba: ninguna fila de la base apuntaba a un objeto bajo `inbody/`, así
+// que no se podía cotejar lo que interpretó el modelo contra lo que quedó en el
+// expediente. Esta fila es también aquello a lo que se cuelga la bitácora.
 //
-// `sustituyeA` es el documento que esta correccion viene a corregir. El
-// anterior se conserva: la tabla solo admite alta.
+// `sustituyeA` es el documento que esta corrección viene a corregir. El
+// anterior se conserva: la tabla sólo admite alta.
+//
+// IDEMPOTENTE A PROPÓSITO. El navegador sube el objeto y después pide este
+// registro, y entre las dos cosas se pierde una conexión, se cierra una laptop
+// o expira una sesión. Como no hay política de borrado sobre `inbody/`, un
+// objeto sin fila ya no lo retira nadie. Por eso registrar dos veces la misma
+// ruta no falla ni duplica: devuelve el registro que ya existe, y el reintento
+// desde la pantalla es seguro tantas veces como haga falta.
+//
+// `subido_por` no se manda. Lo pone el valor por omisión de la columna con la
+// identidad real de la sesión, y la política rechaza cualquier otro valor. Un
+// cliente adversario no firma un estudio con el nombre de alguien más.
 export async function registrarDocumentoClinico(
   pacienteId: string,
   path: string,
   sustituyeA?: string,
 ): Promise<Result> {
   const supabase = await createClient();
-  const uid = await usuarioId(supabase);
+
+  const yaRegistrado = await documentoDeRuta(supabase, path);
+  if (yaRegistrado) {
+    // La misma ruta apuntando a otra paciente sólo puede venir de un cliente
+    // manipulado: la ruta lleva el id de la paciente adentro y la base lo
+    // comprueba. Se avisa en vez de devolver un ok que no es cierto.
+    if (yaRegistrado.paciente_id !== pacienteId) {
+      return {
+        ok: false,
+        error: "Esa ruta ya está registrada para otra paciente.",
+      };
+    }
+    return { ok: true, id: yaRegistrado.id };
+  }
+
   const { data, error } = await supabase
     .from("documentos_clinicos")
     .insert({
       paciente_id: pacienteId,
       path,
       tipo: "inbody",
-      subido_por: uid,
       sustituye_a: sustituyeA ?? null,
     })
     .select("id")
     .single();
-  if (error) return { ok: false, error: error.message };
+
+  if (error) {
+    // 23505 es la unicidad de `path`: otro intento ganó la carrera entre la
+    // consulta de arriba y esta escritura. El resultado que buscaba quien
+    // llama ya existe, así que esto no es un error para la persona.
+    if (error.code === "23505") {
+      const fila = await documentoDeRuta(supabase, path);
+      if (fila && fila.paciente_id === pacienteId) return { ok: true, id: fila.id };
+    }
+    return { ok: false, error: error.message };
+  }
   return { ok: true, id: data?.id };
+}
+
+async function documentoDeRuta(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  path: string,
+): Promise<{ id: string; paciente_id: string } | null> {
+  const { data } = await supabase
+    .from("documentos_clinicos")
+    .select("id, paciente_id")
+    .eq("path", path)
+    .maybeSingle();
+  return data ?? null;
+}
+
+// Objetos bajo `inbody/` que quedaron sin fila. La vista los resuelve con los
+// permisos de quien consulta, así que esta acción no concede nada nuevo: sirve
+// para que un huérfano se pueda ver y adoptar desde la aplicación en vez de
+// quedarse callado dentro del bucket.
+export async function huerfanosDePaciente(
+  pacienteId: string,
+): Promise<{ ok: boolean; error?: string; paths?: string[] }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inbody_huerfanos")
+    .select("path")
+    .eq("paciente_id", pacienteId)
+    .order("created_at", { ascending: false });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, paths: (data ?? []).map((fila) => fila.path as string) };
 }
 
 // URL firmada para ver un documento guardado (ej. foto del InBody).
