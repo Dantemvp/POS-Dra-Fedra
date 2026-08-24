@@ -36,6 +36,12 @@ jobs:
       - name: UTF-8
         run: node scripts/check-utf8.mjs
 
+      # La guarda que impide que una prueba alcance el Supabase de la doctora.
+      # Corre aquí, sin base y sin credenciales, para que el candado tenga
+      # quien lo rompa antes de que haga falta.
+      - name: Guarda anti-producción
+        run: node scripts/check-guardia.mjs
+
       - name: Release metadata
         run: node scripts/release-metadata.mjs
 
