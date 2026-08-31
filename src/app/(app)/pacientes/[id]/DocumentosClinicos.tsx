@@ -101,6 +101,17 @@ export default function DocumentosClinicos({
                   </a>
                 )}
               </div>
+              {!retiro && !documento.url && (
+                // `retiros_clinicos` sólo la leen administración y la doctora. Para la
+                // asistente y el gerente un documento retirado llega aquí como activo y
+                // sin URL, porque el objeto ya no está en su ruta y la firma falla. Sin
+                // este aviso, esa fila se ve igual que una sana y quien subió el estudio
+                // vuelve a subirlo. No se nombra el motivo: eso habla de una paciente.
+                <p className="mt-3 text-sm text-zinc-600">
+                  El archivo no está disponible desde esta sesión. Puede haber sido retirado por
+                  administración: consúltalo antes de volver a subirlo.
+                </p>
+              )}
               {retiro && (
                 <div className="mt-3 text-sm text-zinc-700">
                   <p>{retiro.motivo}</p>

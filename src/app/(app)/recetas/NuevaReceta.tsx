@@ -93,17 +93,6 @@ export default function NuevaReceta({
       setInbodyMsg("Selecciona un paciente primero.");
       return;
     }
-    const pacienteNombre = pacientes.find((paciente) => paciente.id === pacienteId)?.nombre;
-    if (!pacienteNombre) {
-      setInbodyMsg("No se encontró la paciente seleccionada. Vuelve a seleccionarla.");
-      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
-      return;
-    }
-    if (!window.confirm(mensajeConfirmacionInBody(pacienteNombre))) {
-      setInbodyMsg("Carga cancelada. Verifica el nombre de la paciente antes de intentarlo otra vez.");
-      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
-      return;
-    }
     setInbodyMsg(null);
     startTransition(async () => {
       const res = await ultimoInBody(pacienteId);
@@ -131,6 +120,22 @@ export default function NuevaReceta({
     }
     if (!pacienteId) {
       setInbodyMsg("Selecciona un paciente primero.");
+      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
+      return;
+    }
+    // La confirmación va aquí, antes de crear el cliente y antes de subir: si
+    // la persona cancela, no queda objeto en el bucket ni fila que adoptar. En
+    // esta pantalla la paciente se elige de una lista, así que el nombre que se
+    // muestra es el del expediente al que se va a colgar el estudio.
+    const pacienteNombre = pacientes.find((paciente) => paciente.id === pacienteId)?.nombre;
+    if (!pacienteNombre) {
+      setInbodyMsg("No se encontró la paciente seleccionada. Vuelve a seleccionarla.");
+      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
+      return;
+    }
+    if (!window.confirm(mensajeConfirmacionInBody(pacienteNombre))) {
+      setInbodyMsg("Carga cancelada. Verifica el nombre de la paciente antes de intentarlo otra vez.");
+      if (inbodyInputRef.current) inbodyInputRef.current.value = "";
       return;
     }
     setInbodyMsg(null);
