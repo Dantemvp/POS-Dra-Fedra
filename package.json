@@ -1,21 +1,24 @@
 {
-  "name": "tmpnext",
-  "version": "0.1.0",
+  "name": "fedra-pos",
+  "version": "0.2.0-rc.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
     "@types/jsbarcode": "^3.11.4",
+    "dompurify": "3.4.14",
     "html2canvas-pro": "^2.0.4",
     "jsbarcode": "^3.12.3",
     "jspdf": "^4.2.1",
-    "next": "16.2.6",
+    "next": "16.3.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.1",
@@ -28,8 +31,10 @@
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.2",
+    "jsdom": "^27.4.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

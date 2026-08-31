@@ -16,7 +16,7 @@ self.addEventListener("push", function (event) {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
-  } catch (e) {
+  } catch {
     data = { title: "Sistema Fedra", body: event.data ? event.data.text() : "" };
   }
 

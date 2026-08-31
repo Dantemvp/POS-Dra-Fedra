@@ -31,6 +31,8 @@ export default function NotificacionesClient() {
     const ios =
       /iPad|iPhone|iPod/.test(navigator.userAgent) &&
       !("MSStream" in window);
+    // Detección disponible solo después de hidratar en el navegador.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEsIOS(ios);
     setInstalada(
       window.matchMedia("(display-mode: standalone)").matches ||

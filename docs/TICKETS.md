@@ -1,0 +1,342 @@
+# Tickets · Sistema Fedra
+
+Registro de tickets `FED-###`. El formato del contrato está en `docs/WORKFLOW_CLAUDE_CODEX.md`. Los hallazgos van en `docs/HALLAZGOS.md`.
+
+## En curso
+
+### FED-001 Contrato de trabajo y contexto del repositorio
+
+Modo: Remediación · Riesgo: Verde · Carril: F operación
+Autor: Claude · Revisor: Codex
+Estado: primera revisión de Codex con cambios solicitados, corregidos en un segundo commit, pendiente de segunda revisión, sin subir
+
+**Objetivo.** Dejar una sola fuente de verdad para los dos agentes antes de que cualquiera toque código del sistema.
+
+**Qué incluye.** `AGENTS.md` con las reglas compartidas, el semáforo de riesgo y los invariantes del dominio. `CLAUDE.md` reescrito contra el código real. `docs/HALLAZGOS.md` con formato y los hallazgos registrados. `docs/WORKFLOW_CLAUDE_CODEX.md` con el flujo adaptado a una aplicación web. `docs/TICKETS.md`, este archivo. `.github/PULL_REQUEST_TEMPLATE.md`. Se suma `docs/PLAN_MAESTRO_FEDRA.md`, que quedaba fuera de control de versiones.
+
+**Fuera de alcance.** Nada de `src/`, nada de `supabase/`, ninguna credencial, ningún despliegue. No se crean workflows de integración continua porque eso es FED-002 y es de Codex.
+
+**Criterios de aceptación.** Ningún dato del contexto contradice el código. Los dos agentes pueden citar el mismo archivo para resolver una duda de alcance o de permisos.
+
+**Plan de reversa.** Son archivos de documentación en una rama propia. Se descarta la rama y no queda rastro en `main`.
+
+**Verificación hecha.** Se comprobó contra el código que el stack es Next 16.2.6 y React 19.2.4, que no hay dependencias de shadcn ni Radix, que la llave de servicio se usa solo en `src/lib/supabase/admin.ts`, que los dos crons validan `CRON_SECRET`, que el middleware exige sesión fuera de rutas públicas y controla doce prefijos por rol con `RUTAS_ROL`, y que el código consume nueve variables de entorno y ninguna es `GOOGLE_API_KEY` ni `FISH_AUDIO_API_KEY`.
+
+## Siguientes
+
+Esta sección conserva los contratos por identificador y por momento de registro; no se ejecuta de arriba abajo. El orden operativo vigente es: consolidar la rama canónica, FED-009, FED-004A, FED-014, rediseñar FED-006 y FED-007, FED-008, FED-010 y después FED-011. FED-013 se ejecuta en una ventana controlada con acceso a Vercel. FED-003 y FED-004B requieren autorización específica para credenciales o recursos remotos.
+
+### FED-018 Aceptación del tester y guardas anti-producción
+
+Modo: Auditoría y remediación · Riesgo: Ámbar · Carril: F operación
+Autor: Claude · Revisor: Codex
+Estado: implementado sobre `bf9ab03`, pendiente de revisión de Codex; cierra H-027 y H-028, abre H-029
+
+**Objetivo.** Que el tester tenga un contrato de aceptación escrito y que ninguna prueba, script o procedimiento pueda alcanzar el Supabase de la doctora.
+
+**Qué incluye.** `scripts/guardia-supabase.mjs` como única definición de "esta URL es local", consumida por `helpers.mts` y `preparar-storage.mjs`. `scripts/check-guardia.mjs` con 28 casos adversarios, en la integración continua. `scripts/preflight-tester.mjs`, con un modo local que prohíbe cualquier vínculo remoto y `--remoto`, que acepta exclusivamente el proyecto tester `mvevriyiyuurjmwileoh`. El alias `@` en `vitest.config.mts` y diez pruebas de `src/lib/push.ts`. `docs/MATRIZ_ACEPTACION_TESTER.md` y `docs/AUDITORIA_MIGRACION_POS.md`.
+
+**Fuera de alcance.** `package.json`, que sigue reservado a FED-002, así que no se agregaron scripts de npm y los verificadores se invocan con `node`. Ninguna migración, ningún cambio en `supabase/migrations/`, ninguna credencial, ningún despliegue y ninguna corrección de los hallazgos rojos abiertos.
+
+**Invariantes.** La guarda falla cerrado: rechazar un local legítimo estorba, aceptar un remoto toca un expediente. Sólo las desviaciones permisivas son fatales.
+
+**Verificación hecha.** Toda prueba nueva se sometió a mutación y se documentó cuál mutante mata cada una. La primera versión de la prueba del filtro de `auth_uid` nulo sobrevivió a su mutante y se corrigió.
+
+**Plan de reversa.** Tres commits en rama propia. Revertirlos deja `bf9ab03` intacto: los archivos nuevos se quitan y los dos puntos de entrada vuelven a su expresión copiada, que hoy es correcta.
+
+### FED-012 Versionado y reversa verificable
+
+Modo: Remediación · Riesgo: Ámbar · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: cerrado; implementación de Codex aprobada por Claude, integrada en la rama canónica local, sin tag ni despliegue
+
+Mostrar versión y commit en la aplicación, validar que manifiesto, lockfile y tag coincidan, mantener un changelog y exigir una ficha por liberación. La reversa de código usa despliegues inmutables de Vercel; la reversa con migraciones requiere compatibilidad, respaldo y restauración ensayada. No crea tags, despliega ni toca producción.
+
+### FED-013 Registrar la baseline efectiva de producción
+
+Modo: Operación · Riesgo: Rojo · Carril: F operación
+Autor: Dante · Revisores: Claude y Codex
+Estado: por ejecutar con acceso autorizado a Vercel, completa FED-012
+
+Identificar el despliegue inmutable que atiende `sistema-fedra.vercel.app`, su commit, fecha, configuración de variables de sistema y última migración efectiva. Registrar la correspondencia en `docs/LIBERACIONES.md` y ensayar que ese despliegue pueda volver a promoverse sin ejecutarlo sobre producción. Solo después se decide si corresponde crear una etiqueta histórica; nunca se etiqueta por suposición.
+
+### FED-014 Cerrar por rol y ruta el bucket de archivos
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: Claude · Revisor: Codex · Autoriza: Dante
+Estado: implementado sobre `cf31fac` en `claude/FED-014-storage-documentos`, segunda vuelta tras la revisión de Codex, pendiente de su revisión final; cierra H-016, H-017, H-032, H-033 y H-034, y abre FED-019
+
+**Cambio de diseño respecto al plan original, y por qué.** El plan decía resolver las rutas de producto con un `exists` contra `producto_archivos.path`. No funciona para el alta: la aplicación sube el objeto primero y crea la fila después, en `src/app/(app)/inventario/[id]/Archivos.tsx`, así que una política de insert que exigiera la fila bloquearía toda subida legítima. Además dejaría inalcanzable cualquier objeto cuya fila no se llegó a crear, que es justo el huérfano que este ticket viene a evitar. Se resuelve por el primer segmento de la ruta contra `productos`, con la función `es_objeto_de_producto()`, que sirve igual para las cuatro operaciones y es lo único que cambia cuando el paso dos mueva los objetos a `productos/{id}/...`.
+
+**Nadie borra ni sustituye un documento clínico.** Implementado por ausencia de política de update y de delete sobre `inbody/`. Sin política, RLS niega. Es la única forma que no depende de que alguien recuerde la excepción.
+
+**Lo que no se pudo verificar en esta máquina.** No hay Docker, ni CLI de Supabase, ni `psql`, así que la migración y las pruebas de políticas no se ejecutaron localmente. Su primera corrida real es la del workflow `fed004a-rls.yml` en el pull request. Se declara para que nadie lo lea como verificado.
+
+**Objetivo.** Reemplazar las cuatro políticas planas de `storage.objects` sobre el bucket `archivos` por un conjunto que distinga ruta y rol, sin permiso por omisión, y dejar rastro de los documentos clínicos.
+
+**Regla de negocio confirmada.** Los documentos clínicos no se borran físicamente ni se sustituyen. Una corrección entra como documento nuevo, conserva el anterior y queda vinculada a una bitácora. Cualquier excepción futura necesita una regla explícita y autorización de Dante.
+
+**Lo que apareció al diseñar.** Ninguna fila de la base apunta a un objeto bajo `inbody/`: la ruta del estudio se usa para leerlo y se descarta, y solo se guardan los valores extraídos. Es H-017. Tiene dos consecuencias sobre este ticket. La bitácora que exige la regla no tiene a qué colgarse mientras no exista una tabla de documentos clínicos, así que esa tabla es requisito previo y no un extra. Y la protección por metadatos, que sí sirve para los archivos de producto, no se puede aplicar a `inbody/`, porque negar por omisión todo objeto sin fila dejaría fuera de golpe a los estudios que ya están cargados. Los clínicos se protegen por prefijo y rol; los de producto, por metadatos.
+
+**Plan en dos pasos.** El segundo paso es de Codex y lo tomo tal cual: no se mueve un solo objeto de producción dentro de la primera corrección de RLS.
+
+Paso uno, proteger sin mover nada. Inventario de solo lectura de objetos, metadatos y huérfanos, guardado como evidencia antes de tocar políticas. Tabla de documentos clínicos y escritura de su fila dentro del mismo flujo que sube el archivo, incluida en los disparadores de auditoría. Conjunto nuevo de políticas que niega por omisión: `inbody/` por prefijo y rol, rutas de producto por `exists` contra `producto_archivos.path`, y todo lo demás denegado.
+
+Paso dos, migración independiente hacia `productos/{productoId}/...`, con autorización, reversa y evidencia propias: copiar, verificar integridad, actualizar metadatos y retirar el objeto anterior solo después de comprobarlo. Cuando termine, las políticas de producto pasan de `exists` a prefijo y dejan de depender de una tabla.
+
+**Matriz del paso uno, sujeta a revisión de Codex.**
+
+| Ruta | Leer | Crear | Sustituir | Borrar |
+| --- | --- | --- | --- | --- |
+| `inbody/` | admin, doctora, asistente, gerente | admin, doctora, asistente | nadie | nadie |
+| objeto con fila en `producto_archivos` | admin, farmacia, doctora, asistente, gerente | admin, farmacia | admin, farmacia | admin, farmacia |
+| cualquier otra | nadie | nadie | nadie | nadie |
+
+La lectura de `inbody/` copia los roles que `RUTAS_ROL` ya concede a `/pacientes`. La de producto parte de `farmacia_producto_archivos`, que hoy deja leer a farmacia, admin, doctora y asistente y escribir solo a farmacia y admin. Falta reconciliar al gerente, que entró después a las rutas de inventario y nunca se agregó a esa política: si lee los bytes, también debe leer la fila, o los dos vuelven a contradecirse.
+
+**Interacción que hay que corregir en el mismo ticket.** `eliminarArchivo()` en `src/app/(app)/inventario/actions.ts:165` retira el objeto y luego borra la fila de `producto_archivos`, sin revisar el resultado de `remove()`. Con la política del paso uno colgada de esa fila, si el retiro del objeto falla y la fila se borra igual, el objeto queda huérfano y ya nadie puede alcanzarlo ni para limpiarlo. La acción debe comprobar el resultado del retiro y no borrar la fila si falló.
+
+**Archivos permitidos.** Migraciones nuevas bajo `supabase/migrations/`, el flujo de subida y la acción de borrado en `src/app/(app)/`, `docs/HALLAZGOS.md` y `docs/TICKETS.md`. No se reescribe ninguna migración aplicada.
+
+**Fuera de alcance.** `package.json`, reservado a FED-002. FED-006 y FED-007, que Codex rehace aparte. El alta pública, que es FED-009. El movimiento de objetos, que es el paso dos. Cualquier ejecución contra Supabase remoto y cualquier despliegue.
+
+**Invariantes.** Un rol sin ruta clínica en `RUTAS_ROL` no alcanza objetos clínicos por ningún camino, ni por la aplicación ni con la llave anónima desde el navegador. Ningún documento clínico se destruye ni se sobrescribe. Las migraciones son aditivas. Los flujos de la operación diaria siguen funcionando.
+
+**Pruebas requeridas.** Todas contra FED-004A, desde fuera, con la llave anónima y una sesión real por rol, nunca leyendo los archivos de migración. Una sesión de farmacia no enumera nada bajo `inbody/` con `list()`, no descarga una ruta conocida, no la sobrescribe y no la borra. Una cuenta sin rol clínico ni de farmacia no obtiene nada en ninguna ruta. Una asistente lee un estudio y no logra borrarlo ni sustituirlo, y tampoco lo logra la doctora ni el administrador. La doctora sube un InBody, obtiene su URL firmada, extrae los datos y la subida deja fila en la tabla de documentos clínicos. Una corrección del mismo estudio crea fila nueva y conserva la anterior. Farmacia sube y borra un archivo de producto, y la doctora lo lee sin poder borrarlo. Un objeto sin fila en `producto_archivos` y fuera de `inbody/` no es alcanzable por nadie. Ningún proceso con `service_role` depende de las políticas retiradas.
+
+**Por qué las pruebas no se escriben todavía.** Sin FED-004A no hay contra qué ejecutarlas, y una prueba que solo se salta a sí misma es la versión en pruebas del typecheck con `|| echo` que ya costó dos pantallas en blanco en Bianca. La lista de arriba es el contrato de aceptación y se implementa junto con FED-004A, donde puede fallar de verdad.
+
+**Plan de reversa.** El conjunto anterior de políticas queda citado íntegro dentro de la migración nueva, de modo que restablecerlo sea otra migración hacia adelante y no una edición de lo ya aplicado. Si un flujo legítimo se rompe se restablece ese conjunto y H-016 vuelve a Abierto en el mismo movimiento, porque volver a las políticas planas reabre el agujero. La tabla de documentos clínicos es aditiva y no se retira en una reversa: quitarla perdería el rastro que la regla de negocio exige conservar.
+
+**Segunda vuelta, después de la revisión de Codex.** La revisión encontró dos bloqueos de autorización que la primera versión no cubría, y los dos eran de la misma clase: la política miraba el rol y confiaba en que quien escribe es la aplicación. Quedan como H-032 y H-033. El tercer punto, el estudio subido a la paciente equivocada, lo abrió Dante y es H-034.
+
+Lo que cambió. Las reglas de integridad que no dependen de quién escribe pasaron a ser restricciones de la tabla, así que valen también para la llave de servicio: la ruta tiene que ser exactamente `inbody/{paciente_id}/{archivo}`, y una corrección tiene que ser de la misma paciente, sostenido por una llave foránea compuesta contra `(id, paciente_id)`. Las que sí dependen de quién escribe se quedaron en la política de alta: rol, `subido_por = usuario_actual_id()` y existencia real del objeto en el bucket. La política de `producto_archivos` se partió en cuatro, porque una sola `for all` no restringe el borrado. Y el alta del bucket ahora exige que la paciente exista, para no fabricar objetos que después nadie podría registrar ni retirar.
+
+El flujo de subida quedó idempotente y recuperable. La ruta se calcula una vez por intento, con un uuid en lugar de una marca de tiempo, y el reintento del registro reusa esa misma ruta: no sube el objeto dos veces y no pierde el vínculo con la paciente. `registrarDocumentoClinico` devuelve el registro que ya existe en vez de fallar, así que se puede reintentar tantas veces como haga falta, y la pantalla ofrece el reintento en lugar de dejar la foto sin rastro. Los que ya quedaron huérfanos, y los que vengan de antes de esta migración, se ven en la vista `inbody_huerfanos`, que se resuelve con los permisos de quien la consulta.
+
+El retiro administrativo vive en `20260824140000_fed014_retiro_clinico.sql` y en `scripts/retiro-clinico.mjs`, y el procedimiento está en `docs/RETIRO_DOCUMENTO_CLINICO.md`. Lo que no entra aquí y queda en FED-019: la pantalla que muestra un documento retirado como retirado en vez de como archivo roto, el inventario y la adopción de los huérfanos que ya existan en el tester, y la autorización escrita de Fedra. FED-019 es bloqueante antes de subir un solo documento real.
+
+
+### FED-015 Impresión confiable de historias y recetas
+
+Modo: Remediación · Riesgo: Ámbar · Carril: C pacientes
+Autor: Codex · Revisor: Claude
+Estado: implementación en revisión; corrige H-018 y contiene H-019 con bloqueo de impresión hasta confirmar la regla de receta larga
+
+**Objetivo.** Evitar cortes arbitrarios en historias clínicas multipágina y definir un comportamiento comprobable para recetas que no caben en media carta.
+
+**Alcance de esta implementación.** Extraer una función pura de paginación, proteger secciones y firma al dividir la captura de historia, y cubrir documentos cortos, largos, bloques atravesados, superpuestos y mayores que una hoja. Medir el contenido de la receta en el navegador y bloquear la impresión si invade el área del código de barras, sin imponer un límite clínico inventado.
+
+**Fuera de alcance.** Base de datos, Storage, InBody, datos reales, cambios al membrete oficial, migraciones y despliegue. La regla para una receta larga espera confirmación de Fedra o Dante.
+
+**Criterios de aceptación.** Ningún corte normal atraviesa una sección o firma. Un bloque mayor que una hoja se divide sin bloquear el generador. El PDF conserva tamaño carta y repite el membrete. La receta se prueba con fixtures sintéticos antes de cambiar su densidad o número de hojas.
+
+**Pruebas requeridas.** Pruebas unitarias del planificador y prueba visual pendiente en Chromium de historias sintéticas de una, dos y tres hojas. Para receta: casos de uno, cinco y diez medicamentos, indicaciones multilínea, nombre largo y código de barras legible.
+
+**Plan de reversa.** Revertir el commit restaura los cortes fijos anteriores. No cambia datos ni archivos clínicos almacenados.
+### FED-016 Validación estricta de la lectura InBody
+
+Modo: Remediación · Riesgo: Rojo · Carril: E integraciones
+Autor: Codex · Revisor: Claude
+Estado: implementación en revisión, cierra la parte estructural de H-020; prueba integrada pendiente de FED-004A y FED-014
+
+**Objetivo.** Impedir que un archivo incompatible, una respuesta libre de la IA o una corroboración fallida se trate como una extracción clínica válida.
+
+**Qué incluye.** Lista cerrada de formatos, máximo operativo de 10 MiB en cliente y servidor, timeout de 45 segundos, Structured Outputs con esquema estricto, validación local independiente del proveedor y fallo de toda la operación si la segunda lectura no concluye. No se fijan rangos médicos para las métricas sin que Fedra los confirme.
+
+**Archivos permitidos.** El módulo puro `src/lib/inbody.ts`, sus pruebas y los dos flujos existentes de carga y extracción. La tabla y bitácora de documentos siguen perteneciendo a FED-014.
+
+**Invariantes.** La doctora siempre revisa los datos contra la imagen antes de guardarlos. Ningún objeto, arreglo, clave desconocida, número negativo o no finito entra como medición. Un fallo no borra el archivo clínico; FED-014 conserva y registra su estado.
+
+**Pruebas requeridas.** JSON inválido, arreglo, campos desconocidos, tipos incorrectos, valores negativos y no finitos, respuesta vacía, formatos no admitidos, archivo vacío y mayor de 10 MiB. Después de FED-004A y FED-014: éxito de dos pasadas, timeout, error en segunda pasada y vínculo entre imagen, extracción y revisión humana.
+
+**Plan de reversa.** Revertir el commit restaura el modo JSON anterior y elimina límites y timeout. No cambia datos ni migraciones, pero reabre H-020.
+### FED-017 Resultado verificable de notificaciones push
+
+Modo: Remediación · Riesgo: Ámbar · Carril: E integraciones
+Autor: Codex · Revisor: Claude
+Estado: implementación en revisión, cierra la parte de observabilidad de H-023
+
+**Objetivo.** Evitar que una ejecución sin entregas se presente como notificación enviada y conservar suficiente diagnóstico para distinguir configuración, destinatarios, expiración y fallos del proveedor.
+
+**Qué incluye.** Resultado estructurado en `src/lib/push.ts`, mensajes operativos para la prueba manual, conteo de suscripciones expiradas y fallidas, y respuesta detallada de ambos crons. No cambia VAPID, horarios, destinatarios ni suscripciones reales.
+
+**Criterios de aceptación.** Cero entregas nunca aparece en `enviados`. Una configuración ausente o inválida se distingue de una lista vacía. Una entrega parcial conserva los dos conteos. Los endpoints 404 y 410 siguen limpiando suscripciones expiradas.
+
+**Pruebas requeridas.** Estado exitoso, parcial y fallido; mensajes para configuración ausente, cero destinatarios y proveedor rechazando. La prueba integrada pendiente usa una suscripción de prueba autorizada y verifica una entrega, una expiración 410 y una falla transitoria sin borrar la suscripción.
+
+**Plan de reversa.** Revertir el commit restaura el retorno numérico anterior. No cambia esquema, datos ni configuración externa.
+
+### FED-002 Línea base de integración continua y pruebas puras
+
+Modo: Remediación · Riesgo: Ámbar · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: implementado por Codex, pendiente de revisión de Claude
+
+Integración continua con typecheck, lint y build, sin pasos que no puedan fallar. La carpeta `.github` ya existe con la plantilla de pull request, así que lo que falta es el workflow. Pruebas de las funciones puras de dinero y fecha: el parser de CFDI en `src/lib/cfdi.ts`, el cálculo de pagos mixtos y cambio, el corte de caja y la zona horaria de `src/lib/tz.ts`. Sin base de datos, porque todavía no existe ambiente de pruebas.
+
+`package.json` queda reservado para este ticket. Ningún otro ticket lo toca mientras FED-002 esté abierto, incluido el script de typecheck que hoy no existe y que la integración continua va a necesitar.
+
+Implementación local: workflow de CI con lint, typecheck, pruebas y build; Vitest con 12 pruebas sobre CFDI, dinero, pagos mixtos, cambio, corte de caja y zona horaria; extracción mínima de lógica pura; bloqueo de cobro cuando el efectivo recibido no completa el monto requerido. Sin base de datos ni producción.
+
+### FED-005 Actualización de seguridad de Next.js
+
+Modo: Remediación · Riesgo: Rojo · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: implementado por Codex en rama apilada, pendiente de revisión de Claude, cierra H-008
+
+Actualizar Next desde 16.2.6 a una versión corregida y compatible, sin saltar de línea salvo que la evidencia lo exija. Ejecutar la línea base completa de FED-002 antes y después, revisar el reporte de dependencias y separar cualquier cambio requerido por el framework. No desplegar hasta que Claude revise y Dante autorice.
+
+Implementación local: se probó primero 16.2.11, que corrigió los avisos directos del framework pero conservó vulnerabilidades altas de PostCSS y Sharp. Se avanzó a 16.3.2, se alineó eslint-config-next y se fijó DOMPurify 3.4.14. Resultado: cero vulnerabilidades de producción, lint y typecheck limpios, 12 pruebas aprobadas y build completo. Riesgo residual: dos alertas de desarrollo dentro de ESLint. El aviso de migrar `middleware.ts` a `proxy.ts` queda fuera de este ticket.
+
+### FED-006 Autorización explícita de documentos clínicos
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: Codex · Revisor: Claude
+Estado: devuelto al autor; la implementación `170cbdc` fue rechazada y no se integra, mantiene H-010 abierto
+
+Cerrar el rol implícito de una sesión sin perfil y exigir un perfil activo con rol clínico antes de firmar documentos o enviar un InBody a OpenAI. El flujo debe fallar cerrado sin provocar un ciclo entre `/login` y `/dashboard`. Las Server Actions cubren el camino de aplicación, pero el acceso directo a los bytes se resuelve en FED-014 y no se presenta como mitigado por este ticket. El rediseño se implementa en una rama limpia desde la base aprobada y se cierra con sesiones reales por rol en FED-004A.
+
+### FED-007 Consistencia entre identidades y perfiles
+
+Modo: Remediación · Riesgo: Rojo · Carril: B permisos
+Autor: Codex · Revisor: Claude
+Estado: devuelto al autor; la implementación `7a7150a` fue rechazada y no se integra, mantiene H-011 abierto
+
+Evitar identidades y perfiles huérfanos, estados contradictorios y falsos éxitos al crear, activar o desactivar usuarios. El rediseño debe considerar el perfil que crea el trigger, comprobar que cada actualización afectó la fila esperada y definir compensación o reconciliación explícita si falla el segundo paso. Antes se confirma en solo lectura si existen perfiles heredados con `auth_uid` nulo. FED-004A debe ensayar éxito, fallo en cada frontera y fallo de la propia compensación, sin operar sobre cuentas reales.
+
+### FED-008 Endurecer precios y cantidades de cobros
+
+Modo: Remediación · Riesgo: Rojo · Carril: A dinero
+Autor: por asignar · Revisor: el otro agente
+Estado: por abrir después de FED-004A, cierra H-012
+
+Rehacer `registrar_cobro()` para que los renglones ligados a catálogo obtengan su precio desde `productos.precio_venta` o `servicios.precio`, rechacen cantidades no positivas y conserven la atomicidad de cobro, pago e inventario. Antes de decidir cómo tratar conceptos y precios libres, Dante debe confirmar la regla de descuentos del consultorio. La prueba mínima intenta precio cero, precio manipulado, cantidad negativa, producto inactivo, stock insuficiente y un cobro válido. Sin cambios en producción hasta revisión cruzada y autorización.
+
+### FED-009 Cerrar el alta pública de cuentas
+
+Modo: Remediación · Riesgo: Rojo · Carril: B permisos
+Autor: Dante · Revisores: Codex y Claude
+Estado: listo para ejecutar con autorización, cierra H-013
+
+Deshabilitar el alta pública en Supabase Auth sin eliminar el flujo administrativo de `crearUsuario()`, que usa `service_role`. Antes se guarda evidencia de la configuración actual; después se prueba que un alta anónima sea rechazada, que las sesiones existentes sigan entrando y que el administrador todavía pueda crear una empleada de prueba autorizada. El cambio real y su prueba se coordinan con la doctora para no improvisar sobre producción.
+
+### FED-010 Idempotencia de ventas
+
+Modo: Remediación · Riesgo: Rojo · Carril: A dinero
+Autor: por asignar · Revisor: el otro agente
+Estado: por abrir después de FED-004A, cierra H-014 y bloquea cualquier outbox
+
+Asignar a cada venta una clave estable creada antes de enviar, guardarla con unicidad en la base y hacer idempotente `registrar_venta()`. El mismo intento repetido devuelve la venta original; una venta nueva usa otra clave. Probar pérdida de respuesta después del commit, doble clic, dos solicitudes concurrentes y reintento tras reiniciar el navegador.
+
+### FED-011 Contrato híbrido y experiencia sin conexión
+
+Modo: Diseño y remediación · Riesgo: Ámbar · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: por definir después de FED-010, cierra H-015
+
+Definir con Dante qué significa “híbrido” para Fedra: consulta de catálogo, continuidad de venta, impresión, pacientes y cortes no tienen el mismo riesgo. Primero se agrega estado de conexión y manejo claro de errores. Solo después se decide qué se guarda localmente, durante cuánto tiempo y con qué cifrado. Ningún dato clínico se cachea por accidente y ninguna venta entra a una cola sin idempotencia probada.
+
+### FED-003 Rotación del token de despliegue
+
+Modo: Remediación · Riesgo: Rojo · Carril: F operación
+Autor: Dante · Revisor: Claude
+Estado: por abrir, cierra H-001
+
+Solo Dante ejecuta. Se rota el token de Vercel y la credencial nueva no vuelve a pasar por chat. Las llaves de Supabase, OpenAI y el par de OAuth de Google no se tocan hasta confirmar su exposición y sus dependencias, porque de la llave de servicio cuelgan los dos crons y el OAuth ya tiene a la doctora conectada.
+
+### FED-004A Ambiente de pruebas local
+
+Modo: Remediación · Riesgo: Rojo · Carril: F operación
+Autor: Claude · Revisor: Codex
+Estado: implementado por Claude en `claude/FED-004A-supabase-local`, pendiente de revisión de Codex, cierra la primera mitad de H-002
+
+Levantar el entorno local que `supabase/config.toml` ya declara, con las 40 migraciones aplicadas y datos sintéticos. Incluye el `supabase/seed.sql` que ese archivo referencia y que no existe: inventario con lotes y caducidades, pacientes falsos, servicios y un usuario por cada rol. Desbloquea las pruebas de RPC, de RLS desde fuera con la llave anónima local, y de concurrencia. Ni un solo registro real.
+
+Archivos permitidos: `supabase/seed.sql`; `supabase/tests/**`, que es donde viven las pruebas de políticas, sus ayudantes y su configuración de vitest; `.github/workflows/fed004a-rls.yml`, porque el entorno vive en un runner y no en esta máquina; la entrada de `.gitignore` del manifiesto que ese workflow genera en cada corrida; los ajustes de configuración local que haga falta en `supabase/config.toml`; y documentación propia bajo `docs/`. Fuera de alcance: `package.json`, que está reservado para FED-002; `.github/workflows/ci.yml`, que es de FED-002; `src/`; las migraciones existentes, que no se reescriben; migraciones nuevas, que salen en tickets aparte cuando Dante apruebe el contrato; y producción.
+
+**Implementación.** Como esta máquina no tiene Docker ni Supabase CLI, el entorno vive en un runner de GitHub Actions: `.github/workflows/fed004a-rls.yml` descarga el CLI en una versión fija, `2.115.0`, levanta Supabase local, aplica las 40 migraciones desde cero con `supabase db reset` y carga `supabase/seed.sql`. Después comprueba que el número de migraciones aplicadas coincide con el de archivos del repositorio, que la semilla dejó un perfil por rol, sube objetos sintéticos al bucket privado y corre las pruebas de políticas desde fuera, con la llave anónima y una sesión real por cada rol.
+
+La semilla se verifica a sí misma: un bloque final comprueba que hay un usuario por rol, que todo paciente lleva el prefijo `PRUEBA`, que la existencia de cada lote es exactamente entradas menos salidas, y que ventas y cobros valen lo que suman sus renglones y lo que cubren sus pagos. Si algo no cuadra, el reset termina en error.
+
+Tres guardias impiden que esto toque el proyecto remoto. La semilla aborta si encuentra una cuenta fuera de `@fedra.test` o un paciente sin el prefijo de prueba. Las pruebas se niegan a correr si `SUPABASE_URL` no apunta a `127.0.0.1`. Y el workflow falla de entrada si existe un `project-ref`, un archivo de entorno o un `SUPABASE_ACCESS_TOKEN`.
+
+Los hallazgos abiertos quedan como pruebas ejecutables, no comentadas: las afirmaciones de H-016 y H-013 usan `it.fails`, así que corren de verdad, hoy pasan porque el sistema concede de más, y el día que FED-014 o FED-009 cierren el hueco esas pruebas empezarán a pasar y `it.fails` se pondrá roja, obligando a convertirlas en pruebas normales.
+
+**Segundo incremento: la bitácora.** `supabase/tests/auditoria.test.mts` mide la auditoría por su efecto y no por el catálogo: hace un cambio real por la API con la sesión del rol que puede hacerlo y cuenta los renglones nuevos de `audit_log`. Así aparecieron H-025, cuatro tablas sensibles sin disparador, y H-026, la política plana que deja a un admin borrar la bitácora que lo señala.
+
+Cada sonda se afirma en dos pruebas separadas: una normal que exige que la escritura haya ocurrido, y una `it.fails` sobre el rastro. Sin esa separación, una escritura negada por RLS haría fallar la prueba, `it.fails` la daría por buena, y quedaría un hallazgo "confirmado" sin haber medido nada. Es exactamente la trampa que ya escondió H-024 detrás de un helper que devolvía cero ante cualquier error.
+
+### FED-004B Proyecto remoto para vistas previas
+
+Modo: Remediación · Riesgo: Rojo · Carril: F operación
+Autor: Claude · Revisor: Codex · Autoriza: Dante
+Estado: por abrir, no comienza todavía, cierra la segunda mitad de H-002
+
+Segundo proyecto de Supabase en la nube para que cualquier preview funcional use una base separada de la de la doctora. Primero hay que verificar en qué estado están hoy los previews, porque no lo comprobamos. Crea un recurso y credenciales nuevas, así que no se toca sin autorización expresa de Dante. Conviene que espere a FED-003, porque configurar vistas previas con el token de despliegue todavía sin rotar es trabajar sobre una credencial que sabemos comprometida.
+
+### FED-019 Operación del retiro clínico y adopción de huérfanos
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: Codex · Revisor: Claude · Autoriza: Dante
+Estado: integrado y desplegado al tester el 30 de agosto de 2026, en `c992adc`. **Sigue bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
+
+**Por qué es bloqueante.** FED-014 dejó el mecanismo: el objeto se puede sacar de circulación sin destruirlo y el retiro queda registrado y es inmutable. Lo que no dejó es la operación alrededor, y sin ella el mecanismo existe pero nadie sabe cuándo usarlo. Mientras los documentos sean sintéticos eso no cuesta nada. En el momento en que entre el primer InBody real, un error de captura se vuelve un dato clínico de una paciente dentro del expediente de otra, y ahí ya no hay ensayo.
+
+**Qué incluye.**
+
+Autorización escrita de Fedra sobre tres cosas: que un documento clínico no se borra nunca, que el retiro excepcional existe y quién puede pedirlo, y qué se le dice a la paciente cuando ocurre. Sin esa autorización el procedimiento es una decisión nuestra sobre datos que no son nuestros.
+
+La pantalla. Hoy, retirado un documento, la fila de `documentos_clinicos` sigue apuntando a una ruta que ya no responde, y quien la mire va a ver un archivo roto en vez de un documento retirado. La ficha de la paciente tiene que decir que se retiró, cuándo y con qué motivo, y para admin y doctora, que son quienes leen `retiros_clinicos`.
+
+El inventario de huérfanos ya existe como vista, `inbody_huerfanos`, y todavía no lo consume ninguna pantalla. Falta la lista y el botón de adoptar, que registra el objeto contra la paciente que dice su ruta, y falta recorrer los que ya estén en el tester antes de que se mezclen con los reales.
+
+Un ensayo del procedimiento completo con un documento sintético, hecho por alguien que no sea quien escribió el script, cronometrado y anotado. Un procedimiento de emergencia que nunca se ensayó no cuenta, igual que un respaldo que nunca se restauró.
+
+**Fuera de alcance.** Cualquier cambio a las políticas de FED-014, que quedan como están. El paso dos de FED-014, que es el movimiento de los objetos de producto.
+
+**Invariantes.** El retiro sigue siendo excepcional y sigue pasando por la llave de servicio y por una persona. No se expone como RPC ni como server action: una función que el cliente pueda invocar es el borrado que la regla prohíbe, con otro nombre.
+
+**Regla operativa autorizada por Dante.** Antes de subir un InBody, la pantalla muestra el nombre completo de la paciente cuyo expediente está abierto y exige confirmación explícita. El alta posterior ya registra en `documentos_clinicos` quién lo subió y cuándo, y `fn_audit()` conserva el evento. La comparación del nombre visible mediante IA será una segunda barrera, no una reasignación automática, y se diseña después de probar los formatos reales anonimizados.
+
+**Qué quedó comprobado el 30 de agosto de 2026.** La revisión independiente de Claude sobre 2aef571 encontró H-038 y H-039, corregidos en el PR #8 y verificados sobre el tester ya desplegado: en la ficha de la paciente y en el alta de receta la confirmación nombra el expediente abierto y ocurre antes de subir un solo byte; cancelar no deja objeto ni fila, comprobado con `inbody_huerfanos` vacía después de dos cancelaciones; un estudio aceptado deja exactamente una fila y su URL firmada responde; farmacia no enumera `inbody/` ni firma un estudio que sí existe.
+
+**Qué falta para cerrarlo.** Dos cosas, ninguna de código. El ensayo completo del retiro con un documento sintético, que necesita `SUPABASE_SERVICE_ROLE_KEY` del tester en el ambiente de quien lo ejecute: sin un objeto en cuarentena, comprobar que ningún rol lo alcanza no prueba nada, porque un objeto inexistente responde igual. Y la autorización escrita de Fedra sobre las tres reglas que el ticket enumera.
+
+### FED-020 Historia clínica en el formato real de Fedra
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: por asignar · Revisor: el otro agente · Autoriza: Dante
+Estado: por abrir. Decisión de negocio confirmada por Dante el 30 de agosto de 2026
+
+**Regla de negocio confirmada.** El formato real es un cuestionario rápido de Sí, No y No aplica, con campos breves. Son doce secciones y hay que reproducirlas fielmente, conservando los requisitos de la NOM-004-SSA3-2012.
+
+**La NOM vigente es la de 2012.** Hay un proceso oficial de modificación en curso durante 2026. Mientras no se publique, no se inventan requisitos futuros ni se adelanta ningún campo por si acaso.
+
+**Invariante.** No se precarga ninguna respuesta clínica como si alguien ya la hubiera verificado. Una casilla marcada por omisión es una afirmación médica que nadie hizo.
+
+**Fuera de alcance.** La calibración de la impresión, que se hace físicamente contra las impresoras del consultorio y no se cierra desde aquí.
+
+### FED-021 Formato de impresión de receta y tratamiento
+
+Modo: Remediación · Riesgo: Ámbar · Carril: C pacientes
+Autor: por asignar · Revisor: el otro agente · Autoriza: Dante
+Estado: por abrir. Decisión de negocio confirmada por Dante el 30 de agosto de 2026
+
+**Regla de negocio confirmada.** Media carta horizontal. El sistema imprime fase, duración, medicamentos, dosis, horarios y aclaraciones. Cada aclaración se queda agrupada debajo de su medicamento y no se reacomoda por caber mejor.
+
+**La zona inferior queda libre a propósito.** Fedra siempre la completa a mano. El sistema tiene que bloquear cuando el contenido digital invade esa zona, y no puede resolverlo encogiendo la tipografía hasta volverla ilegible. La posición de FASE 1, FASE 2, FASE 10 y las demás se conserva.
+
+**Observación de la revisión del 30 de agosto.** En el tester, el código de barras y el folio caen abajo a la derecha, junto a la línea de FIRMA, que es dentro del área manuscrita. Hay que medirlo contra el recetario real antes de decidir si estorba.
+
+### FED-022 Segunda barrera del InBody: leer el nombre impreso
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: por asignar · Revisor: el otro agente · Autoriza: Dante
+Estado: por abrir. Depende de FED-019 y de una llave de OpenAI exclusiva del tester
+
+**Qué es.** Leer el nombre impreso en el reporte y compararlo contra el expediente abierto, después de la confirmación humana que FED-019 ya dejó puesta.
+
+**Invariante.** La IA nunca sustituye la confirmación de la persona y nunca reasigna un documento sola. Es una segunda barrera, no un reemplazo de la primera.
+
+**Bloqueo actual.** El tester no tiene `OPENAI_API_KEY`. Comprobado el 30 de agosto de 2026: subir un InBody registra el documento y después la lectura falla con el aviso de que falta configurar esa llave. El diseño de esta barrera espera a que exista una llave exclusiva del tester, y los formatos con los que se pruebe tienen que estar anonimizados.
