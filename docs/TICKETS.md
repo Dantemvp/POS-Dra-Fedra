@@ -279,7 +279,7 @@ Segundo proyecto de Supabase en la nube para que cualquier preview funcional use
 
 Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
 Autor: Codex · Revisor: Claude · Autoriza: Dante
-Estado: en implementación por Codex. **Bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
+Estado: integrado y desplegado al tester el 30 de agosto de 2026, en `c992adc`. **Sigue bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
 
 **Por qué es bloqueante.** FED-014 dejó el mecanismo: el objeto se puede sacar de circulación sin destruirlo y el retiro queda registrado y es inmutable. Lo que no dejó es la operación alrededor, y sin ella el mecanismo existe pero nadie sabe cuándo usarlo. Mientras los documentos sean sintéticos eso no cuesta nada. En el momento en que entre el primer InBody real, un error de captura se vuelve un dato clínico de una paciente dentro del expediente de otra, y ahí ya no hay ensayo.
 
@@ -298,3 +298,45 @@ Un ensayo del procedimiento completo con un documento sintético, hecho por algu
 **Invariantes.** El retiro sigue siendo excepcional y sigue pasando por la llave de servicio y por una persona. No se expone como RPC ni como server action: una función que el cliente pueda invocar es el borrado que la regla prohíbe, con otro nombre.
 
 **Regla operativa autorizada por Dante.** Antes de subir un InBody, la pantalla muestra el nombre completo de la paciente cuyo expediente está abierto y exige confirmación explícita. El alta posterior ya registra en `documentos_clinicos` quién lo subió y cuándo, y `fn_audit()` conserva el evento. La comparación del nombre visible mediante IA será una segunda barrera, no una reasignación automática, y se diseña después de probar los formatos reales anonimizados.
+
+**Qué quedó comprobado el 30 de agosto de 2026.** La revisión independiente de Claude sobre 2aef571 encontró H-038 y H-039, corregidos en el PR #8 y verificados sobre el tester ya desplegado: en la ficha de la paciente y en el alta de receta la confirmación nombra el expediente abierto y ocurre antes de subir un solo byte; cancelar no deja objeto ni fila, comprobado con `inbody_huerfanos` vacía después de dos cancelaciones; un estudio aceptado deja exactamente una fila y su URL firmada responde; farmacia no enumera `inbody/` ni firma un estudio que sí existe.
+
+**Qué falta para cerrarlo.** Dos cosas, ninguna de código. El ensayo completo del retiro con un documento sintético, que necesita `SUPABASE_SERVICE_ROLE_KEY` del tester en el ambiente de quien lo ejecute: sin un objeto en cuarentena, comprobar que ningún rol lo alcanza no prueba nada, porque un objeto inexistente responde igual. Y la autorización escrita de Fedra sobre las tres reglas que el ticket enumera.
+
+### FED-020 Historia clínica en el formato real de Fedra
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: por asignar · Revisor: el otro agente · Autoriza: Dante
+Estado: por abrir. Decisión de negocio confirmada por Dante el 30 de agosto de 2026
+
+**Regla de negocio confirmada.** El formato real es un cuestionario rápido de Sí, No y No aplica, con campos breves. Son doce secciones y hay que reproducirlas fielmente, conservando los requisitos de la NOM-004-SSA3-2012.
+
+**La NOM vigente es la de 2012.** Hay un proceso oficial de modificación en curso durante 2026. Mientras no se publique, no se inventan requisitos futuros ni se adelanta ningún campo por si acaso.
+
+**Invariante.** No se precarga ninguna respuesta clínica como si alguien ya la hubiera verificado. Una casilla marcada por omisión es una afirmación médica que nadie hizo.
+
+**Fuera de alcance.** La calibración de la impresión, que se hace físicamente contra las impresoras del consultorio y no se cierra desde aquí.
+
+### FED-021 Formato de impresión de receta y tratamiento
+
+Modo: Remediación · Riesgo: Ámbar · Carril: C pacientes
+Autor: por asignar · Revisor: el otro agente · Autoriza: Dante
+Estado: por abrir. Decisión de negocio confirmada por Dante el 30 de agosto de 2026
+
+**Regla de negocio confirmada.** Media carta horizontal. El sistema imprime fase, duración, medicamentos, dosis, horarios y aclaraciones. Cada aclaración se queda agrupada debajo de su medicamento y no se reacomoda por caber mejor.
+
+**La zona inferior queda libre a propósito.** Fedra siempre la completa a mano. El sistema tiene que bloquear cuando el contenido digital invade esa zona, y no puede resolverlo encogiendo la tipografía hasta volverla ilegible. La posición de FASE 1, FASE 2, FASE 10 y las demás se conserva.
+
+**Observación de la revisión del 30 de agosto.** En el tester, el código de barras y el folio caen abajo a la derecha, junto a la línea de FIRMA, que es dentro del área manuscrita. Hay que medirlo contra el recetario real antes de decidir si estorba.
+
+### FED-022 Segunda barrera del InBody: leer el nombre impreso
+
+Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
+Autor: por asignar · Revisor: el otro agente · Autoriza: Dante
+Estado: por abrir. Depende de FED-019 y de una llave de OpenAI exclusiva del tester
+
+**Qué es.** Leer el nombre impreso en el reporte y compararlo contra el expediente abierto, después de la confirmación humana que FED-019 ya dejó puesta.
+
+**Invariante.** La IA nunca sustituye la confirmación de la persona y nunca reasigna un documento sola. Es una segunda barrera, no un reemplazo de la primera.
+
+**Bloqueo actual.** El tester no tiene `OPENAI_API_KEY`. Comprobado el 30 de agosto de 2026: subir un InBody registra el documento y después la lectura falla con el aviso de que falta configurar esa llave. El diseño de esta barrera espera a que exista una llave exclusiva del tester, y los formatos con los que se pruebe tienen que estar anonimizados.
