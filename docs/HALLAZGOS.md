@@ -495,6 +495,36 @@ El defecto de la prueba se sumaba al de la medición: `filasVisibles()` consulta
 
 **Lo que falta decidir.** Si se prefiere que `anon` siga recibiendo una lista vacía, la salida es devolverle el `execute` sobre `current_rol()`, que para una sesión sin identidad devuelve nulo y no revela nada. Es un renglón en una migración nueva. No lo hago por mi cuenta porque revierte una decisión deliberada de la migración de endurecimiento, y quien la escribió tiene que opinar.
 
+### H-038 La confirmación de FED-019 quedó en la función que no sube nada
+
+Severidad: Rojo
+Carril: C pacientes
+Encontró: Claude, revisando el PR #7 en 2aef571
+Estado: Cerrado por el autor del hallazgo, pendiente de que Codex lo verifique
+Ticket: FED-019
+
+**Evidencia.** `src/app/(app)/recetas/NuevaReceta.tsx` en 2aef571. La pantalla tiene dos funciones que tocan un InBody: `cargarUltimoInBody()`, que sólo LEE el último estudio ya guardado y llena las métricas de la receta, y `subirInBody()`, que es la que escribe bytes en el bucket con `supabase.storage.from("archivos").upload(path, file)`. La confirmación de paciente entró en la primera, línea 102, y la segunda quedó exactamente como estaba: seleccionar una foto desde el alta de receta subía el archivo al expediente sin preguntar nada. Las pruebas del PR no lo ven porque comprueban el texto del mensaje, y el texto estaba bien.
+
+**Impacto.** Es el hueco que FED-019 existe para tapar, y sigue abierto en la pantalla donde la asistente trabaja todos los días. `rutaInBody()` mete el identificador de la paciente dentro de la ruta, así que una foto elegida con la paciente equivocada seleccionada queda escrita bajo `inbody/{otra paciente}/...`. Y como no hay política de borrado sobre `inbody/`, de ahí sólo sale por el retiro administrativo con la llave de servicio. La confirmación mal colocada además desgasta la barrera: preguntar "¿confirmas que este InBody es de X?" cuando no se está guardando nada enseña a la persona a aceptar el aviso sin leerlo, y ese hábito llega intacto al día en que la pregunta sí importa.
+
+**Verificación.** `src/lib/confirmacion-inbody.test.ts`. No comprueba el texto sino el orden: para cada función que sube un documento clínico (`rutaInBody(...)` seguido de `.upload(`), exige que `window.confirm(mensajeConfirmacionInBody(...))` aparezca antes de la subida y dentro de la misma función. La prueba se escribió contra 2aef571 y falló ahí señalando `NuevaReceta.tsx · subirInBody()`; pasa con la corrección. Cubre las dos pantallas y cubrirá cualquier tercera que se agregue.
+
+### H-039 Un documento retirado se ve sano para la asistente y el gerente
+
+Severidad: Ámbar
+Carril: C pacientes
+Encontró: Claude, revisando el PR #7 en 2aef571
+Estado: Mitigado en la pantalla, la decisión de fondo queda para Dante y Codex
+Ticket: FED-019
+
+**Evidencia.** `src/app/(app)/pacientes/[id]/page.tsx` consulta `retiros_clinicos` sólo si el rol es admin o doctora, que es lo único que la política de FED-014 permite leer. Para la asistente y el gerente la lista de retiros llega vacía, `estadoDocumentoClinico()` devuelve `activo` y la ficha pinta el documento como si nada hubiera pasado. La URL firmada sí falla, porque el objeto ya está en `cuarentena/`, así que el botón "Ver documento" no se dibuja: no hay enlace roto ni fuga del motivo. Lo que queda es una fila muda, indistinguible de un documento sano cuya firma falló por otra razón.
+
+**Impacto.** La asistente es quien sube los estudios y quien con más probabilidad provocó el retiro. Es justo a quien la pantalla no le dice nada, y la salida natural ante un documento que no abre es volver a subirlo, que es el error que el retiro vino a corregir.
+
+**Verificación.** `DocumentosClinicos.tsx` avisa cuando un documento sin retiro conocido tampoco tiene URL: dice que el archivo no está disponible y que se consulte antes de volver a subirlo. No nombra el motivo ni al responsable, que es lo que la política reserva a admin y doctora. Queda sin prueba automatizada porque el repositorio no tiene con qué montar un componente de React; se comprueba en el tester con la matriz de aceptación, entrando como asistente a una ficha con un documento retirado.
+
+**Lo que falta decidir.** Si la asistente debe ver el hecho del retiro (sin motivo ni responsable), hace falta una política nueva sobre `retiros_clinicos` o una vista que exponga sólo `path_original` y `movido_en`. Eso cambia las políticas de FED-014, que el ticket declara fuera de alcance, así que no lo toco.
+
 ---
 
 ## Cerrados

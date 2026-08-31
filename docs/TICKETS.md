@@ -279,7 +279,7 @@ Segundo proyecto de Supabase en la nube para que cualquier preview funcional use
 
 Modo: Remediación · Riesgo: Rojo · Carril: C pacientes
 Autor: Codex · Revisor: Claude · Autoriza: Dante
-Estado: por abrir. **Bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
+Estado: en implementación por Codex. **Bloqueante: no se sube ningún documento real al tester ni a producción antes de cerrarlo.** Cierra la parte de operación de H-034
 
 **Por qué es bloqueante.** FED-014 dejó el mecanismo: el objeto se puede sacar de circulación sin destruirlo y el retiro queda registrado y es inmutable. Lo que no dejó es la operación alrededor, y sin ella el mecanismo existe pero nadie sabe cuándo usarlo. Mientras los documentos sean sintéticos eso no cuesta nada. En el momento en que entre el primer InBody real, un error de captura se vuelve un dato clínico de una paciente dentro del expediente de otra, y ahí ya no hay ensayo.
 
@@ -296,3 +296,5 @@ Un ensayo del procedimiento completo con un documento sintético, hecho por algu
 **Fuera de alcance.** Cualquier cambio a las políticas de FED-014, que quedan como están. El paso dos de FED-014, que es el movimiento de los objetos de producto.
 
 **Invariantes.** El retiro sigue siendo excepcional y sigue pasando por la llave de servicio y por una persona. No se expone como RPC ni como server action: una función que el cliente pueda invocar es el borrado que la regla prohíbe, con otro nombre.
+
+**Regla operativa autorizada por Dante.** Antes de subir un InBody, la pantalla muestra el nombre completo de la paciente cuyo expediente está abierto y exige confirmación explícita. El alta posterior ya registra en `documentos_clinicos` quién lo subió y cuándo, y `fn_audit()` conserva el evento. La comparación del nombre visible mediante IA será una segunda barrera, no una reasignación automática, y se diseña después de probar los formatos reales anonimizados.

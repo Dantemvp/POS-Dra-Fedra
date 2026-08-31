@@ -36,6 +36,13 @@ export const INBODY_OPENAI_MODEL = "gpt-4o-2024-08-06";
 
 export type ArchivoInBody = { type: string; size: number };
 
+export function mensajeConfirmacionInBody(nombrePaciente: string): string {
+  return (
+    `Estás por guardar este InBody en el expediente de ${nombrePaciente.trim()}.\n\n` +
+    "¿Confirmas que el documento corresponde a esta paciente?"
+  );
+}
+
 const EXTENSION_POR_MIME: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
