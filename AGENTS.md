@@ -82,7 +82,16 @@ Incidente, reducir daño y preservar evidencia, con producción en solo lectura 
 
 ## Documentos de referencia
 
+- `docs/ESTADO_ACTUAL.md`, la fotografía operativa que se refresca al cambiar despliegues, ramas o prioridades.
+- `docs/RELEVO_MULTIAGENTE.md`, el contrato para continuar entre PC, Mac, Claude y Codex.
 - `docs/PLAN_MAESTRO_FEDRA.md`, el plan vigente y los seis carriles de auditoría.
 - `docs/WORKFLOW_CLAUDE_CODEX.md`, el flujo de cambio completo.
 - `docs/HALLAZGOS.md`, el tablero compartido de hallazgos.
 - `docs/TICKETS.md`, el tablero de tickets con autor y revisor.
+
+## Regla de foco
+
+No convertir un hallazgo menor en una auditoría infinita. Solo interrumpe el
+objetivo vigente un riesgo material sobre dinero, inventario, permisos, datos
+clínicos, despliegue o reversa. Lo demás se registra y se agenda sin secuestrar
+el trabajo actual.
