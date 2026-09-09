@@ -53,6 +53,9 @@ const ARCHIVOS_ENV = [
   ".env.development",
   ".env.development.local",
   ".env.production",
+  ".env.production.local",
+  ".env.test",
+  ".env.test.local",
 ];
 const CLAVES_URL = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL"];
 let destinoAppComprobado = false;

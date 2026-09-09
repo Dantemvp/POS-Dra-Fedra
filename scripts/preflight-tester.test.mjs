@@ -55,6 +55,17 @@ describe("preflight remoto del tester", () => {
     assert.match(resultado.stderr, /\.env\.development declara NEXT_PUBLIC_SUPABASE_URL/);
   });
 
+  it("detecta producción en .env.production.local aunque .env.local sea tester", () => {
+    const resultado = ejecutar({
+      ".env.local": `NEXT_PUBLIC_SUPABASE_URL=${TESTER_URL}\n`,
+      ".env.production.local":
+        "NEXT_PUBLIC_SUPABASE_URL=https://kxtznwgdpvbtlsedmjap.supabase.co\n",
+    });
+
+    assert.equal(resultado.status, 1);
+    assert.match(resultado.stderr, /\.env\.production\.local declara NEXT_PUBLIC_SUPABASE_URL/);
+  });
+
   it("aprueba cuando .env.development demuestra el tester autorizado", () => {
     const resultado = ejecutar({
       ".env.development": `NEXT_PUBLIC_SUPABASE_URL=${TESTER_URL}\n`,
