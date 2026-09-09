@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { Rol } from "@/lib/auth";
-import { navParaRol } from "@/components/nav";
+import AreaNavigation from "@/components/AreaNavigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
 import { APP_VERSION } from "@/lib/version";
@@ -18,9 +16,7 @@ export default function MobileTopBar({
   rol: Rol;
   nombre: string;
 }) {
-  const pathname = usePathname();
   const [abierto, setAbierto] = useState(false);
-  const items = navParaRol(rol);
 
   // Bloquea el scroll del fondo cuando el menú está abierto.
   useEffect(() => {
@@ -71,26 +67,7 @@ export default function MobileTopBar({
               </button>
             </div>
 
-            <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-              {items.map((item) => {
-                const active =
-                  pathname === item.href || pathname.startsWith(item.href + "/");
-                return (
-                  <Link
-                    key={item.href}
-                    onClick={() => setAbierto(false)}
-                    href={item.href}
-                    className={`block rounded-lg px-3 py-2.5 text-[15px] transition ${
-                      active
-                        ? "bg-zinc-900 font-medium text-white"
-                        : "text-zinc-700 hover:bg-zinc-100"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            <AreaNavigation rol={rol} onNavigate={() => setAbierto(false)} />
 
             <div className="border-t border-zinc-200 px-3 py-3">
               <LogoutButton />
