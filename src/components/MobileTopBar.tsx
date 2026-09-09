@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import type { Rol } from "@/lib/auth";
 import AreaNavigation from "@/components/AreaNavigation";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -39,7 +40,14 @@ export default function MobileTopBar({
             <path d="M3 6h18M3 12h18M3 18h18" />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-zinc-900">Dra. Fedra Aldama</span>
+        <Image
+          src="/logo.png"
+          alt="Dra. Fedra Aldama"
+          width={760}
+          height={117}
+          priority
+          className="h-auto w-40 dark:brightness-0 dark:invert"
+        />
         <ThemeToggle />
       </header>
 
