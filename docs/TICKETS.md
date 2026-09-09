@@ -340,3 +340,25 @@ Estado: por abrir. Depende de FED-019 y de una llave de OpenAI exclusiva del tes
 **Invariante.** La IA nunca sustituye la confirmación de la persona y nunca reasigna un documento sola. Es una segunda barrera, no un reemplazo de la primera.
 
 **Bloqueo actual.** El tester no tiene `OPENAI_API_KEY`. Comprobado el 30 de agosto de 2026: subir un InBody registra el documento y después la lectura falla con el aviso de que falta configurar esa llave. El diseño de esta barrera espera a que exista una llave exclusiva del tester, y los formatos con los que se pruebe tienen que estar anonimizados.
+
+### FED-023 Continuidad multiequipo
+
+Modo: Remediación · Riesgo: Verde · Carril: F operación
+Autor: Codex · Revisor: Claude
+Estado: en revisión de Claude; primer cambio solicitado en atención
+
+**Objetivo.** Permitir que una sesión nueva en PC o Mac se ubique y continúe
+desde GitHub sin depender del historial de chat.
+
+**Alcance.** Convertir `README.md` en puerta de entrada y agregar contexto
+operativo, workflow de relevo y prompts para Claude y Codex. Sin código,
+migraciones, secretos, despliegues ni datos reales.
+
+**Criterios de aceptación.** Una sesión nueva identifica en menos de cinco
+minutos repositorio, rama, entornos, estado, roles, prioridad y límites de
+autoridad. Los hallazgos no bloqueantes se registran sin desviar el objetivo.
+
+**Pruebas.** Enlaces locales, búsqueda de secretos, `git diff --check` y
+revisión de Claude.
+
+**Reversa.** Revertir el commit documental.
