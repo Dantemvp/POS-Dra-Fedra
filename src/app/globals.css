@@ -56,6 +56,43 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* El gesto orgánico del membrete identifica la aplicación sin competir con
+   tablas o formularios. Vive en el shell, nunca en documentos imprimibles. */
+.fedra-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.fedra-shell::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  background-image: url("/membrete-historia.png");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  content: "";
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.dark .fedra-shell::before {
+  opacity: 0.035;
+}
+
+@media (max-width: 767px) {
+  .fedra-shell::before {
+    background-position: 38% center;
+    opacity: 0.1;
+  }
+}
+
+@media print {
+  .fedra-shell::before {
+    display: none;
+  }
+}
+
 /* Documentos imprimibles (historia, receta, ticket): SIEMPRE en claro, aunque
    la app esté en tema oscuro. Si heredaran el tema, el texto saldría blanco y
    la impresión/PDF quedaría en blanco. Reponemos la rampa zinc clara y fondo
