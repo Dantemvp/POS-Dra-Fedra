@@ -57,7 +57,7 @@ export default async function DashboardPage({
     caducidad: string;
   }[] = [];
 
-  if (verFarmacia) {
+  if (verFarmacia && areaActiva === "farmacia") {
     // Fronteras de día EN SINALOA (no en UTC del servidor).
     const inicioHoy = inicioDiaSinaloa();
     const desde14 = new Date(inicioHoy.getTime() - 13 * 86_400_000);
@@ -162,7 +162,7 @@ export default async function DashboardPage({
   let pacientesFase: { fase: string; pacientes: number }[] = [];
   let porMes: { mes: string; recetas: number; citas: number }[] = [];
   let ingresosMes: { mes: string; total: number }[] = [];
-  if (verClinica) {
+  if (verClinica && areaActiva === "consultorio") {
     const { count } = await supabase
       .from("pacientes")
       .select("*", { count: "exact", head: true });

@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.2] - 2026-09-09
+
+- Retira la conexión OAuth y la sincronización de escritura con Google Calendar.
+- Conserva la agenda interna, sus citas y los recordatorios por WhatsApp.
+- El Inicio consulta únicamente el área visible, en lugar de cargar Farmacia y
+  Consultorio al mismo tiempo.
+- Añade respuesta visual inmediata durante la navegación entre pantallas.
+
 ## [0.1.1] - 2026-09-09
 
 - Organiza el panel en las vistas Farmacia y Consultorio sin eliminar opciones.
