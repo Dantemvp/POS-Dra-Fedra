@@ -76,6 +76,7 @@ export async function GET(req: Request) {
   }[];
 
   const enviados: string[] = [];
+  const push: Record<string, Awaited<ReturnType<typeof enviarARoles>>> = {};
 
   // Notificación de inventario (caducidades + stock bajo) — una sola, agrupada.
   if (caducando.length > 0 || bajos.length > 0) {
@@ -89,13 +90,13 @@ export async function GET(req: Request) {
     if (bajos.length > 0) {
       partes.push(`${bajos.length} con stock bajo (ej. ${bajos[0].nombre})`);
     }
-    await enviarARoles(["admin", "farmacia", "doctora", "gerente"], {
+    push.inventario = await enviarARoles(["admin", "farmacia", "doctora", "gerente"], {
       title: "⚠️ Inventario para revisar",
       body: partes.join(" · "),
       url: "/inventario",
       tag: "inventario-diario",
     });
-    enviados.push("inventario");
+    if (push.inventario.enviadas > 0) enviados.push("inventario");
   }
 
   // Notificación de agenda del día.
@@ -104,13 +105,13 @@ export async function GET(req: Request) {
     const nom = primera.pacientes
       ? `${primera.pacientes.nombre} ${primera.pacientes.apellidos ?? ""}`.trim()
       : "paciente";
-    await enviarARoles(["admin", "doctora", "asistente", "gerente"], {
+    push.agenda = await enviarARoles(["admin", "doctora", "asistente", "gerente"], {
       title: `📅 Hoy: ${citasHoy.length} cita${citasHoy.length === 1 ? "" : "s"}`,
       body: `Primera: ${nom} a las ${horaSinaloa(primera.fecha_hora)}.`,
       url: "/agenda",
       tag: "agenda-diaria",
     });
-    enviados.push("agenda");
+    if (push.agenda.enviadas > 0) enviados.push("agenda");
   }
 
   return NextResponse.json({
@@ -120,5 +121,6 @@ export async function GET(req: Request) {
     stock_bajo: bajos.length,
     citas_hoy: citasHoy.length,
     enviados,
+    push,
   });
 }

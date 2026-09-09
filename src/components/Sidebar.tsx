@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Rol } from "@/lib/auth";
 import { navParaRol } from "@/components/nav";
+import { APP_VERSION } from "@/lib/version";
 
 export default function Sidebar({ rol }: { rol: Rol }) {
   const pathname = usePathname();
@@ -44,6 +45,9 @@ export default function Sidebar({ rol }: { rol: Rol }) {
           );
         })}
       </nav>
+      <div className="border-t border-zinc-200 px-5 py-3 text-[10px] text-zinc-400">
+        {APP_VERSION.etiqueta}
+      </div>
     </aside>
   );
 }

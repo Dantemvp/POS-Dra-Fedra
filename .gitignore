@@ -43,3 +43,4 @@ next-env.d.ts
 # Supabase
 supabase/.temp/
 supabase/.branches/
+supabase/tests/manifiesto-storage.json

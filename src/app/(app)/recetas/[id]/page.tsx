@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
 import CodigoBarrasReceta from "./CodigoBarrasReceta";
+import { edadEnFecha } from "@/lib/impresion-documento";
+import { fechaSinaloa, ymdSinaloa } from "@/lib/tz";
 
 type Item = {
   medicamento: string;
@@ -33,13 +35,6 @@ const METRICA_TOP: Record<string, number> = {
   cintura: 48.5,
 };
 
-function edadDe(fnac?: string | null): string {
-  if (!fnac) return "";
-  const d = new Date(fnac);
-  if (isNaN(d.getTime())) return "";
-  return String(Math.floor((Date.now() - d.getTime()) / 31557600000));
-}
-
 export default async function RecetaPrint({
   params,
 }: {
@@ -60,8 +55,8 @@ export default async function RecetaPrint({
   const r = data as unknown as Receta;
   const p = r.pacientes;
   const nombre = p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : "";
-  const edad = edadDe(p?.fecha_nac);
-  const fecha = new Date(r.fecha).toLocaleDateString("es-MX");
+  const edad = edadEnFecha(p?.fecha_nac, ymdSinaloa(r.fecha));
+  const fecha = fechaSinaloa(r.fecha);
   const metricas = r.metricas ?? {};
 
   return (
@@ -132,6 +127,7 @@ export default async function RecetaPrint({
 
         {/* Rp / medicamentos */}
         <div
+          data-receta-contenido
           style={{
             position: "absolute",
             left: "5%",
@@ -189,6 +185,7 @@ export default async function RecetaPrint({
         {/* Código de barras del folio: la farmacia lo escanea para cargar los
             medicamentos recetados en el POS. */}
         <div
+          data-receta-limite
           style={{
             position: "absolute",
             right: "3.5%",

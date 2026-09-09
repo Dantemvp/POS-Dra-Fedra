@@ -7,6 +7,7 @@ import type { Rol } from "@/lib/auth";
 import { navParaRol } from "@/components/nav";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
+import { APP_VERSION } from "@/lib/version";
 
 // Barra superior + menú lateral deslizable. Solo se muestra en pantallas
 // chicas (md:hidden); en escritorio manda el Sidebar fijo.
@@ -20,11 +21,6 @@ export default function MobileTopBar({
   const pathname = usePathname();
   const [abierto, setAbierto] = useState(false);
   const items = navParaRol(rol);
-
-  // Cierra el menú al navegar.
-  useEffect(() => {
-    setAbierto(false);
-  }, [pathname]);
 
   // Bloquea el scroll del fondo cuando el menú está abierto.
   useEffect(() => {
@@ -54,7 +50,6 @@ export default function MobileTopBar({
       {/* Overlay + drawer */}
       {abierto && (
         <div className="fixed inset-0 z-40">
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setAbierto(false)}
@@ -83,6 +78,7 @@ export default function MobileTopBar({
                 return (
                   <Link
                     key={item.href}
+                    onClick={() => setAbierto(false)}
                     href={item.href}
                     className={`block rounded-lg px-3 py-2.5 text-[15px] transition ${
                       active
@@ -98,6 +94,9 @@ export default function MobileTopBar({
 
             <div className="border-t border-zinc-200 px-3 py-3">
               <LogoutButton />
+              <p className="mt-3 px-1 text-[10px] text-zinc-400">
+                {APP_VERSION.etiqueta}
+              </p>
             </div>
           </aside>
         </div>

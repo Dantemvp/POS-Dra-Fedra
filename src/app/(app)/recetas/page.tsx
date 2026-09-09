@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import NuevaReceta from "./NuevaReceta";
 import ListaRecetas, { type RecetaLista } from "./ListaRecetas";
 
+export const maxDuration = 120;
+
 type Receta = {
   id: string;
   folio: number;

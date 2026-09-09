@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, sin_movimiento: true, fecha: ymdSinaloa() });
   }
 
-  await enviarARoles(["admin", "doctora", "gerente"], {
+  const push = await enviarARoles(["admin", "doctora", "gerente"], {
     title: `🧾 Cierre del día: ${fmt(total)}`,
     body: `Farmacia ${fmt(totalVentas)} · Consultorio ${fmt(totalCobros)} · ${nOps} operaciones.`,
     url: "/caja",
@@ -73,5 +73,6 @@ export async function GET(req: Request) {
     cobros: totalCobros,
     total,
     operaciones: nOps,
+    push,
   });
 }

@@ -168,7 +168,18 @@ export async function eliminarArchivo(
   productoId: string,
 ): Promise<ActionResult> {
   const supabase = await createClient();
-  await supabase.storage.from("archivos").remove([path]);
+  // Se comprueba el retiro antes de borrar la fila. Con la politica de FED-014
+  // colgada de `producto_archivos`, si el objeto no se retira y la fila se
+  // borra igual, el objeto queda huerfano y ya nadie puede alcanzarlo ni para
+  // limpiarlo.
+  const { error: errorRetiro } = await supabase.storage
+    .from("archivos")
+    .remove([path]);
+  if (errorRetiro)
+    return {
+      ok: false,
+      error: `No se pudo retirar el archivo: ${errorRetiro.message}. La ficha no se borro.`,
+    };
   const { error } = await supabase.from("producto_archivos").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/inventario/${productoId}`);
