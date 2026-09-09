@@ -30,6 +30,22 @@ node scripts/preflight-tester.mjs --remoto
 El último comando debe aprobar únicamente el tester. No enlaces este checkout
 al identificador productivo.
 
+### Si ya existe un checkout enlazado a producción
+
+No lo repuntes al tester y no reutilices su `.env.local`. Consérvalo intacto y
+crea otro directorio exclusivo:
+
+```bash
+git fetch origin --prune
+git worktree add --detach ../sistema-fedra-tester origin/codex/fedra-integration
+cd ../sistema-fedra-tester
+npm ci
+```
+
+Después vincula solamente ese directorio al proyecto tester y ejecuta el
+preflight. El worktree nace sin los archivos locales ignorados del checkout
+productivo.
+
 Lee `README.md`, `AGENTS.md` y `docs/ESTADO_ACTUAL.md`. Después consulta solo el
 ticket y los hallazgos que vas a trabajar.
 

@@ -22,12 +22,16 @@ Quien escribe un cambio no puede ser su único revisor.
 
 Priorizar funcionalidad y seguridad con análisis proporcional al riesgo. Antes de proponer una solución, evaluar causa, impacto, casos límite, efectos secundarios, reversa y mantenimiento. Evitar tanto la parálisis por análisis como los parches rápidos: elegir el cambio mínimo que resuelva la causa y permita seguir avanzando.
 
-## Reparto de carriles
+## Reparto de trabajo
 
-Claude toma dinero, permisos, arquitectura y operación. Son los carriles A, B y F del plan maestro.
-Codex toma datos clínicos, farmacia, integraciones y pruebas adversariales. Son los carriles C, D y E.
+Como especialidad inicial, Claude suele tomar dinero, permisos, arquitectura y
+operación; Codex suele tomar datos clínicos, farmacia, integraciones y pruebas
+adversariales. No son cargos permanentes. La asignación escrita en cada ticket
+manda y puede intercambiarse por disponibilidad o tokens.
 
-Cada ticket tiene un solo autor. El otro revisa. Si dos tareas tocan el mismo archivo, no son paralelas y se ordenan.
+Cada ticket tiene un solo autor/arquitecto y un auditor/revisor distinto. Quien
+escribió una parte material no puede ser su único aprobador. Si dos tareas tocan
+el mismo archivo, no son paralelas y se ordenan.
 
 ## Semáforo de riesgo
 

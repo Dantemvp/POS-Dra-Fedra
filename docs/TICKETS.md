@@ -345,7 +345,7 @@ Estado: por abrir. Depende de FED-019 y de una llave de OpenAI exclusiva del tes
 
 Modo: Remediación · Riesgo: Verde · Carril: F operación
 Autor: Codex · Revisor: Claude
-Estado: en implementación desde `2660c6d`
+Estado: en revisión de Claude; primer cambio solicitado en atención
 
 **Objetivo.** Permitir que una sesión nueva en PC o Mac se ubique y continúe
 desde GitHub sin depender del historial de chat.
