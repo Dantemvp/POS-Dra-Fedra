@@ -525,6 +525,40 @@ Ticket: FED-019
 
 **Lo que falta decidir.** Si la asistente debe ver el hecho del retiro (sin motivo ni responsable), hace falta una política nueva sobre `retiros_clinicos` o una vista que exponga sólo `path_original` y `movido_en`. Eso cambia las políticas de FED-014, que el ticket declara fuera de alcance, así que no lo toco.
 
+### H-040 El preflight remoto aprobaba sin destino comprobado de la aplicación
+
+Severidad: Rojo
+Carril: E integraciones
+Encontró: Claude
+Estado: En revisión
+Ticket: FED-024
+
+**Evidencia.** Con el CLI enlazado al tester y `.env.local` declarando una URL
+vacía, el preflight emitía un aviso y terminaba con código cero.
+
+**Impacto.** El mensaje afirmaba que el destino estaba comprobado aunque solo
+se hubiera comprobado el CLI, no la aplicación que abre el navegador.
+
+**Verificación.** FED-024 exige al menos una URL explícita del tester desde un
+archivo de entorno o la terminal; en caso contrario termina con código uno.
+
+### H-041 El preflight no inspeccionaba `.env.development`
+
+Severidad: Rojo
+Carril: E integraciones
+Encontró: Claude
+Estado: En revisión
+Ticket: FED-024
+
+**Evidencia.** Next puede cargar `.env.development`, pero el inventario del
+preflight no lo incluía. Una URL productiva en ese archivo no se detectaba.
+
+**Impacto.** `next dev` podía hablar con producción después de un preflight
+verde.
+
+**Verificación.** FED-024 agrega el archivo al inventario y prueba tanto el
+rechazo de producción como la aceptación explícita del tester.
+
 ---
 
 ## Cerrados
