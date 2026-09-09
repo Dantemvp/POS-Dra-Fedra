@@ -31,6 +31,8 @@ export default function NotificacionesClient() {
     const ios =
       /iPad|iPhone|iPod/.test(navigator.userAgent) &&
       !("MSStream" in window);
+    // Estas banderas solo existen en el navegador y se obtienen al montar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEsIOS(ios);
     setInstalada(
       window.matchMedia("(display-mode: standalone)").matches ||
