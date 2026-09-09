@@ -47,8 +47,15 @@ if (existsSync(refPath)) {
 // aplicacion que abre la persona que prueba no lee ese archivo: `next dev` lee
 // el `.env.local`. Comprobar solo el vinculo aprueba un entorno donde el CLI
 // mira al tester y el navegador mira a otra parte.
-const ARCHIVOS_ENV = [".env", ".env.local", ".env.production", ".env.development.local"];
+const ARCHIVOS_ENV = [
+  ".env",
+  ".env.local",
+  ".env.development",
+  ".env.development.local",
+  ".env.production",
+];
 const CLAVES_URL = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL"];
+let destinoAppComprobado = false;
 
 /** Lee las URLs de Supabase declaradas dentro de un archivo de entorno. */
 function urlsDeclaradas(archivo) {
@@ -86,6 +93,7 @@ if (envs.length > 0) {
       const aceptada = remoto ? limpia === TESTER_URL : esSupabaseLocal(limpia);
       if (aceptada) {
         ok.push(`${archivo} declara ${clave} hacia el destino permitido.`);
+        if (remoto) destinoAppComprobado = true;
       } else {
         problemas.push(
           `${archivo} declara ${clave}="${valor}", que no es el destino permitido en este modo. ` +
@@ -115,10 +123,20 @@ for (const nombre of ["SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"]) {
     continue;
   }
   if (remoto) {
-    if (v.replace(/\/$/, "") === TESTER_URL) ok.push(`${nombre} apunta al tester remoto autorizado.`);
+    if (v.replace(/\/$/, "") === TESTER_URL) {
+      ok.push(`${nombre} apunta al tester remoto autorizado.`);
+      destinoAppComprobado = true;
+    }
     else problemas.push(`${nombre} apunta a "${v}"; en modo remoto sólo se acepta ${TESTER_URL}.`);
   } else if (esSupabaseLocal(v)) ok.push(`${nombre} apunta a un Supabase local (${v}).`);
   else problemas.push(`${nombre} apunta a "${v}", que NO es local. Esa variable alcanza datos reales.`);
+}
+
+if (remoto && !destinoAppComprobado) {
+  problemas.push(
+    `No se puede demostrar que la aplicación apunte a ${TESTER_URL}. ` +
+      `Declara NEXT_PUBLIC_SUPABASE_URL o SUPABASE_URL con ese valor en un archivo de entorno o en la terminal.`,
+  );
 }
 
 // 5. Token de despliegue de Vercel. H-001 lo da por quemado y sin rotar.

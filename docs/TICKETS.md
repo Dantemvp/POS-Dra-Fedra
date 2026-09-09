@@ -345,7 +345,7 @@ Estado: por abrir. Depende de FED-019 y de una llave de OpenAI exclusiva del tes
 
 Modo: Remediación · Riesgo: Verde · Carril: F operación
 Autor: Codex · Revisor: Claude
-Estado: en revisión de Claude; primer cambio solicitado en atención
+Estado: cerrado e integrado en `8b0a979`
 
 **Objetivo.** Permitir que una sesión nueva en PC o Mac se ubique y continúe
 desde GitHub sin depender del historial de chat.
@@ -362,3 +362,23 @@ autoridad. Los hallazgos no bloqueantes se registran sin desviar el objetivo.
 revisión de Claude.
 
 **Reversa.** Revertir el commit documental.
+
+### FED-024 El preflight debe demostrar el destino de la aplicación
+
+Modo: Remediación · Riesgo: Rojo · Carril: E integraciones
+Autor: Codex · Revisor: Claude
+Estado: en implementación desde `8b0a979`
+
+**Objetivo.** Impedir que el preflight remoto apruebe solo porque el CLI está
+enlazado al tester cuando no puede demostrar adónde apunta la aplicación.
+
+**Alcance.** `scripts/preflight-tester.mjs`, sus pruebas y el registro de
+H-040/H-041. Sin aplicaciones, migraciones, archivos de entorno, despliegues u
+operaciones remotas.
+
+**Criterios de aceptación.** El modo remoto falla si ninguna variable efectiva
+demuestra `mvevriyiyuurjmwileoh`; detecta `.env.development`; continúa
+rechazando cualquier URL productiva y aprueba una URL explícita del tester.
+
+**Reversa.** Revertir el commit restaura el preflight anterior. No cambia datos
+ni configuración externa.
