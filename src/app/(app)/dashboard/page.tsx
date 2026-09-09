@@ -14,6 +14,7 @@ import {
   confirmacionVencida,
   necesitaConfirmar,
 } from "../agenda/confirmacion";
+import { areaInicialParaRol, areasParaRol, type AreaTrabajo } from "@/components/nav";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -25,9 +26,18 @@ const METODO_LABEL: Record<string, string> = {
   otro: "Otro",
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ area?: string }>;
+}) {
   const usuario = await getUsuarioActual();
   const rol = usuario?.rol ?? "asistente";
+  const params = await searchParams;
+  const areas = areasParaRol(rol);
+  const areaActiva: AreaTrabajo = areas.includes(params.area as AreaTrabajo)
+    ? (params.area as AreaTrabajo)
+    : areaInicialParaRol(rol);
   const verFarmacia = rol === "admin" || rol === "farmacia" || rol === "gerente";
   const verClinica =
     rol === "admin" || rol === "doctora" || rol === "asistente" || rol === "gerente";
@@ -317,14 +327,39 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-8">
-      <div className="order-1">
-        <h1 className="text-2xl font-semibold text-zinc-900">
-          Hola, {usuario?.nombre}
-        </h1>
-        <p className="mt-1 text-sm capitalize text-zinc-500">{rol}</p>
+      <div className="order-1 space-y-5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8c7a63]">
+            {areaActiva === "farmacia" ? "Farmacia" : "Consultorio"}
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-[-0.02em] text-zinc-900">
+            Hola, {usuario?.nombre}
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            {areaActiva === "farmacia"
+              ? "Ventas, inventario y operación del día"
+              : "Pacientes, agenda y seguimiento clínico"}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {areaActiva === "farmacia" ? (
+            <>
+              <Accion href="/ventas" principal>Nueva venta</Accion>
+              <Accion href="/inventario">Ver inventario</Accion>
+              <Accion href="/caja">Abrir caja</Accion>
+            </>
+          ) : (
+            <>
+              <Accion href="/pacientes" principal>Buscar paciente</Accion>
+              <Accion href="/agenda">Ver agenda</Accion>
+              {rol !== "asistente" && <Accion href="/recetas">Nueva receta</Accion>}
+            </>
+          )}
+        </div>
       </div>
 
-      {verFarmacia && (
+      {verFarmacia && areaActiva === "farmacia" && (
         <div className="order-3 flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Kpi label="Ventas de hoy" value={String(ventasDiaCount)} />
@@ -393,7 +428,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {verClinica && (
+      {verClinica && areaActiva === "consultorio" && (
         <div className="order-2 space-y-4">
           {citasPorConfirmar > 0 && (
             <Link
@@ -520,6 +555,29 @@ export default async function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function Accion({
+  href,
+  principal,
+  children,
+}: {
+  href: string;
+  principal?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+        principal
+          ? "bg-[#3f5148] text-white shadow-sm hover:bg-[#34433c]"
+          : "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-[#f2eeec] hover:text-zinc-950"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
 
