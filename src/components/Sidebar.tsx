@@ -1,49 +1,15 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
 import type { Rol } from "@/lib/auth";
-import { navParaRol } from "@/components/nav";
+import AreaNavigation from "@/components/AreaNavigation";
 
 export default function Sidebar({ rol }: { rol: Rol }) {
-  const pathname = usePathname();
-  const items = navParaRol(rol);
-
   return (
-    <aside className="hidden w-56 flex-col border-r border-zinc-200 bg-white print:hidden md:flex">
-      <div className="border-b border-zinc-200 px-5 py-4">
-        <p className="text-sm font-semibold text-zinc-900">Dra. Fedra Aldama</p>
-        <p className="text-xs text-zinc-500 capitalize">{rol}</p>
+    <aside className="relative z-[1] hidden w-64 flex-col border-r border-black/5 bg-white print:hidden md:flex">
+      <div className="px-6 pb-5 pt-6">
+        <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="h-auto w-full max-w-[190px] dark:brightness-0 dark:invert" />
+        <p className="mt-0.5 text-xs capitalize text-zinc-500">{rol}</p>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
-        {items.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          if (!item.ready) {
-            return (
-              <span
-                key={item.href}
-                className="flex cursor-not-allowed items-center justify-between rounded-lg px-3 py-2 text-sm text-zinc-400"
-              >
-                {item.label}
-                <span className="text-[10px] uppercase tracking-wide">pronto</span>
-              </span>
-            );
-          }
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`block rounded-lg px-3 py-2 text-sm transition ${
-                active
-                  ? "bg-zinc-900 font-medium text-white"
-                  : "text-zinc-700 hover:bg-zinc-100"
-              }`}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <AreaNavigation rol={rol} />
     </aside>
   );
 }
