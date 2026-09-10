@@ -1,5 +1,17 @@
 # Historial de versiones
 
+## [0.1.3] - 2026-09-09
+
+- La receta deja en blanco la columna de peso, estatura, IMC, peso ideal, peso
+  sugerido y cintura, para que la Dra. Fedra anote ahí la evolución a mano.
+- La fase pasa a una etiqueta destacada arriba de esa columna.
+- Cada medicamento abre con asterisco y lleva su duración junto al nombre.
+- La posología y las aclaraciones bajan a renglones propios y conservan sus
+  saltos de línea, en lugar de unirse en una sola línea.
+- El código de barras del folio ya no se imprime fuera de la hoja ni encima de
+  la línea de firma: ahora se ajusta al área que se le asigna y va abajo a la
+  izquierda, sobre el folio.
+
 ## [0.1.2] - 2026-09-09
 
 - Retira la conexión OAuth y la sincronización de escritura con Google Calendar.
