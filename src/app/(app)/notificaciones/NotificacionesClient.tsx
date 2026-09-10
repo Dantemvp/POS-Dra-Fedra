@@ -6,6 +6,7 @@ import {
   eliminarSuscripcion,
   enviarPrueba,
 } from "./actions";
+import { SERVICE_WORKER_URL } from "@/lib/version";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -47,7 +48,7 @@ export default function NotificacionesClient() {
     }
     (async () => {
       try {
-        const reg = await navigator.serviceWorker.register("/sw.js", {
+        const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, {
           scope: "/",
           updateViaCache: "none",
         });

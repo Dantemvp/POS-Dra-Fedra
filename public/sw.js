@@ -1,22 +1,75 @@
 // Service Worker — Sistema Dra. Fedra Aldama
 // Recibe notificaciones push y las muestra en el dispositivo (cel/laptop),
-// aunque la app esté cerrada. NO hace caché offline (eso es otro alcance).
+// aunque la app esté cerrada. La caché se limita a recursos públicos y
+// compilados; nunca guarda páginas, APIs ni respuestas con datos clínicos.
 
-self.addEventListener("install", () => {
+const CACHE_NAME = "fedra-static-v0.1.13";
+const PRECACHE = [
+  "/logo.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/badge.png",
+  "/manifest.webmanifest",
+];
+
+self.addEventListener("install", (event) => {
   // Activa esta versión de inmediato sin esperar a que se cierren las pestañas.
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(PRECACHE.map((recurso) => cache.add(recurso))),
+    ),
+  );
 });
 
 self.addEventListener("activate", (event) => {
   // Toma control de las páginas abiertas al instante.
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      caches
+        .keys()
+        .then((nombres) =>
+          Promise.all(
+            nombres
+              .filter((nombre) => nombre.startsWith("fedra-static-") && nombre !== CACHE_NAME)
+              .map((nombre) => caches.delete(nombre)),
+          ),
+        ),
+    ]),
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  const esRecursoEstatico =
+    PRECACHE.includes(url.pathname) ||
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname === "/_next/image";
+  if (!esRecursoEstatico) return;
+
+  event.respondWith(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const guardado = await cache.match(request);
+      if (guardado) return guardado;
+
+      const respuesta = await fetch(request);
+      if (respuesta.ok) await cache.put(request, respuesta.clone());
+      return respuesta;
+    }),
+  );
 });
 
 self.addEventListener("push", function (event) {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
-  } catch (e) {
+  } catch {
     data = { title: "Sistema Fedra", body: event.data ? event.data.text() : "" };
   }
 

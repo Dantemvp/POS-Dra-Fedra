@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Rol } from "@/lib/auth";
 import AreaNavigation from "@/components/AreaNavigation";
+import { APP_VERSION } from "@/lib/version";
 
 export default function Sidebar({ rol }: { rol: Rol }) {
   return (
@@ -10,6 +11,9 @@ export default function Sidebar({ rol }: { rol: Rol }) {
         <p className="mt-0.5 text-xs capitalize text-zinc-500">{rol}</p>
       </div>
       <AreaNavigation rol={rol} />
+      <div className="mt-auto border-t border-black/5 px-6 py-3 text-[11px] text-zinc-400">
+        Sistema Fedra · v{APP_VERSION}
+      </div>
     </aside>
   );
 }
