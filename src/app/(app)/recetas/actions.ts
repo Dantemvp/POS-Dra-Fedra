@@ -15,6 +15,50 @@ export type ItemReceta = {
 
 export type Result = { ok: boolean; error?: string; id?: string };
 
+export type AjustesImpresionReceta = {
+  tamano: number;
+  separacion: number;
+  izquierda: number;
+  inicio: number;
+  mostrar_metricas: boolean;
+};
+
+export type ItemRecetaEditable = Omit<ItemReceta, "producto_id"> & { id: string | null };
+
+export async function guardarReceta(
+  recetaId: string,
+  fase: number | null,
+  items: ItemRecetaEditable[],
+  ajustes: AjustesImpresionReceta,
+): Promise<Result> {
+  const supabase = await createClient();
+  const limpios = items
+    .map((item) => ({
+      id: item.id,
+      medicamento: item.medicamento.trim(),
+      dosis: item.dosis.trim(),
+      duracion_dias: item.duracion_dias,
+      indicaciones: item.indicaciones.trim(),
+    }))
+    .filter((item) => item.medicamento !== "");
+
+  if (!recetaId) return { ok: false, error: "No se encontró la receta." };
+  if (limpios.length === 0) return { ok: false, error: "La receta debe conservar al menos un medicamento." };
+  if (limpios.length > 50) return { ok: false, error: "La receta supera el máximo de 50 medicamentos." };
+
+  const { error } = await supabase.rpc("editar_receta", {
+    p_receta_id: recetaId,
+    p_fase: fase,
+    p_items: limpios,
+    p_ajustes: ajustes,
+  });
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/recetas/${recetaId}`);
+  revalidatePath("/recetas");
+  return { ok: true, id: recetaId };
+}
+
 // Devuelve los datos del último InBody guardado del paciente (para pre-cargar receta).
 export async function ultimoInBody(
   pacienteId: string,

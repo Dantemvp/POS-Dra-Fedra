@@ -4,15 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import AjustadorReceta from "./AjustadorReceta";
 
 type Item = {
+  id: string;
   medicamento: string;
   dosis: string | null;
   duracion_dias: number | null;
   indicaciones: string | null;
 };
 type Receta = {
+  id: string;
   folio: number;
   fecha: string;
   fase: number | null;
+  ajustes_impresion: Record<string, unknown> | null;
   pacientes: {
     nombre: string;
     apellidos: string | null;
@@ -39,9 +42,10 @@ export default async function RecetaPrint({
   const { data } = await supabase
     .from("recetas")
     .select(
-      "folio, fecha, fase, pacientes(nombre, apellidos, fecha_nac), receta_items(medicamento, dosis, duracion_dias, indicaciones)",
+      "id, folio, fecha, fase, ajustes_impresion, pacientes(nombre, apellidos, fecha_nac), receta_items(id, medicamento, dosis, duracion_dias, indicaciones)",
     )
     .eq("id", id)
+    .order("orden", { referencedTable: "receta_items", ascending: true })
     .single();
 
   if (!data) notFound();
@@ -52,7 +56,7 @@ export default async function RecetaPrint({
   const fecha = new Date(r.fecha).toLocaleDateString("es-MX");
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-[1500px]">
       {/* Tamaño media carta horizontal solo al imprimir */}
       <style>{`@media print { @page { size: 8.5in 5.5in; margin: 0; } }`}</style>
 
@@ -64,7 +68,7 @@ export default async function RecetaPrint({
           ← Recetas
         </Link>
       </div>
-      <AjustadorReceta nombre={nombre} edad={edad} fecha={fecha} folio={r.folio} fase={r.fase} items={r.receta_items} />
+      <AjustadorReceta recetaId={r.id} nombre={nombre} edad={edad} fecha={fecha} folio={r.folio} fase={r.fase} items={r.receta_items} ajustes={r.ajustes_impresion} />
     </div>
   );
 }
