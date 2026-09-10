@@ -110,7 +110,7 @@ export default async function RecetaPrint({
             style={{
               position: "absolute",
               left: "65.5%",
-              top: "25%",
+              top: "21.5%",
               width: "22%",
               padding: "0.6cqw 0",
               textAlign: "center",

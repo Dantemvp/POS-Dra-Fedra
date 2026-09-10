@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## [0.1.5] - 2026-09-09
+
+- Sube la etiqueta de fase de la receta: se encimaba sobre la palabra "PESO:"
+  impresa en el recetario.
+
 ## [0.1.4] - 2026-09-09
 
 - Corrige el ajuste del código de barras de la receta: la medida que genera
