@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## [0.1.14] - 2026-09-10
+
+- Mantiene visible el logotipo en escritorio y móvil aunque el dispositivo
+  tenga guardada la preferencia de tema oscuro.
+
 ## [0.1.13] - 2026-09-10
 
 - Muestra la versión instalada en escritorio, menú móvil e inicio de sesión.
