@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## [0.1.4] - 2026-09-09
+
+- Corrige el ajuste del código de barras de la receta: la medida que genera
+  JsBarcode trae unidad y un viewBox no la admite, así que el navegador lo
+  descartaba y el dibujo salía recortado por la derecha.
+
 ## [0.1.3] - 2026-09-09
 
 - La receta deja en blanco la columna de peso, estatura, IMC, peso ideal, peso

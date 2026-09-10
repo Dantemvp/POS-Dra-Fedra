@@ -27,10 +27,14 @@ export default function CodigoBarrasReceta({ folio }: { folio: number }) {
       // se salía de la hoja al imprimir en media carta. Se convierte la medida
       // generada en viewBox y se dejan las dimensiones al CSS, de modo que el
       // código siempre quepa dentro del área que se le asigna.
-      const w = svg.getAttribute("width");
-      const h = svg.getAttribute("height");
-      if (w && h) {
+      // JsBarcode escribe las medidas con unidad ("202px"). Un viewBox solo
+      // admite numeros: con la unidad el navegador lo descarta, el SVG se queda
+      // sin relacion de aspecto y el dibujo se recorta. De ahi el parseFloat.
+      const w = parseFloat(svg.getAttribute("width") ?? "");
+      const h = parseFloat(svg.getAttribute("height") ?? "");
+      if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
         svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+        svg.style.aspectRatio = `${w} / ${h}`;
         svg.setAttribute("preserveAspectRatio", "xMinYMid meet");
         svg.removeAttribute("width");
         svg.removeAttribute("height");
