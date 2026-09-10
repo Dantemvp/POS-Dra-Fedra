@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.12] - 2026-09-09
+
+- Sustituye las casillas ambiguas de la historia clínica por decisiones
+  explícitas: Sí, No o Sin responder.
+- Valida los campos obligatorios también en el servidor y conserva vacíos
+  numéricos como vacíos en lugar de convertirlos en cero.
+- Mantiene la estructura completa de la plantilla en el PDF y evita cortar
+  secciones, renglones y firma entre dos hojas.
+
 ## [0.1.11] - 2026-09-09
 
 - Sustituye la máscara rectangular de las métricas por seis máscaras pequeñas
