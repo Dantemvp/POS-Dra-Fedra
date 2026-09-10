@@ -46,6 +46,17 @@ export default function NuevaHistoria({
       setMsg("Selecciona un tipo de historia.");
       return;
     }
+    const faltantes = tipo?.campos_historia.filter(
+      (campo) =>
+        campo.requerido &&
+        (valores[campo.id] === undefined ||
+          valores[campo.id] === null ||
+          String(valores[campo.id]).trim() === ""),
+    );
+    if (faltantes?.length) {
+      setMsg(`Falta completar: ${faltantes.map((campo) => campo.etiqueta).join(", ")}.`);
+      return;
+    }
     startTransition(async () => {
       const res = await crearHistoria(pacienteId, tipoId, valores);
       if (!res.ok) {
@@ -107,14 +118,33 @@ export default function NuevaHistoria({
                   {c.requerido && <span className="text-red-500">*</span>}
                 </label>
                 {c.tipo_dato === "booleano" ? (
-                  <label className="flex items-center gap-2 text-sm text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(valores[c.id])}
-                      onChange={(e) => setCampo(c.id, e.target.checked)}
-                    />
-                    Sí
-                  </label>
+                  <div className="grid grid-cols-3 gap-2" role="group" aria-label={c.etiqueta}>
+                    {[
+                      [true, "Sí"],
+                      [false, "No"],
+                      [null, "Sin responder"],
+                    ].map(([opcion, etiqueta]) => {
+                      const activo =
+                        opcion === null
+                          ? valores[c.id] === undefined || valores[c.id] === null
+                          : valores[c.id] === opcion;
+                      return (
+                        <button
+                          key={etiqueta as string}
+                          type="button"
+                          aria-pressed={activo}
+                          onClick={() => setCampo(c.id, opcion)}
+                          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                            activo
+                              ? "border-[#8c7a63] bg-[#f1ebe1] text-[#6f604e]"
+                              : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                          }`}
+                        >
+                          {etiqueta as string}
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : c.tipo_dato === "textarea" ? (
                   <textarea
                     className={`${input} min-h-20`}
@@ -178,7 +208,9 @@ export default function NuevaHistoria({
                       setCampo(
                         c.id,
                         c.tipo_dato === "numero"
-                          ? Number(e.target.value)
+                          ? e.target.value === ""
+                            ? ""
+                            : Number(e.target.value)
                           : e.target.value,
                       )
                     }
