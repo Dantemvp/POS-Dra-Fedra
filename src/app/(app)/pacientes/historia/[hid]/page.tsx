@@ -23,6 +23,14 @@ function valor(v: unknown): string {
   return String(v ?? "").trim();
 }
 
+function valorImpreso(v: unknown, campo?: Campo): string {
+  if (campo && v === undefined) {
+    return "Sin responder";
+  }
+  const texto = valor(v);
+  return texto || "Sin responder";
+}
+
 export default async function HistoriaPrint({
   params,
 }: {
@@ -55,7 +63,6 @@ export default async function HistoriaPrint({
   const secciones: { nombre: string; filas: [string, string][] }[] = [];
   for (const c of campos) {
     const v = datos[c.id];
-    if (v === undefined || v === null || valor(v) === "") continue;
     usados.add(c.id);
     const sec = c.seccion ?? "Datos";
     let grupo = secciones.find((s) => s.nombre === sec);
@@ -63,7 +70,7 @@ export default async function HistoriaPrint({
       grupo = { nombre: sec, filas: [] };
       secciones.push(grupo);
     }
-    grupo.filas.push([c.etiqueta, valor(v)]);
+    grupo.filas.push([c.etiqueta, valorImpreso(v, c)]);
   }
   const extra: [string, string][] = Object.entries(datos)
     .filter(([k, v]) => !usados.has(k) && valor(v) !== "")

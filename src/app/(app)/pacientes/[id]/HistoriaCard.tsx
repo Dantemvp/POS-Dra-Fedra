@@ -175,16 +175,35 @@ export default function HistoriaCard({
                   {labels[k] ?? k}
                 </label>
                 {tipo === "booleano" ? (
-                  <label className="flex items-center gap-2 text-sm text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(valores[k])}
-                      onChange={(e) =>
-                        setValores((p) => ({ ...p, [k]: e.target.checked }))
-                      }
-                    />
-                    Sí
-                  </label>
+                  <div className="grid grid-cols-3 gap-2" role="group" aria-label={labels[k] ?? k}>
+                    {[
+                      [true, "Sí"],
+                      [false, "No"],
+                      [null, "Sin responder"],
+                    ].map(([opcion, etiqueta]) => {
+                      const activo =
+                        opcion === null
+                          ? valores[k] === undefined || valores[k] === null
+                          : valores[k] === opcion;
+                      return (
+                        <button
+                          key={etiqueta as string}
+                          type="button"
+                          aria-pressed={activo}
+                          onClick={() =>
+                            setValores((p) => ({ ...p, [k]: opcion }))
+                          }
+                          className={`rounded-lg border px-2 py-2 text-xs font-medium transition-colors ${
+                            activo
+                              ? "border-[#8c7a63] bg-[#f1ebe1] text-[#6f604e]"
+                              : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                          }`}
+                        >
+                          {etiqueta as string}
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : tipo === "multi" ? (
                   <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                     {(def?.opciones ?? []).map((o) => {
@@ -248,7 +267,9 @@ export default function HistoriaCard({
                         ...p,
                         [k]:
                           tipo === "numero"
-                            ? Number(e.target.value)
+                            ? e.target.value === ""
+                              ? ""
+                              : Number(e.target.value)
                             : e.target.value,
                       }))
                     }

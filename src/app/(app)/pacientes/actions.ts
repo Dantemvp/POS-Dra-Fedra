@@ -5,6 +5,46 @@ import { createClient } from "@/lib/supabase/server";
 
 export type Result = { ok: boolean; error?: string; id?: string };
 
+type CampoHistoria = {
+  id: string;
+  requerido: boolean;
+};
+
+function estaVacio(valor: unknown): boolean {
+  return (
+    valor === undefined ||
+    valor === null ||
+    (typeof valor === "string" && valor.trim() === "") ||
+    (Array.isArray(valor) && valor.length === 0)
+  );
+}
+
+async function validarDatosHistoria(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tipoHistoriaId: string,
+  datos: Record<string, unknown>,
+): Promise<{ ok: true; datos: Record<string, unknown> } | { ok: false; error: string }> {
+  const { data: campos, error } = await supabase
+    .from("campos_historia")
+    .select("id, requerido")
+    .eq("tipo_historia_id", tipoHistoriaId);
+  if (error) return { ok: false, error: "No se pudo validar la plantilla de historia." };
+
+  const definiciones = (campos ?? []) as CampoHistoria[];
+  const permitidos = new Set(definiciones.map((campo) => campo.id));
+  const faltante = definiciones.find(
+    (campo) => campo.requerido && estaVacio(datos[campo.id]),
+  );
+  if (faltante) return { ok: false, error: "Completa los campos obligatorios." };
+
+  return {
+    ok: true,
+    datos: Object.fromEntries(
+      Object.entries(datos).filter(([clave]) => permitidos.has(clave)),
+    ),
+  };
+}
+
 // Marca/desmarca si el paciente ya dejó reseña en Google Maps.
 export async function marcarReviewGoogle(
   pacienteId: string,
@@ -75,10 +115,13 @@ export async function crearHistoria(
   const supabase = await createClient();
   const uid = await usuarioId(supabase);
 
+  const validacion = await validarDatosHistoria(supabase, tipoHistoriaId, datos);
+  if (!validacion.ok) return validacion;
+
   const { error } = await supabase.from("historias_clinicas").insert({
     paciente_id: pacienteId,
     tipo_historia_id: tipoHistoriaId,
-    datos,
+    datos: validacion.datos,
     doctora_id: uid,
   });
 
@@ -94,12 +137,27 @@ export async function actualizarHistoria(
   pacienteId: string,
 ): Promise<Result> {
   const supabase = await createClient();
+  const { data: historia, error: historiaError } = await supabase
+    .from("historias_clinicas")
+    .select("tipo_historia_id, paciente_id")
+    .eq("id", historiaId)
+    .single();
+  if (historiaError || !historia)
+    return { ok: false, error: "No se encontró la historia clínica." };
+
+  const validacion = await validarDatosHistoria(
+    supabase,
+    historia.tipo_historia_id,
+    datos,
+  );
+  if (!validacion.ok) return validacion;
+
   const { error } = await supabase
     .from("historias_clinicas")
-    .update({ datos })
+    .update({ datos: validacion.datos })
     .eq("id", historiaId);
   if (error) return { ok: false, error: error.message };
-  revalidatePath(`/pacientes/${pacienteId}`);
+  revalidatePath(`/pacientes/${historia.paciente_id ?? pacienteId}`);
   return { ok: true };
 }
 
