@@ -14,23 +14,12 @@ type Receta = {
   folio: number;
   fecha: string;
   fase: number | null;
-  metricas: Record<string, string> | null;
   pacientes: {
     nombre: string;
     apellidos: string | null;
     fecha_nac: string | null;
   } | null;
   receta_items: Item[];
-};
-
-// Posición vertical (% del alto) de cada métrica en el recetario.
-const METRICA_TOP: Record<string, number> = {
-  peso: 29.8,
-  estatura: 33.6,
-  imc: 37.3,
-  peso_ideal: 41.1,
-  peso_sugerido: 44.9,
-  cintura: 48.5,
 };
 
 function edadDe(fnac?: string | null): string {
@@ -51,7 +40,7 @@ export default async function RecetaPrint({
   const { data } = await supabase
     .from("recetas")
     .select(
-      "folio, fecha, fase, metricas, pacientes(nombre, apellidos, fecha_nac), receta_items(medicamento, dosis, duracion_dias, indicaciones)",
+      "folio, fecha, fase, pacientes(nombre, apellidos, fecha_nac), receta_items(medicamento, dosis, duracion_dias, indicaciones)",
     )
     .eq("id", id)
     .single();
@@ -62,7 +51,6 @@ export default async function RecetaPrint({
   const nombre = p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : "";
   const edad = edadDe(p?.fecha_nac);
   const fecha = new Date(r.fecha).toLocaleDateString("es-MX");
-  const metricas = r.metricas ?? {};
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -113,64 +101,89 @@ export default async function RecetaPrint({
           {fecha}
         </span>
 
-        {/* Métricas (columna derecha) */}
-        {Object.entries(METRICA_TOP).map(([k, top]) =>
-          metricas[k] ? (
-            <span
-              key={k}
-              style={{
-                position: "absolute",
-                left: "82%",
-                top: `${top}%`,
-                fontSize: "1.5cqw",
-              }}
-            >
-              {metricas[k]}
-            </span>
-          ) : null,
-        )}
+        {/* Etiqueta de fase, arriba de la columna derecha.
+            La columna de peso, estatura, IMC y cintura se deja EN BLANCO a
+            propósito: Fedra anota ahí a mano la evolución de la paciente. El
+            sistema no debe imprimir nada debajo de esta etiqueta. */}
+        {r.fase ? (
+          <div
+            style={{
+              position: "absolute",
+              left: "65.5%",
+              top: "25%",
+              width: "22%",
+              padding: "0.6cqw 0",
+              textAlign: "center",
+              fontSize: "1.6cqw",
+              background: "#e7e2da",
+              borderRadius: "0.4cqw",
+            }}
+          >
+            FASE {r.fase}
+          </div>
+        ) : null}
 
-        {/* Rp / medicamentos */}
+        {/* Medicamentos. Formato de las recetas muestra: cada renglón abre con
+            un asterisco, el nombre lleva la duración entre paréntesis, y la
+            posología y las aclaraciones van debajo, sangradas y en bloques
+            separados. Las aclaraciones NO se reacomodan para caber mejor. */}
         <div
           style={{
             position: "absolute",
             left: "5%",
-            top: "30%",
+            top: "28%",
             width: "53%",
             fontSize: "1.5cqw",
             lineHeight: 1.35,
           }}
         >
-          {r.fase ? (
-            <p style={{ marginBottom: "0.6cqw", color: "#6b7280" }}>
-              Fase {r.fase} del tratamiento
-            </p>
-          ) : null}
-          <ol style={{ display: "flex", flexDirection: "column", gap: "0.8cqw" }}>
+          <ol style={{ display: "flex", flexDirection: "column", gap: "1.5cqw" }}>
             {r.receta_items.map((it, i) => (
               <li key={i}>
-                <div style={{ fontWeight: 600 }}>
-                  <span style={{ paddingRight: "0.6cqw" }}>›</span>
+                <div>
+                  <span style={{ paddingRight: "0.6cqw" }}>*</span>
                   {it.medicamento}
+                  {it.duracion_dias ? ` (${it.duracion_dias} días)` : ""}
                 </div>
-                <div
-                  style={{
-                    color: "#52525b",
-                    paddingLeft: "1.4cqw",
-                    whiteSpace: "pre-line", // respeta saltos de línea en dosis/indicaciones
-                  }}
-                >
-                  {[
-                    it.dosis,
-                    it.duracion_dias ? `${it.duracion_dias} días` : null,
-                    it.indicaciones,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </div>
+                {it.dosis ? (
+                  <div
+                    style={{
+                      paddingLeft: "1.6cqw",
+                      whiteSpace: "pre-line", // respeta saltos de línea en la dosificación
+                    }}
+                  >
+                    {it.dosis}
+                  </div>
+                ) : null}
+                {it.indicaciones ? (
+                  <div
+                    style={{
+                      paddingLeft: "1.6cqw",
+                      marginTop: "0.6cqw",
+                      whiteSpace: "pre-line", // cada aclaración conserva su propio renglón
+                    }}
+                  >
+                    {it.indicaciones}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ol>
+        </div>
+
+        {/* Código de barras del folio: la farmacia lo escanea para cargar los
+            medicamentos recetados en el POS. Va abajo a la izquierda, encima
+            del folio, lejos de la línea de FIRMA y del área que Fedra escribe
+            a mano. El SVG se ajusta al ancho de este contenedor. */}
+        <div
+          style={{
+            position: "absolute",
+            left: "3.5%",
+            top: "85%",
+            width: "20%",
+          }}
+        >
+          <CodigoBarrasReceta folio={r.folio} />
         </div>
 
         {/* Folio (discreto) */}
@@ -185,19 +198,6 @@ export default async function RecetaPrint({
         >
           Folio #{r.folio}
         </span>
-
-        {/* Código de barras del folio: la farmacia lo escanea para cargar los
-            medicamentos recetados en el POS. */}
-        <div
-          style={{
-            position: "absolute",
-            right: "3.5%",
-            top: "90%",
-            width: "24%",
-          }}
-        >
-          <CodigoBarrasReceta folio={r.folio} />
-        </div>
       </div>
     </div>
   );
