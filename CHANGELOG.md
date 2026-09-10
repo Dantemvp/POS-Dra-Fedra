@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## [0.1.11] - 2026-09-09
+
+- Sustituye la máscara rectangular de las métricas por seis máscaras pequeñas
+  que eliminan solo las palabras y preservan las formas del membrete.
+
 ## [0.1.10] - 2026-09-09
 
 - Ajusta la máscara de métricas al ancho real del texto para no cortar la
