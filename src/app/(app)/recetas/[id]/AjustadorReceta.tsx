@@ -26,6 +26,15 @@ type Props = {
   ajustes: Record<string, unknown> | null;
 };
 
+const MASCARAS_METRICAS = [
+  { top: "28.7%", width: "7.5%" },
+  { top: "32.5%", width: "10.5%" },
+  { top: "36.3%", width: "5.5%" },
+  { top: "40.1%", width: "18.5%" },
+  { top: "43.9%", width: "15.5%" },
+  { top: "47.7%", width: "9.5%" },
+] as const;
+
 function prepararItems(items: ItemImprimible[]): ItemEditable[] {
   return items.map((item, indice) => ({ ...item, clave: item.id ?? `nuevo-${indice}` }));
 }
@@ -219,13 +228,14 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
       <div className="print-area doc-imprimible relative mx-auto w-full bg-white text-zinc-900 lg:sticky lg:top-4" style={{ aspectRatio: "2000 / 1294", containerType: "inline-size" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/recetario.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} />
-        {!mostrarMetricas ? (
+        {!mostrarMetricas ? MASCARAS_METRICAS.map((mascara) => (
           <div
-            data-receta-metricas-ocultas
+            key={mascara.top}
+            data-receta-metrica-oculta
             aria-hidden="true"
-            style={{ position: "absolute", left: "64.5%", top: "25%", width: "22.5%", height: "27%", background: "white" }}
+            style={{ position: "absolute", left: "64.5%", top: mascara.top, width: mascara.width, height: "3.2%", background: "white" }}
           />
-        ) : null}
+        )) : null}
         <span style={{ position: "absolute", left: "10%", top: "18.2%", fontSize: "1.6cqw" }}>{nombre}</span>
         <span style={{ position: "absolute", left: "50%", top: "18.2%", fontSize: "1.6cqw" }}>{edad}</span>
         <span style={{ position: "absolute", left: "71%", top: "18.2%", fontSize: "1.6cqw" }}>{fecha}</span>
