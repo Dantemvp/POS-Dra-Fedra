@@ -10,9 +10,10 @@ export default function CodigoBarrasReceta({ folio }: { folio: number }) {
   const ref = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const svg = ref.current;
+    if (!svg) return;
     try {
-      JsBarcode(ref.current, `REC${folio}`, {
+      JsBarcode(svg, `REC${folio}`, {
         format: "CODE128",
         displayValue: true,
         fontSize: 11,
@@ -20,10 +21,30 @@ export default function CodigoBarrasReceta({ folio }: { folio: number }) {
         margin: 0,
         background: "transparent",
       });
+
+      // JsBarcode fija width/height en píxeles sobre el <svg>. Sin viewBox, el
+      // dibujo conserva ese tamaño aunque el contenedor sea más chico: por eso
+      // se salía de la hoja al imprimir en media carta. Se convierte la medida
+      // generada en viewBox y se dejan las dimensiones al CSS, de modo que el
+      // código siempre quepa dentro del área que se le asigna.
+      const w = svg.getAttribute("width");
+      const h = svg.getAttribute("height");
+      if (w && h) {
+        svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+        svg.setAttribute("preserveAspectRatio", "xMinYMid meet");
+        svg.removeAttribute("width");
+        svg.removeAttribute("height");
+      }
     } catch {
       // Si el folio aún no existe, no renderiza (no rompe la impresión).
     }
   }, [folio]);
 
-  return <svg ref={ref} aria-label={`Código de receta REC${folio}`} />;
+  return (
+    <svg
+      ref={ref}
+      aria-label={`Código de receta REC${folio}`}
+      style={{ display: "block", width: "100%", height: "auto" }}
+    />
+  );
 }
