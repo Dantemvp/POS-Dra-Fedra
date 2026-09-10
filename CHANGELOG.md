@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## [0.1.16] - 2026-09-10
+
+- Registra las entradas rápidas de inventario como una sola transacción para
+  impedir existencias sin lote o sin movimiento de trazabilidad.
+
 ## [0.1.15] - 2026-09-10
 
 - Mantiene la versión visible en la barra superior aunque la página sea larga.
