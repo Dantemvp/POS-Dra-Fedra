@@ -22,7 +22,7 @@ export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string
         <button onClick={() => setAbierto(true)} aria-label="Abrir menú" className="rounded-lg p-2 text-zinc-700 hover:bg-zinc-100">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
         </button>
-        <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="h-auto w-40 dark:brightness-0 dark:invert" />
+        <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="h-auto w-40" />
         <ThemeToggle />
       </header>
       {abierto && (
