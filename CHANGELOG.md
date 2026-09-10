@@ -1,5 +1,9 @@
 # Historial de versiones
 
+## [0.1.15] - 2026-09-10
+
+- Mantiene la versión visible en la barra superior aunque la página sea larga.
+
 ## [0.1.14] - 2026-09-10
 
 - Mantiene visible el logotipo en escritorio y móvil aunque el dispositivo
