@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type KeyboardEvent } from "react";
 import { guardarReceta } from "../actions";
 import CodigoBarrasReceta from "./CodigoBarrasReceta";
 import PrintButton from "./PrintButton";
@@ -34,6 +34,23 @@ function numeroAjuste(ajustes: Record<string, unknown> | null, campo: string, ba
   return typeof ajustes?.[campo] === "number" ? ajustes[campo] : base;
 }
 
+function TextoConVinetas({ texto }: { texto: string }) {
+  return texto.split("\n").map((linea, indice) => {
+    const coincidencia = linea.match(/^(\t*)(\*{1,3}|[-•])\s*(.*)$/);
+    if (!coincidencia) {
+      const tabulaciones = linea.match(/^\t*/)?.[0].length ?? 0;
+      return <div key={indice} style={{ marginLeft: `${tabulaciones * 1.2}cqw`, minHeight: "1lh", whiteSpace: "pre-wrap" }}>{linea.replace(/^\t+/, "")}</div>;
+    }
+    const profundidad = coincidencia[1].length + (coincidencia[2].startsWith("*") ? coincidencia[2].length - 1 : 0);
+    return (
+      <div key={indice} style={{ display: "flex", gap: "0.55cqw", marginLeft: `${profundidad * 1.2}cqw`, minHeight: "1lh" }}>
+        <span aria-hidden="true">•</span>
+        <span style={{ whiteSpace: "pre-wrap" }}>{coincidencia[3]}</span>
+      </div>
+    );
+  });
+}
+
 export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, fase: faseInicial, items: itemsIniciales, ajustes }: Props) {
   const originales = useMemo(() => prepararItems(itemsIniciales), [itemsIniciales]);
   const [guardando, iniciarGuardado] = useTransition();
@@ -52,6 +69,19 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
     setItems((actuales) => actuales.map((item) => item.clave === clave
       ? { ...item, [campo]: campo === "duracion_dias" ? (valor ? Number(valor) : null) : valor }
       : item));
+  }
+
+  function insertarTabulacion(evento: KeyboardEvent<HTMLTextAreaElement>, clave: string, campo: "dosis" | "indicaciones") {
+    if (evento.key !== "Tab") return;
+    evento.preventDefault();
+    const campoTexto = evento.currentTarget;
+    const inicioSeleccion = campoTexto.selectionStart;
+    const finSeleccion = campoTexto.selectionEnd;
+    const valor = campoTexto.value.slice(0, inicioSeleccion) + "\t" + campoTexto.value.slice(finSeleccion);
+    actualizar(clave, campo, valor);
+    requestAnimationFrame(() => {
+      campoTexto.selectionStart = campoTexto.selectionEnd = inicioSeleccion + 1;
+    });
   }
 
   function mover(indice: number, direccion: -1 | 1) {
@@ -169,8 +199,9 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
                 <div className="grid gap-2 md:grid-cols-[1fr_8rem]">
                   <input value={item.medicamento} onChange={(e) => actualizar(item.clave, "medicamento", e.target.value)} placeholder="Medicamento" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
                   <input type="number" min="1" value={item.duracion_dias ?? ""} onChange={(e) => actualizar(item.clave, "duracion_dias", e.target.value)} placeholder="Días" className="rounded-lg border border-zinc-300 bg-white px-3 py-2" />
-                  <textarea value={item.dosis ?? ""} onChange={(e) => actualizar(item.clave, "dosis", e.target.value)} placeholder="Dosis y horario" rows={2} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 md:col-span-2" />
-                  <textarea value={item.indicaciones ?? ""} onChange={(e) => actualizar(item.clave, "indicaciones", e.target.value)} placeholder="Aclaraciones, una por renglón" rows={2} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 md:col-span-2" />
+                  <textarea value={item.dosis ?? ""} onChange={(e) => actualizar(item.clave, "dosis", e.target.value)} onKeyDown={(e) => insertarTabulacion(e, item.clave, "dosis")} placeholder="Dosis y horario" rows={2} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 md:col-span-2" />
+                  <textarea value={item.indicaciones ?? ""} onChange={(e) => actualizar(item.clave, "indicaciones", e.target.value)} onKeyDown={(e) => insertarTabulacion(e, item.clave, "indicaciones")} placeholder="Aclaraciones, una por renglón" rows={2} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 md:col-span-2" />
+                  <p className="text-xs text-zinc-500 md:col-span-2">Enter: nuevo renglón · * texto: viñeta · ** texto: viñeta con sangría · Tab: sangría libre</p>
                 </div>
               </div>
             ))}
@@ -192,7 +223,7 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
           <div
             data-receta-metricas-ocultas
             aria-hidden="true"
-            style={{ position: "absolute", left: "64.5%", top: "25%", width: "28%", height: "27%", background: "white" }}
+            style={{ position: "absolute", left: "64.5%", top: "25%", width: "22.5%", height: "27%", background: "white" }}
           />
         ) : null}
         <span style={{ position: "absolute", left: "10%", top: "18.2%", fontSize: "1.6cqw" }}>{nombre}</span>
@@ -204,8 +235,8 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
             {items.map((item) => (
               <li key={item.clave}>
                 <div><span style={{ paddingRight: "0.6cqw" }}>*</span>{item.medicamento}{item.duracion_dias ? ` (${item.duracion_dias} días)` : ""}</div>
-                {item.dosis ? <div style={{ paddingLeft: "1.6cqw", whiteSpace: "pre-line" }}>{item.dosis}</div> : null}
-                {item.indicaciones ? <div style={{ paddingLeft: "1.6cqw", marginTop: "0.6cqw", whiteSpace: "pre-line" }}>{item.indicaciones}</div> : null}
+                {item.dosis ? <div style={{ paddingLeft: "1.6cqw" }}><TextoConVinetas texto={item.dosis} /></div> : null}
+                {item.indicaciones ? <div style={{ paddingLeft: "1.6cqw", marginTop: "0.6cqw" }}><TextoConVinetas texto={item.indicaciones} /></div> : null}
               </li>
             ))}
           </ul>

@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## [0.1.10] - 2026-09-09
+
+- Ajusta la máscara de métricas al ancho real del texto para no cortar la
+  ilustración derecha del membrete.
+- Permite crear viñetas y sangrías dentro de dosis y aclaraciones mediante
+  asteriscos o la tecla Tab.
+
 ## [0.1.9] - 2026-09-09
 
 - Coloca los controles de ajuste en un panel lateral para mantener visible la
