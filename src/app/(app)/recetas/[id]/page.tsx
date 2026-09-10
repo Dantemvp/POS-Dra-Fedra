@@ -101,32 +101,11 @@ export default async function RecetaPrint({
           {fecha}
         </span>
 
-        {/* Etiqueta de fase, arriba de la columna derecha.
-            La columna de peso, estatura, IMC y cintura se deja EN BLANCO a
-            propósito: Fedra anota ahí a mano la evolución de la paciente. El
-            sistema no debe imprimir nada debajo de esta etiqueta. */}
-        {r.fase ? (
-          <div
-            style={{
-              position: "absolute",
-              left: "65.5%",
-              top: "21.5%",
-              width: "22%",
-              padding: "0.6cqw 0",
-              textAlign: "center",
-              fontSize: "1.6cqw",
-              background: "#e7e2da",
-              borderRadius: "0.4cqw",
-            }}
-          >
-            FASE {r.fase}
-          </div>
-        ) : null}
-
         {/* Medicamentos. Formato de las recetas muestra: cada renglón abre con
             un asterisco, el nombre lleva la duración entre paréntesis, y la
             posología y las aclaraciones van debajo, sangradas y en bloques
-            separados. Las aclaraciones NO se reacomodan para caber mejor. */}
+            separados. La fase cierra el contenido impreso: debajo de ella no
+            se imprime texto clínico porque Fedra completa esa zona a mano. */}
         <div
           data-receta-contenido
           style={{
@@ -170,6 +149,23 @@ export default async function RecetaPrint({
               </li>
             ))}
           </ul>
+          {r.fase ? (
+            <div
+              data-receta-fase
+              style={{
+                width: "42%",
+                marginTop: "2cqw",
+                padding: "0.6cqw 0",
+                textAlign: "center",
+                fontSize: "1.6cqw",
+                fontWeight: 600,
+                background: "#e7e2da",
+                borderRadius: "0.4cqw",
+              }}
+            >
+              FASE {r.fase}
+            </div>
+          ) : null}
         </div>
 
         {/* Inicio de la franja inferior reservada. No se dibuja; el botón de

@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## [0.1.7] - 2026-09-09
+
+- Coloca la etiqueta de fase después del último medicamento para evitar que se
+  encime con el membrete o con el tratamiento.
+- Reserva todo el espacio posterior a la fase para las anotaciones manuscritas
+  de la doctora.
+
 ## [0.1.6] - 2026-09-09
 
 - Impide imprimir recetas cuyo contenido invade la franja reservada para el
