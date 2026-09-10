@@ -3,7 +3,7 @@
 // aunque la app esté cerrada. La caché se limita a recursos públicos y
 // compilados; nunca guarda páginas, APIs ni respuestas con datos clínicos.
 
-const CACHE_NAME = "fedra-static-v0.1.14";
+const CACHE_NAME = "fedra-static-v0.1.15";
 const PRECACHE = [
   "/logo.png",
   "/icon-192.png",
