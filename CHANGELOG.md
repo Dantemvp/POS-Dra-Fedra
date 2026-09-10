@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.9] - 2026-09-09
+
+- Coloca los controles de ajuste en un panel lateral para mantener visible la
+  receta mientras se modifica.
+- Oculta las métricas impresas por defecto y permite mostrarlas con una casilla.
+- Permite guardar en una sola transacción el texto, orden, fase y configuración
+  visual de la receta.
+
 ## [0.1.8] - 2026-09-09
 
 - Añade un modo de ajuste previo a la impresión que no modifica la receta
