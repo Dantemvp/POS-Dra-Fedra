@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.8] - 2026-09-09
+
+- Añade un modo de ajuste previo a la impresión que no modifica la receta
+  clínica guardada.
+- Permite editar y reordenar medicamentos, dosis y aclaraciones, agregar
+  renglones y ajustar tamaño, separación y posición dentro de límites seguros.
+- Mantiene la fase como cierre del texto impreso y conserva el bloqueo de
+  desbordamiento antes de abrir el diálogo de impresión.
+
 ## [0.1.7] - 2026-09-09
 
 - Coloca la etiqueta de fase después del último medicamento para evitar que se

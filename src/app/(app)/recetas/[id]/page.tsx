@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import PrintButton from "./PrintButton";
-import CodigoBarrasReceta from "./CodigoBarrasReceta";
+import AjustadorReceta from "./AjustadorReceta";
 
 type Item = {
   medicamento: string;
@@ -57,154 +56,15 @@ export default async function RecetaPrint({
       {/* Tamaño media carta horizontal solo al imprimir */}
       <style>{`@media print { @page { size: 8.5in 5.5in; margin: 0; } }`}</style>
 
-      <div className="mb-4 flex items-center justify-between no-print">
+      <div className="mb-4 no-print">
         <Link
           href="/recetas"
           className="text-sm text-zinc-500 hover:text-zinc-900"
         >
           ← Recetas
         </Link>
-        <PrintButton />
       </div>
-
-      <div
-        className="print-area doc-imprimible relative mx-auto w-full bg-white text-zinc-900"
-        style={{
-          aspectRatio: "2000 / 1294",
-          containerType: "inline-size",
-        }}
-      >
-        {/* Recetario de fondo como <img>: las imágenes SÍ se imprimen aunque
-            el usuario no marque "Gráficos en segundo plano" (a diferencia de
-            background-image de CSS, que el navegador omite al imprimir). */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/recetario.png"
-          alt=""
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "fill",
-          }}
-        />
-
-        {/* Nombre / Edad / Fecha (texto JUSTO ARRIBA de la línea) */}
-        <span style={{ position: "absolute", left: "10%", top: "18.2%", fontSize: "1.6cqw" }}>
-          {nombre}
-        </span>
-        <span style={{ position: "absolute", left: "50%", top: "18.2%", fontSize: "1.6cqw" }}>
-          {edad}
-        </span>
-        <span style={{ position: "absolute", left: "71%", top: "18.2%", fontSize: "1.6cqw" }}>
-          {fecha}
-        </span>
-
-        {/* Medicamentos. Formato de las recetas muestra: cada renglón abre con
-            un asterisco, el nombre lleva la duración entre paréntesis, y la
-            posología y las aclaraciones van debajo, sangradas y en bloques
-            separados. La fase cierra el contenido impreso: debajo de ella no
-            se imprime texto clínico porque Fedra completa esa zona a mano. */}
-        <div
-          data-receta-contenido
-          style={{
-            position: "absolute",
-            left: "5%",
-            top: "28%",
-            width: "53%",
-            fontSize: "1.5cqw",
-            lineHeight: 1.35,
-          }}
-        >
-          <ul style={{ display: "flex", flexDirection: "column", gap: "1.5cqw" }}>
-            {r.receta_items.map((it, i) => (
-              <li key={i}>
-                <div>
-                  <span style={{ paddingRight: "0.6cqw" }}>*</span>
-                  {it.medicamento}
-                  {it.duracion_dias ? ` (${it.duracion_dias} días)` : ""}
-                </div>
-                {it.dosis ? (
-                  <div
-                    style={{
-                      paddingLeft: "1.6cqw",
-                      whiteSpace: "pre-line", // respeta saltos de línea en la dosificación
-                    }}
-                  >
-                    {it.dosis}
-                  </div>
-                ) : null}
-                {it.indicaciones ? (
-                  <div
-                    style={{
-                      paddingLeft: "1.6cqw",
-                      marginTop: "0.6cqw",
-                      whiteSpace: "pre-line", // cada aclaración conserva su propio renglón
-                    }}
-                  >
-                    {it.indicaciones}
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          {r.fase ? (
-            <div
-              data-receta-fase
-              style={{
-                width: "42%",
-                marginTop: "2cqw",
-                padding: "0.6cqw 0",
-                textAlign: "center",
-                fontSize: "1.6cqw",
-                fontWeight: 600,
-                background: "#e7e2da",
-                borderRadius: "0.4cqw",
-              }}
-            >
-              FASE {r.fase}
-            </div>
-          ) : null}
-        </div>
-
-        {/* Inicio de la franja inferior reservada. No se dibuja; el botón de
-            impresión la usa para impedir que una receta larga invada el folio
-            o el código de barras. */}
-        <div
-          data-receta-limite
-          aria-hidden="true"
-          style={{ position: "absolute", left: "5%", top: "82%", width: "53%" }}
-        />
-
-        {/* Código de barras del folio: la farmacia lo escanea para cargar los
-            medicamentos recetados en el POS. Va abajo a la izquierda, encima
-            del folio, lejos de la línea de FIRMA y del área que Fedra escribe
-            a mano. El SVG se ajusta al ancho de este contenedor. */}
-        <div
-          style={{
-            position: "absolute",
-            left: "3.5%",
-            top: "85%",
-            width: "20%",
-          }}
-        >
-          <CodigoBarrasReceta folio={r.folio} />
-        </div>
-
-        {/* Folio (discreto) */}
-        <span
-          style={{
-            position: "absolute",
-            left: "3.5%",
-            top: "95.5%",
-            fontSize: "1.05cqw",
-            color: "#a1a1aa",
-          }}
-        >
-          Folio #{r.folio}
-        </span>
-      </div>
+      <AjustadorReceta nombre={nombre} edad={edad} fecha={fecha} folio={r.folio} fase={r.fase} items={r.receta_items} />
     </div>
   );
 }
