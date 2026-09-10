@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.6] - 2026-09-09
+
+- Impide imprimir recetas cuyo contenido invade la franja reservada para el
+  código de barras y el folio.
+- El control falla cerrado si no puede medir el documento y explica cómo
+  corregir una receta demasiado larga.
+- Corrige la semántica de la lista de medicamentos sin alterar su apariencia.
+
 ## [0.1.5] - 2026-09-09
 
 - Sube la etiqueta de fase de la receta: se encimaba sobre la palabra "PESO:"

@@ -128,6 +128,7 @@ export default async function RecetaPrint({
             posología y las aclaraciones van debajo, sangradas y en bloques
             separados. Las aclaraciones NO se reacomodan para caber mejor. */}
         <div
+          data-receta-contenido
           style={{
             position: "absolute",
             left: "5%",
@@ -137,7 +138,7 @@ export default async function RecetaPrint({
             lineHeight: 1.35,
           }}
         >
-          <ol style={{ display: "flex", flexDirection: "column", gap: "1.5cqw" }}>
+          <ul style={{ display: "flex", flexDirection: "column", gap: "1.5cqw" }}>
             {r.receta_items.map((it, i) => (
               <li key={i}>
                 <div>
@@ -168,8 +169,17 @@ export default async function RecetaPrint({
                 ) : null}
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
+
+        {/* Inicio de la franja inferior reservada. No se dibuja; el botón de
+            impresión la usa para impedir que una receta larga invada el folio
+            o el código de barras. */}
+        <div
+          data-receta-limite
+          aria-hidden="true"
+          style={{ position: "absolute", left: "5%", top: "82%", width: "53%" }}
+        />
 
         {/* Código de barras del folio: la farmacia lo escanea para cargar los
             medicamentos recetados en el POS. Va abajo a la izquierda, encima
