@@ -100,31 +100,16 @@ export async function registrarEntrada(
   if (!cantidad || cantidad <= 0)
     return { ok: false, error: "La cantidad debe ser mayor a 0." };
 
-  // 1) Crear lote
-  const { data: loteRow, error: loteErr } = await supabase
-    .from("lotes")
-    .insert({
-      producto_id: productoId,
-      lote,
-      caducidad,
-      cantidad_actual: cantidad,
-      costo,
-    })
-    .select("id")
-    .single();
-
-  if (loteErr) return { ok: false, error: loteErr.message };
-
-  // 2) Registrar movimiento (append-only, base del Libro de Control)
-  const { error: movErr } = await supabase.from("movimientos_inv").insert({
-    producto_id: productoId,
-    lote_id: loteRow.id,
-    tipo: "entrada",
-    cantidad,
-    motivo: "Entrada de inventario",
+  // Lote y movimiento se crean en una sola transacción en la base.
+  const { error } = await supabase.rpc("registrar_entrada_inventario", {
+    p_producto_id: productoId,
+    p_cantidad: cantidad,
+    p_lote: lote,
+    p_caducidad: caducidad,
+    p_costo: costo,
   });
 
-  if (movErr) return { ok: false, error: movErr.message };
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/inventario");
   return { ok: true };
