@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { APP_VERSION } from "@/lib/version";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,8 +35,16 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-100 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200">
         <div className="mb-6 text-center">
+          <Image
+            src="/logo.png"
+            alt="Dra. Fedra Aldama"
+            width={760}
+            height={117}
+            priority
+            className="mx-auto mb-5 h-auto w-full max-w-[240px]"
+          />
           <h1 className="text-xl font-semibold text-zinc-900">
-            Dra. Fedra Aldama
+            Sistema de farmacia y consultorio
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
             Farmacia y consultorio
@@ -83,6 +93,9 @@ export default function LoginPage() {
             {loading ? "Entrando…" : "Iniciar sesión"}
           </button>
         </form>
+        <p className="mt-6 text-center text-[11px] text-zinc-400">
+          Versión {APP_VERSION}
+        </p>
       </div>
     </div>
   );

@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## [0.1.13] - 2026-09-10
+
+- Muestra la versión instalada en escritorio, menú móvil e inicio de sesión.
+- Integra el logotipo de la Dra. Fedra en la pantalla de acceso.
+- Registra el service worker desde el arranque y conserva entre sesiones solo
+  recursos públicos y compilados. No almacena páginas, APIs ni datos clínicos.
+
 ## [0.1.12] - 2026-09-09
 
 - Sustituye las casillas ambiguas de la historia clínica por decisiones

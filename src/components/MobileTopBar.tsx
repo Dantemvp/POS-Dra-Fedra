@@ -6,6 +6,7 @@ import type { Rol } from "@/lib/auth";
 import AreaNavigation from "@/components/AreaNavigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
+import { APP_VERSION } from "@/lib/version";
 
 export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string }) {
   const [abierto, setAbierto] = useState(false);
@@ -35,7 +36,12 @@ export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string
               </button>
             </div>
             <AreaNavigation rol={rol} onNavigate={() => setAbierto(false)} />
-            <div className="border-t border-zinc-200 px-3 py-3"><LogoutButton /></div>
+            <div className="mt-auto border-t border-zinc-200 px-3 py-3">
+              <LogoutButton />
+              <p className="mt-2 px-1 text-[11px] text-zinc-400">
+                Sistema Fedra · v{APP_VERSION}
+              </p>
+            </div>
           </aside>
         </div>
       )}
