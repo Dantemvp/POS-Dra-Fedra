@@ -10,7 +10,9 @@ Uso:
     python vaciar.py --respaldo <carpeta> --ejecutar # vacía
 """
 
+import hashlib
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -49,6 +51,23 @@ def respaldo_valido(carpeta):
             f"No hay respaldo utilizable en {carpeta}.\n"
             "Se esperan MANIFIESTO.txt y restaurar.sql. Corre respaldar.py primero."
         )
+    contenido = open(manifiesto, encoding="utf-8").read()
+    if f"Proyecto Supabase : {cx.PROYECTO}" not in contenido:
+        raise SystemExit("El respaldo no corresponde al proyecto productivo autorizado.")
+    esperados = re.findall(r"^  ([0-9a-f]{64})  (.+)$", contenido, re.MULTILINE)
+    if not esperados:
+        raise SystemExit("El manifiesto no contiene hashes verificables.")
+    raiz = os.path.realpath(carpeta)
+    for esperado, relativo in esperados:
+        ruta = os.path.realpath(os.path.join(raiz, relativo))
+        if os.path.commonpath([raiz, ruta]) != raiz or not os.path.isfile(ruta):
+            raise SystemExit(f"Archivo de respaldo ausente o invalido: {relativo}")
+        h = hashlib.sha256()
+        with open(ruta, "rb") as f:
+            for bloque in iter(lambda: f.read(65536), b""):
+                h.update(bloque)
+        if h.hexdigest() != esperado:
+            raise SystemExit(f"El respaldo fue alterado: {relativo}")
     return manifiesto
 
 

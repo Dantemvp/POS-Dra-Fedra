@@ -42,7 +42,12 @@ def sql_insert(tabla, filas):
     listado = ", ".join(f'"{c}"' for c in cols)
     for f in filas:
         vals = ", ".join(cx.lit(f.get(c)) for c in cols)
-        lineas.append(f'insert into public."{tabla}" ({listado}) values ({vals});')
+        # Las tablas preservadas siguen pobladas durante una restauracion. El
+        # conflicto se ignora para que no detenga la recuperacion completa.
+        lineas.append(
+            f'insert into public."{tabla}" ({listado}) values ({vals}) '
+            'on conflict do nothing;'
+        )
     return "\n".join(lineas) + "\n"
 
 
@@ -106,7 +111,24 @@ def main():
             "begin;\nset session_replication_role = replica;  -- no disparar triggers ni FKs\n\n"
         )
         f.write("\n".join(partes))
-        f.write("\nset session_replication_role = origin;\ncommit;\n")
+        f.write(
+            "\n-- Reacomodar secuencias despues de restaurar IDs explicitos.\n"
+            "do $$\n"
+            "declare r record;\n"
+            "begin\n"
+            "  for r in\n"
+            "    select table_name, column_name\n"
+            "    from information_schema.columns\n"
+            "    where table_schema = 'public' and column_default like 'nextval(%'\n"
+            "  loop\n"
+            "    execute format(\n"
+            "      'select setval(pg_get_serial_sequence(%L, %L), coalesce(max(%I), 1), max(%I) is not null) from public.%I',\n"
+            "      'public.' || r.table_name, r.column_name, r.column_name, r.column_name, r.table_name\n"
+            "    );\n"
+            "  end loop;\n"
+            "end $$;\n"
+            "set session_replication_role = origin;\ncommit;\n"
+        )
 
     with open(os.path.join(destino, "estructura.json"), "w", encoding="utf-8") as f:
         json.dump(estructura(), f, ensure_ascii=False, indent=1, default=str)

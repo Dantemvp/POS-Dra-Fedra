@@ -4,9 +4,6 @@ import CorteDelDia from "./CorteDelDia";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
 import VentasDelDia, { type VentaDetalle } from "./VentasDelDia";
 
-const money = (n: number) =>
-  n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
-
 type VentaRow = {
   id: string;
   folio: number;
