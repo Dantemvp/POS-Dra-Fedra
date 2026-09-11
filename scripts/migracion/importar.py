@@ -80,6 +80,18 @@ def uid():
     return str(uuid.uuid4())
 
 
+def nota_paciente(r):
+    """Lo que no cabe en una columna del paciente pero no se puede perder."""
+    bruto = r.get("Celular")
+    # Excel devuelve los números como float: 4487363.0 no es un teléfono legible.
+    if isinstance(bruto, float) and bruto.is_integer():
+        bruto = int(bruto)
+    crudo = ex.txt(bruto)
+    if crudo and not ex.telefono(r.get("Celular")):
+        return f"Teléfono del sistema anterior, no utilizable para WhatsApp: {crudo}"
+    return None
+
+
 # --- escritura ---------------------------------------------------------------
 
 def existentes(tabla):
@@ -90,7 +102,7 @@ def existentes(tabla):
     return {f["id_legacy"]: f["id"] for f in filas}
 
 
-def escribir(tabla, filas, tam=400):
+def escribir(tabla, filas, tam=250):
     """Inserta en lotes. Las filas ya traen su id resuelto."""
     if not filas:
         return 0
@@ -196,6 +208,7 @@ def construir(wb, ctx):
             "id": nuevo, "nombre": nombre, "apellidos": t(r.get("Apellidos")),
             "fecha_nac": f(r.get("Nacio")), "sexo": t(r.get("Sexo")),
             "telefono_wpp": ex.telefono(r.get("Celular")), "email": t(r.get("Email")),
+            "notas": nota_paciente(r),
             "peso_inicial": n(r.get("Peso")), "cintura_inicial": n(r.get("Cintura")),
             "direccion": t(r.get("Direccion")),
             "creado_en": m(r.get("fechAlta")) or m(r.get("Timestamp")),
@@ -333,7 +346,7 @@ def construir(wb, ctx):
             "id": ctx["previos"]["receta_items"].get(leg, uid()), "receta_id": rec,
             "medicamento": t(r.get("Tipo de medicamento")) or "(sin nombre)",
             "dosis": t(r.get("Dosis")),
-            "duracion_dias": e(r.get("Duracion")) if r.get("Duracion") is not None else e(r.get("Duración")),
+            "duracion_dias": e(r.get("Duración")),
             "cantidad": n(r.get("Cantidad de medicamentos")),
             "indicaciones": t(r.get("Indicaciones")),
             "id_legacy": leg, **marca_hist,
@@ -602,6 +615,11 @@ def main():
         nuevas = [f for f in ac.filas[t] if f["id"] not in set(ctx["previos"][t].values())]
         escribir(t, nuevas)
     if ac.pendientes:
+        # Se rehacen enteros: son el retrato de esta corrida, no un histórico.
+        cx.sql(
+            "delete from public.importacion_pendientes "
+            f"where origen_datos = {cx.lit(ORIGEN)};"
+        )
         escribir("importacion_pendientes",
                  [{**p, "id": uid()} for p in ac.pendientes])
 

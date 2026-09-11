@@ -113,7 +113,10 @@ def marca(v, hora=None):
         return None
     if hora is not None and isinstance(hora, dt.time):
         base = dt.datetime.combine(base.date(), hora)
-    return base.isoformat()
+    # El AppSheet guardaba hora local de Sinaloa, que es UTC-7 todo el año desde
+    # 2022. Sin el desfase, Postgres las leería como UTC y todo quedaría siete
+    # horas corrido: una consulta de las 6 de la tarde caería al día siguiente.
+    return base.isoformat() + "-07:00"
 
 
 def telefono(v):
