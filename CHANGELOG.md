@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## [0.1.17] - 2026-09-10
+
+- Sustituye los datos operativos por la exportacion autorizada del AppSheet v5;
+  conserva cuentas, permisos y plantillas, y marca cada registro importado como
+  informacion historica visible en busquedas y filtros.
+
 ## [0.1.16] - 2026-09-10
 
 - Registra las entradas rápidas de inventario como una sola transacción para

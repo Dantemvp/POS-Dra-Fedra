@@ -3,6 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { fechaSinaloa } from "@/lib/tz";
+import {
+  BadgeHistorico,
+  SelectorHistorico,
+  coincideVista,
+  textoBusqueda,
+  type VistaHistorico,
+} from "@/components/Historico";
 
 export type RecetaLista = {
   id: string;
@@ -10,6 +17,7 @@ export type RecetaLista = {
   fecha: string;
   fase: number | null;
   paciente: string;
+  es_historico?: boolean | null;
 };
 
 type Orden = "reciente" | "antiguo" | "folio";
@@ -18,6 +26,7 @@ export default function ListaRecetas({ recetas }: { recetas: RecetaLista[] }) {
   const [q, setQ] = useState("");
   const [fase, setFase] = useState("");
   const [orden, setOrden] = useState<Orden>("reciente");
+  const [vista, setVista] = useState<VistaHistorico>("todos");
 
   const fases = useMemo(
     () =>
@@ -30,10 +39,12 @@ export default function ListaRecetas({ recetas }: { recetas: RecetaLista[] }) {
   const filtradas = useMemo(() => {
     const t = q.trim().toLowerCase();
     let r = recetas.filter((x) => {
-      const coincide = !t || x.paciente.toLowerCase().includes(t);
+      const coincide =
+        !t ||
+        `${x.paciente}${textoBusqueda(x.es_historico)}`.toLowerCase().includes(t);
       const faseOk =
         fase === "" ? true : fase === "sin" ? x.fase == null : x.fase === Number(fase);
-      return coincide && faseOk;
+      return coincide && faseOk && coincideVista(x.es_historico, vista);
     });
     const t0 = (s: string) => new Date(s).getTime();
     r = [...r].sort((a, b) => {
@@ -42,7 +53,7 @@ export default function ListaRecetas({ recetas }: { recetas: RecetaLista[] }) {
       return t0(b.fecha) - t0(a.fecha);
     });
     return r;
-  }, [q, fase, orden, recetas]);
+  }, [q, fase, orden, vista, recetas]);
 
   return (
     <>
@@ -66,6 +77,7 @@ export default function ListaRecetas({ recetas }: { recetas: RecetaLista[] }) {
           ))}
           <option value="sin">Sin fase</option>
         </select>
+        <SelectorHistorico valor={vista} onChange={setVista} />
         <select
           value={orden}
           onChange={(e) => setOrden(e.target.value as Orden)}
@@ -101,7 +113,12 @@ export default function ListaRecetas({ recetas }: { recetas: RecetaLista[] }) {
             {filtradas.slice(0, 200).map((r) => (
               <tr key={r.id} className="hover:bg-zinc-50">
                 <td className="px-4 py-3 font-medium text-zinc-900">#{r.folio}</td>
-                <td className="px-4 py-3 text-zinc-700">{r.paciente}</td>
+                <td className="px-4 py-3 text-zinc-700">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span>{r.paciente}</span>
+                    {r.es_historico && <BadgeHistorico compacto />}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   {r.fase != null ? (
                     <span className="rounded-full bg-[#efe7db] px-2 py-0.5 text-xs font-medium text-[#8c7a63]">
@@ -127,7 +144,7 @@ export default function ListaRecetas({ recetas }: { recetas: RecetaLista[] }) {
           </tbody>
         </table>
       </div>
-      {(q.trim() || fase) && (
+      {(q.trim() || fase || vista !== "todos") && (
         <p className="mt-2 text-xs text-zinc-400">
           {filtradas.length} de {recetas.length} recetas
         </p>

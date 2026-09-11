@@ -6,6 +6,7 @@ import { etiquetaDiaCorta } from "@/lib/tz";
 import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
 import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
+import { BadgeHistorico } from "@/components/Historico";
 import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
 import ReviewGoogle from "./ReviewGoogle";
 
@@ -59,6 +60,7 @@ type Paciente = {
   telefono_wpp: string | null;
   email: string | null;
   review_google: boolean | null;
+  es_historico: boolean | null;
 };
 
 type Historia = {
@@ -80,7 +82,9 @@ export default async function PacienteDetalle({
 
   const { data: paciente } = await supabase
     .from("pacientes")
-    .select("id, nombre, apellidos, fecha_nac, sexo, telefono_wpp, email, review_google")
+    .select(
+      "id, nombre, apellidos, fecha_nac, sexo, telefono_wpp, email, review_google, es_historico",
+    )
     .eq("id", id)
     .single();
 
@@ -179,6 +183,7 @@ export default async function PacienteDetalle({
                 Fase {faseActual}
               </span>
             )}
+            {p.es_historico && <BadgeHistorico />}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <ReviewGoogle pacienteId={p.id} inicial={!!p.review_google} />

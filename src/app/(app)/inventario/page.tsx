@@ -10,6 +10,7 @@ type Producto = {
   stock_minimo: number;
   es_controlado: boolean;
   fraccion_cofepris: string;
+  es_historico: boolean | null;
   lotes: Lote[];
 };
 
@@ -18,7 +19,7 @@ export default async function InventarioPage() {
   const { data, error } = await supabase
     .from("productos")
     .select(
-      "id, nombre, precio_venta, stock_minimo, es_controlado, fraccion_cofepris, lotes(cantidad_actual, caducidad)",
+      "id, nombre, precio_venta, stock_minimo, es_controlado, fraccion_cofepris, es_historico, lotes(cantidad_actual, caducidad)",
     )
     .order("nombre");
 
