@@ -3,6 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { fechaSinaloa, horaSinaloa } from "@/lib/tz";
+import {
+  BadgeHistorico,
+  SelectorHistorico,
+  coincideVista,
+  textoBusqueda,
+  type VistaHistorico,
+} from "@/components/Historico";
 
 // Fecha y hora de captura en zona Sinaloa (ej. "7 jun 2026, 4:16 p.m.")
 function captura(s: string | null): string {
@@ -17,6 +24,7 @@ export type PacienteLista = {
   telefono_wpp: string | null;
   creado_en: string | null;
   fase: number | null;
+  es_historico?: boolean | null;
 };
 
 // Limpia el teléfono a formato wa.me (México = 52).
@@ -38,6 +46,7 @@ export default function ListaPacientes({
   const [q, setQ] = useState("");
   const [fase, setFase] = useState<string>("");
   const [orden, setOrden] = useState<Orden>("az");
+  const [vista, setVista] = useState<VistaHistorico>("todos");
 
   // Fases disponibles (para el dropdown).
   const fasesDisponibles = useMemo(
@@ -53,7 +62,7 @@ export default function ListaPacientes({
     let r = pacientes.filter((p) => {
       const coincide =
         !t ||
-        `${p.nombre} ${p.apellidos ?? ""} ${p.telefono_wpp ?? ""} ${captura(p.creado_en)}`
+        `${p.nombre} ${p.apellidos ?? ""} ${p.telefono_wpp ?? ""} ${captura(p.creado_en)}${textoBusqueda(p.es_historico)}`
           .toLowerCase()
           .includes(t);
       const faseOk =
@@ -62,7 +71,7 @@ export default function ListaPacientes({
           : fase === "sin"
             ? p.fase == null
             : p.fase === Number(fase);
-      return coincide && faseOk;
+      return coincide && faseOk && coincideVista(p.es_historico, vista);
     });
     const t0 = (s: string | null) => (s ? new Date(s).getTime() : 0);
     r = [...r].sort((a, b) => {
@@ -78,7 +87,7 @@ export default function ListaPacientes({
       }
     });
     return r;
-  }, [q, fase, orden, pacientes]);
+  }, [q, fase, orden, vista, pacientes]);
 
   return (
     <>
@@ -102,6 +111,7 @@ export default function ListaPacientes({
           ))}
           <option value="sin">Sin fase</option>
         </select>
+        <SelectorHistorico valor={vista} onChange={setVista} />
         <select
           value={orden}
           onChange={(e) => setOrden(e.target.value as Orden)}
@@ -140,7 +150,12 @@ export default function ListaPacientes({
               return (
                 <tr key={p.id} className="hover:bg-zinc-50">
                   <td className="px-4 py-3 font-medium text-zinc-900">
-                    {p.nombre} {p.apellidos ?? ""}
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span>
+                        {p.nombre} {p.apellidos ?? ""}
+                      </span>
+                      {p.es_historico && <BadgeHistorico compacto />}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     {p.fase != null ? (
@@ -184,7 +199,7 @@ export default function ListaPacientes({
         </table>
       </div>
 
-      {(q.trim() || fase) && (
+      {(q.trim() || fase || vista !== "todos") && (
         <p className="mt-2 text-xs text-zinc-400">
           {filtrados.length} de {pacientes.length} pacientes
         </p>

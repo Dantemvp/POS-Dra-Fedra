@@ -7,6 +7,7 @@ type Receta = {
   folio: number;
   fecha: string;
   fase: number | null;
+  es_historico: boolean | null;
   pacientes: { nombre: string; apellidos: string | null } | null;
 };
 
@@ -37,7 +38,7 @@ export default async function RecetasPage() {
 
   const { data: recetasData } = await supabase
     .from("recetas")
-    .select("id, folio, fecha, fase, pacientes(nombre, apellidos)")
+    .select("id, folio, fecha, fase, es_historico, pacientes(nombre, apellidos)")
     .order("fecha", { ascending: false })
     .limit(2000);
 
@@ -47,6 +48,7 @@ export default async function RecetasPage() {
       folio: r.folio,
       fecha: r.fecha,
       fase: r.fase,
+      es_historico: r.es_historico,
       paciente: r.pacientes
         ? `${r.pacientes.nombre} ${r.pacientes.apellidos ?? ""}`.trim()
         : "—",

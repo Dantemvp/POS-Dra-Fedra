@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import CancelarVentaBtn from "./CancelarVentaBtn";
+import {
+  BadgeHistorico,
+  SelectorHistorico,
+  coincideVista,
+  type VistaHistorico,
+} from "@/components/Historico";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -12,6 +18,8 @@ export type VentaDetalle = {
   id: string;
   folio: number;
   hora: string;
+  fecha: string;
+  es_historico: boolean;
   total: number;
   metodo_pago: string | null;
   items: VentaItem[];
@@ -20,28 +28,55 @@ export type VentaDetalle = {
 
 export default function VentasDelDia({ ventas }: { ventas: VentaDetalle[] }) {
   const [abierta, setAbierta] = useState<string | null>(null);
+  // Arranca en las de hoy: el uso diario de esta pantalla es el corte, y las
+  // ventas importadas son de otro año. Quien las busque cambia el selector.
+  const [vista, setVista] = useState<VistaHistorico>("actual");
+
+  const mostradas = useMemo(
+    () => ventas.filter((v) => coincideVista(v.es_historico, vista)),
+    [ventas, vista],
+  );
+  const historicas = useMemo(
+    () => ventas.filter((v) => v.es_historico).length,
+    [ventas],
+  );
 
   return (
+    <>
+    {historicas > 0 && (
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <SelectorHistorico
+          valor={vista}
+          onChange={setVista}
+          etiquetaActual="Sólo ventas de hoy"
+        />
+        <span className="text-xs text-zinc-500">
+          {historicas} ventas importadas del sistema anterior
+        </span>
+      </div>
+    )}
     <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
       <table className="w-full text-left text-sm">
         <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
           <tr>
             <th className="px-4 py-3">Folio</th>
-            <th className="px-4 py-3">Hora</th>
+            <th className="px-4 py-3">Cuándo</th>
             <th className="px-4 py-3">Método</th>
             <th className="px-4 py-3 text-right">Total</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
-          {ventas.length === 0 && (
+          {mostradas.length === 0 && (
             <tr>
               <td colSpan={5} className="px-4 py-8 text-center text-zinc-400">
-                Sin ventas hoy.
+                {vista === "historico"
+                  ? "No hay ventas importadas."
+                  : "Sin ventas hoy."}
               </td>
             </tr>
           )}
-          {ventas.map((v) => {
+          {mostradas.map((v) => {
             const expandida = abierta === v.id;
             // Con pagos mixtos hay varias filas en `pagos`; si no, cae al metodo_pago.
             const metodoLabel =
@@ -61,6 +96,7 @@ export default function VentasDelDia({ ventas }: { ventas: VentaDetalle[] }) {
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 
@@ -94,13 +130,20 @@ function FilaVenta({
             #{v.folio}
           </button>
         </td>
-        <td className="px-4 py-3 text-zinc-600">{v.hora}</td>
+        <td className="px-4 py-3 text-zinc-600">
+          <span className="flex flex-wrap items-center gap-2">
+            <span>{v.es_historico ? `${v.fecha}, ${v.hora}` : v.hora}</span>
+            {v.es_historico && <BadgeHistorico compacto />}
+          </span>
+        </td>
         <td className="px-4 py-3 capitalize text-zinc-600">{metodoLabel}</td>
         <td className="px-4 py-3 text-right tabular-nums text-zinc-900">
           {money(Number(v.total))}
         </td>
         <td className="px-4 py-3 text-right">
-          <CancelarVentaBtn ventaId={v.id} />
+          {/* Una venta importada no se cancela: devolvería al inventario de hoy
+              mercancía que se vendió en el sistema anterior. */}
+          {!v.es_historico && <CancelarVentaBtn ventaId={v.id} />}
         </td>
       </tr>
       {expandida && (

@@ -2,6 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  BadgeHistorico,
+  SelectorHistorico,
+  coincideVista,
+  textoBusqueda,
+  type VistaHistorico,
+} from "@/components/Historico";
 
 export type ProductoFila = {
   id: string;
@@ -12,6 +19,7 @@ export type ProductoFila = {
   bajo: boolean;
   es_controlado: boolean;
   fraccion_cofepris: string;
+  es_historico?: boolean | null;
 };
 
 export default function TablaProductos({
@@ -20,21 +28,29 @@ export default function TablaProductos({
   productos: ProductoFila[];
 }) {
   const [q, setQ] = useState("");
+  const [vista, setVista] = useState<VistaHistorico>("todos");
 
   const filtrados = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return productos;
-    return productos.filter((p) => p.nombre.toLowerCase().includes(s));
-  }, [q, productos]);
+    return productos.filter(
+      (p) =>
+        (!s ||
+          `${p.nombre}${textoBusqueda(p.es_historico)}`.toLowerCase().includes(s)) &&
+        coincideVista(p.es_historico, vista),
+    );
+  }, [q, vista, productos]);
 
   return (
     <div>
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Buscar producto por nombre para revisar o editar…"
-        className="mb-3 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
-      />
+      <div className="mb-3 flex flex-wrap gap-2">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar producto por nombre para revisar o editar…"
+          className="min-w-[12rem] flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+        />
+        <SelectorHistorico valor={vista} onChange={setVista} />
+      </div>
 
       <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
         <table className="w-full text-left text-sm">
@@ -54,7 +70,7 @@ export default function TablaProductos({
                 <td colSpan={6} className="px-4 py-8 text-center text-zinc-400">
                   {productos.length === 0
                     ? "Aún no hay productos. Agrega el primero arriba."
-                    : `Sin coincidencias para "${q}".`}
+                    : "Ningún producto coincide con los filtros."}
                 </td>
               </tr>
             )}
@@ -67,6 +83,11 @@ export default function TablaProductos({
                   {p.es_controlado && (
                     <span className="ml-2 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-purple-700">
                       controlado
+                    </span>
+                  )}
+                  {p.es_historico && (
+                    <span className="ml-2 inline-block align-middle">
+                      <BadgeHistorico compacto />
                     </span>
                   )}
                 </td>

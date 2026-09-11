@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { inicioDiaSinaloa, horaSinaloa } from "@/lib/tz";
+import { inicioDiaSinaloa, horaSinaloa, fechaSinaloa } from "@/lib/tz";
 import CorteDelDia from "./CorteDelDia";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
 import VentasDelDia, { type VentaDetalle } from "./VentasDelDia";
@@ -45,6 +45,7 @@ export default async function CajaPage() {
     )
     .gte("fecha", desde)
     .eq("estado", "pagada")
+    .eq("es_historico", false)
     .order("fecha", { ascending: false });
 
   const ventas = (ventasData ?? []) as unknown as VentaRow[];
@@ -109,10 +110,23 @@ export default async function CajaPage() {
       desglose[p.metodo] = (desglose[p.metodo] ?? 0) + Number(p.monto);
   }
 
-  const ventasDetalle: VentaDetalle[] = ventas.map((v) => ({
+  // Ventas traídas del AppSheet viejo. Van por separado a propósito: se listan
+  // para poder consultarlas, pero no tocan el corte ni el desglose del día.
+  const { data: historicasData } = await supabase
+    .from("ventas")
+    .select(
+      "id, folio, fecha, total, metodo_pago, venta_items(cantidad, precio_unit, productos(nombre)), pagos(metodo, monto)",
+    )
+    .eq("es_historico", true)
+    .order("fecha", { ascending: false })
+    .limit(500);
+
+  const aDetalle = (v: VentaRow, historica: boolean): VentaDetalle => ({
     id: v.id,
     folio: v.folio,
     hora: horaSinaloa(v.fecha),
+    fecha: fechaSinaloa(v.fecha),
+    es_historico: historica,
     total: Number(v.total),
     metodo_pago: v.metodo_pago,
     items: (v.venta_items ?? []).map((it) => ({
@@ -124,7 +138,12 @@ export default async function CajaPage() {
       metodo: p.metodo,
       monto: Number(p.monto),
     })),
-  }));
+  });
+
+  const ventasDetalle: VentaDetalle[] = [
+    ...ventas.map((v) => aDetalle(v, false)),
+    ...((historicasData ?? []) as unknown as VentaRow[]).map((v) => aDetalle(v, true)),
+  ];
 
   // Libro de Control COFEPRIS: movimientos de productos controlados
   const { data: movData } = await supabase

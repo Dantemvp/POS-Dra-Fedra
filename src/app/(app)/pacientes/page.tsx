@@ -6,7 +6,7 @@ export default async function PacientesPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("pacientes")
-    .select("id, nombre, apellidos, telefono_wpp, creado_en")
+    .select("id, nombre, apellidos, telefono_wpp, creado_en, es_historico")
     .order("nombre");
 
   // Fase actual de cada paciente = fase de su última receta con fase.
