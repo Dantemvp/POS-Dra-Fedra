@@ -21,7 +21,7 @@ declare t text;
 begin
   foreach t in array array[
     'pacientes','historias_clinicas','recetas','receta_items','citas',
-    'productos','lotes','ventas','venta_items','pagos',
+    'productos','lotes','ventas','venta_items','pagos','cortes_caja',
     'proveedores','categorias','servicios',
     'cobros','cobro_items','cobro_pagos'
   ]
@@ -37,6 +37,10 @@ comment on column pacientes.origen_datos is
   'Lote de importación del que vino el registro. Null = capturado en este POS.';
 comment on column pacientes.es_historico is
   'true = se muestra con la etiqueta "Información histórica importada".';
+
+-- El archivo autorizado contiene una existencia historica de 99,999,999,997.
+-- Se conserva tal cual, como pidio negocio, sin usarla para validar vigencia.
+alter table public.lotes alter column cantidad_actual type numeric(14,2);
 
 -- Índices solo donde hay filtro de pantalla (pacientes, recetas, inventario, ventas).
 create index if not exists ix_pacientes_historico on pacientes(es_historico);
@@ -115,7 +119,7 @@ create policy "clinica_lee_importacion_pendientes" on importacion_pendientes
 -- begin
 --   foreach t in array array[
 --     'pacientes','historias_clinicas','recetas','receta_items','citas',
---     'productos','lotes','ventas','venta_items','pagos',
+--     'productos','lotes','ventas','venta_items','pagos','cortes_caja',
 --     'proveedores','categorias','servicios',
 --     'cobros','cobro_items','cobro_pagos'
 --   ]
