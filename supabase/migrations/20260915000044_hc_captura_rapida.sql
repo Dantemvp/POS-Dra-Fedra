@@ -38,12 +38,16 @@
 -- ----------------------------------------------------------------------------
 do $$
 declare
-  v_tipo    uuid;
-  v_tipos   int;
-  v_campos  int;
-  v_gineco  int;
-  v_cuantos int;
-  r         record;
+  v_tipo      uuid;
+  v_tipos     int;
+  v_campos    int;
+  v_gineco    int;
+  v_cuantos   int;
+  v_imc       int;
+  v_preguntas int := 0;
+  v_completa  boolean;
+  v_columna   text;
+  r           record;
 begin
   select count(*) into v_tipos from tipos_historia
    where nombre = 'Historia Clínica (NOM-004)';
@@ -60,18 +64,76 @@ begin
   select id into v_tipo from tipos_historia
    where nombre = 'Historia Clínica (NOM-004)';
 
-  -- Ya aplicada: se sale en silencio para que un reintento sea inofensivo.
-  if exists (
-    select 1 from campos_historia
-     where tipo_historia_id = v_tipo
-       and seccion = 'IX. Ficha clínica'
-       and etiqueta = 'IMC'
-  ) then
-    raise notice 'La captura rápida ya estaba aplicada, no se cambia nada';
-    return;
+  select count(*) into v_campos from campos_historia where tipo_historia_id = v_tipo;
+
+  select count(*) into v_imc from campos_historia
+   where tipo_historia_id = v_tipo
+     and seccion = 'IX. Ficha clínica'
+     and etiqueta = 'IMC';
+
+  -- Un campo IMC en la ficha clínica puede significar dos cosas: que esta
+  -- migración ya corrió, o que alguien lo agregó a mano. Solo lo primero
+  -- permite salir sin hacer nada; lo segundo tiene que abortar, porque si no
+  -- la migración terminaría "bien" sin instalar la captura rápida.
+  if v_imc > 0 then
+    v_completa := v_imc = 1 and v_campos = 67;
+
+    -- Las columnas nuevas se consultan por información del catálogo y con SQL
+    -- dinámico, porque este bloque corre antes de los ALTER que las crean.
+    if v_completa then
+      foreach v_columna in array array['oculto','depende_de','depende_valor','solo_sexo','valor_default','rol'] loop
+        if not exists (
+          select 1 from information_schema.columns
+           where table_schema = 'public'
+             and table_name = 'campos_historia'
+             and column_name = v_columna
+        ) then
+          v_completa := false;
+        end if;
+      end loop;
+    end if;
+
+    if v_completa then
+      execute 'select count(*) from campos_historia where tipo_historia_id = $1 and depende_de is not null'
+        into v_cuantos using v_tipo;
+      v_completa := v_cuantos = 16;
+    end if;
+
+    if v_completa then
+      execute 'select count(*) from campos_historia where tipo_historia_id = $1 and rol = ''imc'''
+        into v_cuantos using v_tipo;
+      v_completa := v_cuantos = 1;
+    end if;
+
+    if v_completa then
+      select count(*) into v_preguntas from campos_historia
+       where tipo_historia_id = v_tipo
+         and tipo_dato = 'booleano'
+         and etiqueta in (
+           '¿Fuma?',
+           '¿Toma alcohol?',
+           '¿Tiene alergias?',
+           '¿Tuvo enfermedades en la infancia?',
+           '¿Ha estado hospitalizado(a)?',
+           '¿Lo operaron en los últimos 6 meses?',
+           '¿Ha recibido transfusiones?',
+           '¿Ha tenido fracturas o traumatismos?',
+           '¿Tiene alguna enfermedad crónico-degenerativa?',
+           '¿Toma algún medicamento actualmente?',
+           '¿Refiere alguna enfermedad o síntoma a destacar?'
+         );
+      v_completa := v_preguntas = 11;
+    end if;
+
+    if v_completa then
+      raise notice 'La captura rápida ya estaba aplicada, no se cambia nada';
+      return;
+    end if;
+
+    raise exception 'La sección IX. Ficha clínica ya tiene % campo(s) IMC, pero la plantilla no corresponde a una aplicación completa de esta migración (% campos, % de las 11 preguntas). Revisar a mano antes de continuar.', v_imc, v_campos, v_preguntas
+      using errcode = '22023';
   end if;
 
-  select count(*) into v_campos from campos_historia where tipo_historia_id = v_tipo;
   if v_campos <> 55 then
     raise exception 'La plantilla NOM-004 tiene % campos y esta migración espera 55. Alguien la editó: revisar antes de aplicar.', v_campos
       using errcode = '22023';

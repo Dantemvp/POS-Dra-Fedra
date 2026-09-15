@@ -99,6 +99,50 @@ test("si alguien agregó un campo a la plantilla: aborta en vez de adivinar", as
   assert.equal(await retrato(db), antes);
 });
 
+test("IMC preexistente puesto a mano: aborta y no agrega columnas", async () => {
+  // La marca de "ya aplicada" es un campo IMC en la ficha clínica. Si alguien
+  // lo agregó por su cuenta, la migración no debe darse por hecha: terminaría
+  // bien sin instalar la captura rápida.
+  const db = await baseConPlantilla();
+  await db.exec(
+    `insert into campos_historia (tipo_historia_id, seccion, etiqueta, tipo_dato, orden)
+     select id, 'IX. Ficha clínica', 'IMC', 'numero', 76
+       from tipos_historia where nombre = 'Historia Clínica (NOM-004)'`,
+  );
+  const antes = await retrato(db);
+
+  await assert.rejects(() => db.exec(MIGRACION), /no corresponde a una aplicación completa/);
+
+  assert.equal(await retrato(db), antes, "ninguna fila cambió");
+  assert.equal(await contar(db, CAMPOS), 56, "sigue con sus 56 campos");
+  assert.equal(
+    await existeColumna(db, "campos_historia", "rol"),
+    false,
+    "aborta antes de los ALTER",
+  );
+  assert.equal(
+    await contar(db, "select count(*)::int as n from campos_historia where etiqueta like '¿%'"),
+    0,
+    "no se instaló ninguna pregunta",
+  );
+});
+
+test("IMC preexistente con la plantilla ya migrada encima: sigue abortando", async () => {
+  // Caso mixto: la migración corrió, y después alguien agregó otro IMC. El
+  // conteo deja de cuadrar y un reintento no debe pasar de largo.
+  const db = await baseConPlantilla();
+  await db.exec(MIGRACION);
+  await db.exec(
+    `insert into campos_historia (tipo_historia_id, seccion, etiqueta, tipo_dato, orden)
+     select id, 'IX. Ficha clínica', 'IMC', 'numero', 999
+       from tipos_historia where nombre = 'Historia Clínica (NOM-004)'`,
+  );
+  const antes = await retrato(db);
+
+  await assert.rejects(() => db.exec(MIGRACION), /no corresponde a una aplicación completa/);
+  assert.equal(await retrato(db), antes);
+});
+
 test("segundo intento tras una corrida completa: no duplica nada", async () => {
   const db = await baseConPlantilla();
   await db.exec(MIGRACION);
