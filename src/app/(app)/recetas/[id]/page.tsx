@@ -16,6 +16,7 @@ type Receta = {
   fecha: string;
   fase: number | null;
   ajustes_impresion: Record<string, unknown> | null;
+  metricas: Record<string, unknown> | null;
   pacientes: {
     nombre: string;
     apellidos: string | null;
@@ -42,7 +43,7 @@ export default async function RecetaPrint({
   const { data } = await supabase
     .from("recetas")
     .select(
-      "id, folio, fecha, fase, ajustes_impresion, pacientes(nombre, apellidos, fecha_nac), receta_items(id, medicamento, dosis, duracion_dias, indicaciones)",
+      "id, folio, fecha, fase, ajustes_impresion, metricas, pacientes(nombre, apellidos, fecha_nac), receta_items(id, medicamento, dosis, duracion_dias, indicaciones)",
     )
     .eq("id", id)
     .order("orden", { referencedTable: "receta_items", ascending: true })
@@ -57,8 +58,14 @@ export default async function RecetaPrint({
 
   return (
     <div className="mx-auto max-w-[1500px]">
-      {/* Tamaño media carta horizontal solo al imprimir */}
-      <style>{`@media print { @page { size: 8.5in 5.5in; margin: 0; } }`}</style>
+      {/* El consultorio imprime en la hoja carta completa que ya trae la bandeja
+          y la corta a la mitad, igual que hacía el POS viejo desde Acrobat. Por
+          eso la página es carta vertical y la receta ocupa los 139.7 mm de
+          arriba, a tamaño real. */}
+      <style>{`@media print {
+        @page { size: letter portrait; margin: 0; }
+        .doc-imprimible.print-area { width: 215.9mm; height: 139.7mm; }
+      }`}</style>
 
       <div className="mb-4 no-print">
         <Link
@@ -68,7 +75,7 @@ export default async function RecetaPrint({
           ← Recetas
         </Link>
       </div>
-      <AjustadorReceta recetaId={r.id} nombre={nombre} edad={edad} fecha={fecha} folio={r.folio} fase={r.fase} items={r.receta_items} ajustes={r.ajustes_impresion} />
+      <AjustadorReceta recetaId={r.id} nombre={nombre} edad={edad} fecha={fecha} folio={r.folio} fase={r.fase} items={r.receta_items} ajustes={r.ajustes_impresion} metricasReceta={r.metricas} />
     </div>
   );
 }

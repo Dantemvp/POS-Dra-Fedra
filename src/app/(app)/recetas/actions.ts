@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { limpiarAjustes, type AjustesImpresionReceta } from "./ajustes-impresion";
 
 export type ItemReceta = {
   medicamento: string;
@@ -14,14 +15,6 @@ export type ItemReceta = {
 };
 
 export type Result = { ok: boolean; error?: string; id?: string };
-
-export type AjustesImpresionReceta = {
-  tamano: number;
-  separacion: number;
-  izquierda: number;
-  inicio: number;
-  mostrar_metricas: boolean;
-};
 
 export type ItemRecetaEditable = Omit<ItemReceta, "producto_id"> & { id: string | null };
 
@@ -50,7 +43,7 @@ export async function guardarReceta(
     p_receta_id: recetaId,
     p_fase: fase,
     p_items: limpios,
-    p_ajustes: ajustes,
+    p_ajustes: limpiarAjustes(ajustes),
   });
 
   if (error) return { ok: false, error: error.message };
