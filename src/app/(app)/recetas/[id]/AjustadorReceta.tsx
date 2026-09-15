@@ -9,6 +9,8 @@ import {
   type ClaveMetricaReceta,
   type MetricasReceta,
 } from "../ajustes-impresion";
+import SelectorPlantillas from "../SelectorPlantillas";
+import type { PlantillaReceta } from "../plantillas";
 import CodigoBarrasReceta from "./CodigoBarrasReceta";
 import PrintButton from "./PrintButton";
 
@@ -32,6 +34,7 @@ type Props = {
   items: ItemImprimible[];
   ajustes: Record<string, unknown> | null;
   metricasReceta: Record<string, unknown> | null;
+  plantillas: PlantillaReceta[];
 };
 
 // Los seis renglones ya vienen impresos en recetario.png (2000 x 1294 px). Las
@@ -147,7 +150,7 @@ function TextoConVinetas({ texto }: { texto: string }) {
   });
 }
 
-export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, fase: faseInicial, items: itemsIniciales, ajustes, metricasReceta }: Props) {
+export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, fase: faseInicial, items: itemsIniciales, ajustes, metricasReceta, plantillas }: Props) {
   const originales = useMemo(() => prepararItems(itemsIniciales), [itemsIniciales]);
   const [guardando, iniciarGuardado] = useTransition();
   const [editando, setEditando] = useState(false);
@@ -212,6 +215,20 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
       [copia[indice], copia[destino]] = [copia[destino], copia[indice]];
       return copia;
     });
+  }
+
+  function aplicarPlantilla(plantilla: PlantillaReceta) {
+    setItems(plantilla.items.map((item, indice) => ({
+      id: null,
+      clave: `plantilla-${siguienteId + indice}`,
+      medicamento: item.medicamento,
+      dosis: item.dosis,
+      duracion_dias: item.duracion_dias,
+      indicaciones: item.indicaciones,
+    })));
+    setSiguienteId((id) => id + plantilla.items.length);
+    if (plantilla.fase_texto) setFaseTexto(plantilla.fase_texto);
+    setMensaje(`Plantilla "${plantilla.nombre}" cargada. Revisa y guarda.`);
   }
 
   function agregar() {
@@ -291,6 +308,8 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
               Restablecer
             </button>
           </div>
+
+          <SelectorPlantillas plantillas={plantillas} onAplicar={aplicarPlantilla} />
 
           <div className="mb-4 rounded-xl bg-stone-100 px-3 py-3">
             <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-zinc-800">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AjustadorReceta from "./AjustadorReceta";
+import type { PlantillaReceta } from "../plantillas";
 
 type Item = {
   id: string;
@@ -49,6 +50,15 @@ export default async function RecetaPrint({
     .order("orden", { referencedTable: "receta_items", ascending: true })
     .single();
 
+
+  // Combinaciones prearmadas de la doctora, para precargar la receta.
+  const { data: plantillasData } = await supabase
+    .from("plantillas_receta")
+    .select("id, categoria, nombre, fases, fase_texto, items")
+    .eq("activo", true)
+    .order("orden");
+  const plantillas = (plantillasData ?? []) as unknown as PlantillaReceta[];
+
   if (!data) notFound();
   const r = data as unknown as Receta;
   const p = r.pacientes;
@@ -75,7 +85,7 @@ export default async function RecetaPrint({
           ← Recetas
         </Link>
       </div>
-      <AjustadorReceta recetaId={r.id} nombre={nombre} edad={edad} fecha={fecha} folio={r.folio} fase={r.fase} items={r.receta_items} ajustes={r.ajustes_impresion} metricasReceta={r.metricas} />
+      <AjustadorReceta recetaId={r.id} nombre={nombre} edad={edad} fecha={fecha} folio={r.folio} fase={r.fase} items={r.receta_items} ajustes={r.ajustes_impresion} metricasReceta={r.metricas} plantillas={plantillas} />
     </div>
   );
 }

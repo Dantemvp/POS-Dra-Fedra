@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import NuevaReceta from "./NuevaReceta";
 import ListaRecetas, { type RecetaLista } from "./ListaRecetas";
+import type { PlantillaReceta } from "./plantillas";
 
 type Receta = {
   id: string;
@@ -36,6 +37,15 @@ export default async function RecetasPage() {
     nombre: p.nombre as string,
   }));
 
+
+  // Combinaciones prearmadas de la doctora, para precargar la receta.
+  const { data: plantillasData } = await supabase
+    .from("plantillas_receta")
+    .select("id, categoria, nombre, fases, fase_texto, items")
+    .eq("activo", true)
+    .order("orden");
+  const plantillas = (plantillasData ?? []) as unknown as PlantillaReceta[];
+
   const { data: recetasData } = await supabase
     .from("recetas")
     .select("id, folio, fecha, fase, es_historico, pacientes(nombre, apellidos)")
@@ -62,7 +72,7 @@ export default async function RecetasPage() {
         Genera una receta pre-llenada lista para imprimir.
       </p>
 
-      <NuevaReceta pacientes={pacientes} productos={productos} />
+      <NuevaReceta pacientes={pacientes} productos={productos} plantillas={plantillas} />
 
       <ListaRecetas recetas={recetas} />
     </div>

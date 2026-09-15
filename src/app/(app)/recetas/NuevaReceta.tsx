@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { crearReceta, ultimoInBody, type ItemReceta } from "./actions";
 import ComboBuscador from "@/components/ComboBuscador";
+import SelectorPlantillas from "./SelectorPlantillas";
+import type { PlantillaReceta } from "./plantillas";
 import { extraerInBody } from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fechaSinaloa } from "@/lib/tz";
@@ -54,9 +56,11 @@ const METRICAS: [string, string][] = [
 export default function NuevaReceta({
   pacientes,
   productos,
+  plantillas,
 }: {
   pacientes: { id: string; nombre: string }[];
   productos: { id: string; nombre: string }[];
+  plantillas: PlantillaReceta[];
 }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -73,6 +77,7 @@ export default function NuevaReceta({
   }, [productos]);
   const [fase, setFase] = useState("");
   const [items, setItems] = useState<ItemReceta[]>([{ ...filaVacia }]);
+  const [faseTexto, setFaseTexto] = useState<string | null>(null);
   const [metricas, setMetricas] = useState<Record<string, string>>({});
   const [inbodyMsg, setInbodyMsg] = useState<string | null>(null);
   const [inbodyLoading, setInbodyLoading] = useState(false);
@@ -131,6 +136,19 @@ export default function NuevaReceta({
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  function aplicarPlantilla(plantilla: PlantillaReceta) {
+    setItems(plantilla.items.map((item) => ({
+      medicamento: item.medicamento,
+      dosis: item.dosis,
+      duracion_dias: item.duracion_dias,
+      indicaciones: item.indicaciones,
+    })));
+    setFaseTexto(plantilla.fase_texto);
+    // La carpeta manda para archivar; la etiqueta impresa viaja aparte.
+    if (plantilla.fases.length > 0) setFase(String(plantilla.fases[0]));
+    setMsg(null);
+  }
+
   function setItem(idx: number, patch: Partial<ItemReceta>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
@@ -149,6 +167,7 @@ export default function NuevaReceta({
         fase ? Number(fase) : null,
         itemsLigados,
         metricas,
+        faseTexto,
       );
       if (!res.ok) {
         setMsg(res.error ?? "Error.");
@@ -171,6 +190,8 @@ export default function NuevaReceta({
 
   return (
     <div className="mb-6 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+      <SelectorPlantillas plantillas={plantillas} onAplicar={aplicarPlantilla} />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-600">

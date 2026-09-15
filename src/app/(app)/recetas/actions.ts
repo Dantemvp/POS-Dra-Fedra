@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { limpiarAjustes, type AjustesImpresionReceta } from "./ajustes-impresion";
+import { limpiarAjustes, MAX_TEXTO_FASE, type AjustesImpresionReceta } from "./ajustes-impresion";
 
 export type ItemReceta = {
   medicamento: string;
@@ -87,6 +87,9 @@ export async function crearReceta(
   fase: number | null,
   items: ItemReceta[],
   metricas: Record<string, string> = {},
+  // Etiqueta que trae la plantilla ("FASE 1: 30 días"). Se guarda para que la
+  // receta imprima el texto de la doctora y no uno armado con el número.
+  faseTexto: string | null = null,
 ): Promise<Result> {
   const supabase = await createClient();
 
@@ -106,6 +109,9 @@ export async function crearReceta(
       fase,
       estado: "emitida",
       metricas: Object.keys(metricasLimpias).length ? metricasLimpias : null,
+      ajustes_impresion: faseTexto?.trim()
+        ? { fase_texto: faseTexto.trim().slice(0, MAX_TEXTO_FASE) }
+        : null,
     })
     .select("id")
     .single();
