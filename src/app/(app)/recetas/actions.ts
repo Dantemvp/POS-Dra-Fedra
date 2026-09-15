@@ -119,13 +119,17 @@ export async function crearReceta(
   if (error) return { ok: false, error: error.message };
 
   const { error: itemsErr } = await supabase.from("receta_items").insert(
-    limpios.map((i) => ({
+    // `orden` manda en la impresión. Sin él todos los renglones quedaban en 0 y
+    // la receta salía con los medicamentos en cualquier orden, que importa
+    // cuando la combinación lleva una secuencia (ayuno, cena, escalamiento).
+    limpios.map((i, indice) => ({
       receta_id: receta.id,
       producto_id: i.producto_id ?? null,
       medicamento: i.medicamento.trim(),
       dosis: i.dosis.trim() || null,
       duracion_dias: i.duracion_dias,
       indicaciones: i.indicaciones.trim() || null,
+      orden: indice,
     })),
   );
 
