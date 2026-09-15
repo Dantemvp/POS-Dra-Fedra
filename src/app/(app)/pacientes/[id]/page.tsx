@@ -94,7 +94,7 @@ export default async function PacienteDetalle({
   const { data: tiposData } = await supabase
     .from("tipos_historia")
     .select(
-      "id, nombre, campos_historia(id, etiqueta, tipo_dato, opciones, orden, requerido, seccion)",
+      "id, nombre, campos_historia(id, etiqueta, tipo_dato, opciones, orden, requerido, seccion, oculto, depende_de, depende_valor, solo_sexo, valor_default, rol)",
     )
     .eq("activo", true)
     .order("nombre");
@@ -214,7 +214,7 @@ export default async function PacienteDetalle({
         inbodyTipoId={tipos.find((t) => t.nombre === "InBody")?.id ?? null}
       />
 
-      <NuevaHistoria pacienteId={p.id} tipos={tipos} />
+      <NuevaHistoria pacienteId={p.id} sexo={p.sexo} tipos={tipos} />
 
       <h2 className="mb-3 text-lg font-medium text-zinc-900">
         Historias clínicas

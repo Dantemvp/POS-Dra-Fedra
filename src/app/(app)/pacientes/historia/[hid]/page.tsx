@@ -3,7 +3,15 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
 
-type Campo = { id: string; etiqueta: string; seccion: string | null; orden: number };
+type Campo = {
+  id: string;
+  etiqueta: string;
+  seccion: string | null;
+  orden: number;
+  oculto: boolean | null;
+  depende_de: string | null;
+  depende_valor: string | null;
+};
 type Historia = {
   fecha: string;
   datos: Record<string, unknown>;
@@ -50,11 +58,12 @@ export default async function HistoriaPrint({
   if (!data) notFound();
   const h = data as unknown as Historia;
   const p = h.pacientes;
+  const nombrePaciente = p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : "";
   const datos = h.datos ?? {};
 
   const { data: camposData } = await supabase
     .from("campos_historia")
-    .select("id, etiqueta, seccion, orden")
+    .select("id, etiqueta, seccion, orden, oculto, depende_de, depende_valor")
     .eq("tipo_historia_id", h.tipos_historia?.id ?? "")
     .order("orden");
   const campos = (camposData ?? []) as Campo[];
@@ -64,6 +73,16 @@ export default async function HistoriaPrint({
   for (const c of campos) {
     const v = datos[c.id];
     usados.add(c.id);
+    // Un campo retirado de la captura solo se imprime si esta historia lo
+    // contestó: así las 548 importadas conservan lo que traían.
+    if (c.oculto && valor(v) === "") continue;
+    // Si la pregunta que abre este campo se respondió que no, el campo no se
+    // preguntó. Imprimir "Sin responder" debajo del "No" sobra.
+    if (c.depende_de && valor(v) === "") {
+      const respuestaPadre = datos[c.depende_de];
+      const abre = String(c.depende_valor ?? "true");
+      if (respuestaPadre !== undefined && String(respuestaPadre) !== abre) continue;
+    }
     const sec = c.seccion ?? "Datos";
     let grupo = secciones.find((s) => s.nombre === sec);
     if (!grupo) {
@@ -251,15 +270,24 @@ export default async function HistoriaPrint({
             )}
           </div>
 
-          {/* Firma */}
-          <div className="mt-10 break-inside-avoid text-center" data-pdf-block>
-            <div className="mx-auto w-56 border-t border-zinc-500" />
-            <p className="mt-1 text-[10px] font-semibold text-zinc-900">
-              Dra. Fedra Yarissa Aldama Castro
-            </p>
-            <p className="text-[8px] text-zinc-500">
-              Médico Cirujano · Céd. Prof. 11015233 · S.S.A. 20982
-            </p>
+          {/* Firmas: la NOM-004 pide la del paciente además de la del médico. */}
+          <div className="mt-10 flex break-inside-avoid justify-between gap-8" data-pdf-block>
+            <div className="flex-1 text-center">
+              <div className="mx-auto w-56 border-t border-zinc-500" />
+              <p className="mt-1 text-[10px] font-semibold text-zinc-900">
+                {nombrePaciente || "Nombre del paciente"}
+              </p>
+              <p className="text-[8px] text-zinc-500">Firma del paciente</p>
+            </div>
+            <div className="flex-1 text-center">
+              <div className="mx-auto w-56 border-t border-zinc-500" />
+              <p className="mt-1 text-[10px] font-semibold text-zinc-900">
+                Dra. Fedra Yarissa Aldama Castro
+              </p>
+              <p className="text-[8px] text-zinc-500">
+                Médico Cirujano · Céd. Prof. 11015233 · S.S.A. 20982
+              </p>
+            </div>
           </div>
           </div>
         </div>
