@@ -23,6 +23,106 @@
 -- guardada cambia de forma.
 -- ============================================================================
 
+-- ----------------------------------------------------------------------------
+-- Precondición: falla cerrada ANTES de tocar una sola fila o columna.
+--
+-- La plantilla NOM-004 está hecha para que la doctora la edite sin
+-- programador. Si alguna etiqueta ya cambió, las actualizaciones de más abajo
+-- no encontrarían su campo y la migración terminaría dejando la plantilla a
+-- medias, marcada como completa. Por eso cualquier desviación aborta aquí,
+-- donde todavía no se modificó nada.
+--
+-- Este bloque solo usa columnas que ya existen, para poder correr antes de los
+-- ALTER. La marca de "ya aplicada" es el campo IMC de la ficha clínica, que
+-- esta migración es la única que crea.
+-- ----------------------------------------------------------------------------
+do $$
+declare
+  v_tipo    uuid;
+  v_tipos   int;
+  v_campos  int;
+  v_gineco  int;
+  v_cuantos int;
+  r         record;
+begin
+  select count(*) into v_tipos from tipos_historia
+   where nombre = 'Historia Clínica (NOM-004)';
+
+  if v_tipos = 0 then
+    raise exception 'No existe la plantilla "Historia Clínica (NOM-004)". La migración 044 no tiene sobre qué trabajar.'
+      using errcode = 'P0002';
+  end if;
+  if v_tipos > 1 then
+    raise exception 'Hay % plantillas llamadas "Historia Clínica (NOM-004)". Debe haber exactamente una.', v_tipos
+      using errcode = '22023';
+  end if;
+
+  select id into v_tipo from tipos_historia
+   where nombre = 'Historia Clínica (NOM-004)';
+
+  -- Ya aplicada: se sale en silencio para que un reintento sea inofensivo.
+  if exists (
+    select 1 from campos_historia
+     where tipo_historia_id = v_tipo
+       and seccion = 'IX. Ficha clínica'
+       and etiqueta = 'IMC'
+  ) then
+    raise notice 'La captura rápida ya estaba aplicada, no se cambia nada';
+    return;
+  end if;
+
+  select count(*) into v_campos from campos_historia where tipo_historia_id = v_tipo;
+  if v_campos <> 55 then
+    raise exception 'La plantilla NOM-004 tiene % campos y esta migración espera 55. Alguien la editó: revisar antes de aplicar.', v_campos
+      using errcode = '22023';
+  end if;
+
+  select count(*) into v_gineco from campos_historia
+   where tipo_historia_id = v_tipo and seccion = 'IV. Ginecoobstétricos';
+  if v_gineco <> 8 then
+    raise exception 'La sección IV. Ginecoobstétricos tiene % campos y esta migración espera 8.', v_gineco
+      using errcode = '22023';
+  end if;
+
+  -- Cada sección/etiqueta que la migración toca debe existir una sola vez.
+  for r in
+    select * from (values
+      ('I. Identificación',                 'Estado civil'),
+      ('I. Identificación',                 'Escolaridad'),
+      ('I. Identificación',                 'Religión'),
+      ('III. Personales no patológicos',    'Tabaquismo'),
+      ('III. Personales no patológicos',    'Alcohol'),
+      ('III. Personales no patológicos',    'Alergias'),
+      ('III. Personales no patológicos',    'Tipo sanguíneo'),
+      ('III. Personales no patológicos',    'Toxicomanías / farmacodependencia'),
+      ('V. Personales patológicos',         'Enfermedades de la infancia'),
+      ('V. Personales patológicos',         'Hospitalizaciones previas'),
+      ('V. Personales patológicos',         'Antecedentes quirúrgicos'),
+      ('V. Personales patológicos',         'Transfusiones previas'),
+      ('V. Personales patológicos',         'Fracturas / traumatismos'),
+      ('V. Personales patológicos',         'Crónico-degenerativas (DM, HTA, obesidad)'),
+      ('VIII. Interrogatorio por aparatos', 'Respiratorio / Cardiovascular'),
+      ('VIII. Interrogatorio por aparatos', 'Digestivo'),
+      ('VIII. Interrogatorio por aparatos', 'Endocrino'),
+      ('VIII. Interrogatorio por aparatos', 'Músculo-esquelético'),
+      ('VIII. Interrogatorio por aparatos', 'Piel y anexos'),
+      ('VIII. Interrogatorio por aparatos', 'Neurológico y psiquiátrico'),
+      ('VIII. Interrogatorio por aparatos', 'Medicamentos actuales'),
+      ('IX. Ficha clínica',                 'Talla (m)'),
+      ('IX. Ficha clínica',                 'Peso (kg)')
+    ) as t(seccion, etiqueta)
+  loop
+    select count(*) into v_cuantos from campos_historia
+     where tipo_historia_id = v_tipo and seccion = r.seccion and etiqueta = r.etiqueta;
+    if v_cuantos <> 1 then
+      raise exception 'El campo "%" de la sección "%" aparece % veces y esta migración espera exactamente una.', r.etiqueta, r.seccion, v_cuantos
+        using errcode = '22023';
+    end if;
+  end loop;
+
+  raise notice 'Precondición de la migración 044: plantilla NOM-004 intacta, se puede aplicar';
+end $$;
+
 alter table campos_historia add column if not exists oculto boolean not null default false;
 alter table campos_historia add column if not exists depende_de uuid references campos_historia(id) on delete set null;
 alter table campos_historia add column if not exists depende_valor text;
@@ -46,16 +146,18 @@ declare
   v_orden  int;
   r        record;
 begin
+  -- La precondición de arriba ya garantizó que existe una sola plantilla y que
+  -- está intacta. Aquí solo queda repetir la marca para que un reintento tras
+  -- una aplicación completa no haga nada.
   select id into v_tipo from tipos_historia
    where nombre = 'Historia Clínica (NOM-004)';
-  if v_tipo is null then
-    raise notice 'No existe la plantilla NOM-004, no hay nada que ajustar';
-    return;
-  end if;
 
-  -- Marca de idempotencia: el campo de IMC calculado solo existe tras correr esto.
-  if exists (select 1 from campos_historia where tipo_historia_id = v_tipo and rol = 'imc') then
-    raise notice 'La captura rápida ya estaba aplicada';
+  if exists (
+    select 1 from campos_historia
+     where tipo_historia_id = v_tipo
+       and seccion = 'IX. Ficha clínica'
+       and etiqueta = 'IMC'
+  ) then
     return;
   end if;
 
@@ -66,21 +168,22 @@ begin
   -- ---------------------------------------------------------------- I. Identificación
   update campos_historia set tipo_dato = 'opciones',
          opciones = '["Soltero(a)","Casado(a)","Unión libre","Divorciado(a)","Separado(a)","Viudo(a)"]'::jsonb
-   where tipo_historia_id = v_tipo and etiqueta = 'Estado civil';
+   where tipo_historia_id = v_tipo and seccion = 'I. Identificación' and etiqueta = 'Estado civil';
 
   update campos_historia set tipo_dato = 'opciones',
          opciones = '["Ninguna","Primaria","Secundaria","Preparatoria","Carrera técnica","Licenciatura","Posgrado"]'::jsonb
-   where tipo_historia_id = v_tipo and etiqueta = 'Escolaridad';
+   where tipo_historia_id = v_tipo and seccion = 'I. Identificación' and etiqueta = 'Escolaridad';
 
   update campos_historia set tipo_dato = 'opciones',
          opciones = '["Católica","Cristiana","Testigo de Jehová","Otra","Ninguna"]'::jsonb
-   where tipo_historia_id = v_tipo and etiqueta = 'Religión';
+   where tipo_historia_id = v_tipo and seccion = 'I. Identificación' and etiqueta = 'Religión';
 
   -- Ocupación se queda como texto libre: Fernanda lo pidió así.
 
   -- ------------------------------------------- III. Lo que no preguntan en consulta
   update campos_historia set oculto = true
    where tipo_historia_id = v_tipo
+     and seccion = 'III. Personales no patológicos'
      and etiqueta in ('Tipo sanguíneo', 'Toxicomanías / farmacodependencia');
 
   -- ------------------------------------------------------ IV. Ginecoobstétricos
@@ -89,7 +192,9 @@ begin
 
   -- ------------------------------------------------------ V. Personales patológicos
   update campos_historia set etiqueta = 'Antecedentes quirúrgicos (últimos 6 meses)'
-   where tipo_historia_id = v_tipo and etiqueta = 'Antecedentes quirúrgicos';
+   where tipo_historia_id = v_tipo
+     and seccion = 'V. Personales patológicos'
+     and etiqueta = 'Antecedentes quirúrgicos';
 
   -- Crónico-degenerativas conserva su texto largo: 548 historias importadas ya
   -- traen redacción ahí y convertirla a casillas la perdería. Se acelera
@@ -114,8 +219,8 @@ begin
       from campos_historia
      where tipo_historia_id = v_tipo and seccion = r.seccion and etiqueta = r.hijo;
     if v_hijo is null then
-      raise notice 'No se encontró el campo %, se omite su pregunta sí/no', r.hijo;
-      continue;
+      raise exception 'No se encontró el campo "%" de la sección "%". La migración aborta sin cambiar nada.', r.hijo, r.seccion
+        using errcode = 'P0002';
     end if;
 
     insert into campos_historia (tipo_historia_id, seccion, etiqueta, tipo_dato, orden, requerido)
@@ -148,8 +253,8 @@ begin
      );
 
   -- ------------------------------------------------------- IX. Ficha clínica
-  update campos_historia set rol = 'talla' where tipo_historia_id = v_tipo and etiqueta = 'Talla (m)';
-  update campos_historia set rol = 'peso'  where tipo_historia_id = v_tipo and etiqueta = 'Peso (kg)';
+  update campos_historia set rol = 'talla' where tipo_historia_id = v_tipo and seccion = 'IX. Ficha clínica' and etiqueta = 'Talla (m)';
+  update campos_historia set rol = 'peso'  where tipo_historia_id = v_tipo and seccion = 'IX. Ficha clínica' and etiqueta = 'Peso (kg)';
 
   insert into campos_historia (tipo_historia_id, seccion, etiqueta, tipo_dato, orden, requerido, rol)
   values (v_tipo, 'IX. Ficha clínica', 'IMC', 'numero', 755, false, 'imc');

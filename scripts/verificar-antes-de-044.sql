@@ -1,5 +1,7 @@
--- Correr en el SQL editor de Supabase (proyecto kxtznwgdpvbtlsedmjap) ANTES de
--- aplicar la migracion 20260915000044. Solo lee, no cambia nada.
+-- Vistazo previo, opcional. Desde la revision de Codex la migracion 044 ya
+-- comprueba esto sola y aborta sin tocar nada si algo no cuadra, asi que este
+-- query sirve para mirar antes de saltar, no como salvaguarda.
+-- Correr en el SQL editor de Supabase (proyecto kxtznwgdpvbtlsedmjap).
 -- Esperado en una base intacta: cero FALTA, 1 plantilla, 8 campos gineco,
 -- 55 campos totales y ya_aplicada = 0.
 -- Verifica que la plantilla NOM-004 en produccion este como la espera la
