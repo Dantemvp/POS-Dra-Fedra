@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.18] - 2026-09-15
+
+- Agrega captura rapida de historia clinica con preguntas condicionales, IMC
+  automatico y campos ginecoobstetricos no aplicables segun el paciente.
+- Incorpora 54 plantillas de receta con 147 medicamentos y conserva el orden
+  de los renglones al guardar.
+- Ajusta fase, medidas e impresion de la receta segun la reunion con Fernanda.
+
 ## [0.1.17] - 2026-09-10
 
 - Sustituye los datos operativos por la exportacion autorizada del AppSheet v5;
