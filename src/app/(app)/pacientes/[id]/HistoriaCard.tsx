@@ -241,11 +241,21 @@ export default function HistoriaCard({
                     }
                   >
                     <option value="">—</option>
-                    {(def?.opciones ?? []).map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
+                    {/* Un campo que pasó de texto libre a lista trae respuestas
+                        viejas fuera del catálogo. Se agregan para que se vean y
+                        no se pierdan al guardar sin tocarlas. */}
+                    {(() => {
+                      const guardado = String(valores[k] ?? "");
+                      const catalogo = def?.opciones ?? [];
+                      const todas = catalogo.includes(guardado) || guardado === ""
+                        ? catalogo
+                        : [guardado, ...catalogo];
+                      return todas.map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ));
+                    })()}
                   </select>
                 ) : tipo === "textarea" ? (
                   <textarea

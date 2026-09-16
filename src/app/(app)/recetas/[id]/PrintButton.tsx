@@ -30,6 +30,14 @@ export default function PrintButton() {
         Imprimir
       </button>
       {error ? <p role="alert" className="text-right text-sm font-medium text-red-700">{error}</p> : null}
+      {/* Mismos ajustes con los que imprimía el POS viejo desde Acrobat: hoja
+          carta completa, a tamaño real, y la hoja se corta a la mitad. */}
+      <p className="text-right text-xs leading-relaxed text-zinc-500">
+        En el cuadro de impresión: papel <strong>Carta (215.9 × 279.4 mm)</strong>, orientación <strong>vertical</strong>,
+        escala <strong>100%</strong> (nunca &ldquo;ajustar&rdquo;), márgenes <strong>ninguno</strong>.
+        <br />
+        La receta sale en la mitad de arriba de la hoja. Se corta como siempre.
+      </p>
     </div>
   );
 }

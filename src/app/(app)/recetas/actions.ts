@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { limpiarAjustes, MAX_TEXTO_FASE, type AjustesImpresionReceta } from "./ajustes-impresion";
 
 export type ItemReceta = {
   medicamento: string;
@@ -14,14 +15,6 @@ export type ItemReceta = {
 };
 
 export type Result = { ok: boolean; error?: string; id?: string };
-
-export type AjustesImpresionReceta = {
-  tamano: number;
-  separacion: number;
-  izquierda: number;
-  inicio: number;
-  mostrar_metricas: boolean;
-};
 
 export type ItemRecetaEditable = Omit<ItemReceta, "producto_id"> & { id: string | null };
 
@@ -50,7 +43,7 @@ export async function guardarReceta(
     p_receta_id: recetaId,
     p_fase: fase,
     p_items: limpios,
-    p_ajustes: ajustes,
+    p_ajustes: limpiarAjustes(ajustes),
   });
 
   if (error) return { ok: false, error: error.message };
@@ -94,6 +87,9 @@ export async function crearReceta(
   fase: number | null,
   items: ItemReceta[],
   metricas: Record<string, string> = {},
+  // Etiqueta que trae la plantilla ("FASE 1: 30 días"). Se guarda para que la
+  // receta imprima el texto de la doctora y no uno armado con el número.
+  faseTexto: string | null = null,
 ): Promise<Result> {
   const supabase = await createClient();
 
@@ -113,6 +109,9 @@ export async function crearReceta(
       fase,
       estado: "emitida",
       metricas: Object.keys(metricasLimpias).length ? metricasLimpias : null,
+      ajustes_impresion: faseTexto?.trim()
+        ? { fase_texto: faseTexto.trim().slice(0, MAX_TEXTO_FASE) }
+        : null,
     })
     .select("id")
     .single();
@@ -120,13 +119,17 @@ export async function crearReceta(
   if (error) return { ok: false, error: error.message };
 
   const { error: itemsErr } = await supabase.from("receta_items").insert(
-    limpios.map((i) => ({
+    // `orden` manda en la impresión. Sin él todos los renglones quedaban en 0 y
+    // la receta salía con los medicamentos en cualquier orden, que importa
+    // cuando la combinación lleva una secuencia (ayuno, cena, escalamiento).
+    limpios.map((i, indice) => ({
       receta_id: receta.id,
       producto_id: i.producto_id ?? null,
       medicamento: i.medicamento.trim(),
       dosis: i.dosis.trim() || null,
       duracion_dias: i.duracion_dias,
       indicaciones: i.indicaciones.trim() || null,
+      orden: indice,
     })),
   );
 
