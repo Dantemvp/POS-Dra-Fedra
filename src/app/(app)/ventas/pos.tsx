@@ -230,6 +230,11 @@ export default function POS({
   if (ticket) {
     return (
       <div className="mx-auto max-w-sm">
+        <style>{`@media print {
+          @page { size: 80mm auto; margin: 0; }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+          main { padding: 0 !important; }
+        }`}</style>
         <div className="doc-imprimible print-area ticket-print rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
           <div className="text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}

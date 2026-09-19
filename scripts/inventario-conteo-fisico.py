@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import unicodedata
 from collections import Counter
@@ -30,6 +31,19 @@ HOJAS = {
     "INVENTARIO (BODEGA)": "Bodega",
     "INVENTARIO (FARMACIA)": "Farmacia",
 }
+
+ENCABEZADOS = [
+    "PRODUCTO",
+    "CONCEPTO",
+    "PRESENTACION",
+    "LOTE",
+    "FX. VENCIMIENTO",
+    "STATUS",
+    "CANTIDAD INV. (PIEZAS)",
+    "PRECIO UNITARIO (Venta)",
+    "COSTO TOTAL INV.",
+    "UBICACION",
+]
 
 
 def texto(valor: Any) -> str | None:
@@ -78,6 +92,32 @@ def serializa(valor: Any) -> Any:
     return valor
 
 
+def validar_encabezados(nombre_hoja: str, hoja: Any) -> None:
+    recibidos = [celda.value for celda in hoja[3][: len(ENCABEZADOS)]]
+    esperados = [clave_texto(valor) for valor in ENCABEZADOS]
+    actuales = [clave_texto(texto(valor)) for valor in recibidos]
+    diferencias = [
+        {
+            "columna": indice + 1,
+            "esperado": ENCABEZADOS[indice],
+            "recibido": recibidos[indice],
+        }
+        for indice, (esperado, actual) in enumerate(zip(esperados, actuales))
+        if esperado != actual
+    ]
+    if diferencias:
+        raise ValueError(
+            f"La hoja {nombre_hoja!r} no tiene el formato esperado: "
+            + json.dumps(diferencias, ensure_ascii=False, default=serializa)
+        )
+
+
+def misma_ruta(origen: Path, salida: Path) -> bool:
+    if origen.resolve() == salida.resolve():
+        return True
+    return salida.exists() and os.path.samefile(origen, salida)
+
+
 def leer(archivo: Path) -> dict[str, Any]:
     formulas = openpyxl.load_workbook(archivo, read_only=True, data_only=False)
     valores = openpyxl.load_workbook(archivo, read_only=True, data_only=True)
@@ -92,6 +132,7 @@ def leer(archivo: Path) -> dict[str, Any]:
     for nombre_hoja, ubicacion_esperada in HOJAS.items():
         hoja_f = formulas[nombre_hoja]
         hoja_v = valores[nombre_hoja]
+        validar_encabezados(nombre_hoja, hoja_f)
         for renglon, (fila_f, fila_v) in enumerate(
             zip(
                 hoja_f.iter_rows(min_row=4, values_only=True),
@@ -201,8 +242,13 @@ def main() -> int:
     args = parser.parse_args()
     if not args.archivo.is_file():
         parser.error(f"No existe el archivo: {args.archivo}")
+    if args.salida and misma_ruta(args.archivo, args.salida):
+        parser.error("La salida no puede ser el mismo archivo que la fuente.")
 
-    resultado = leer(args.archivo)
+    try:
+        resultado = leer(args.archivo)
+    except ValueError as error:
+        parser.error(str(error))
     print(json.dumps(resultado["resumen"], ensure_ascii=False, indent=2))
     if resultado["bloqueos"]:
         print("\nBloqueos:")
