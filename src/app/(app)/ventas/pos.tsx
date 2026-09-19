@@ -230,7 +230,7 @@ export default function POS({
   if (ticket) {
     return (
       <div className="mx-auto max-w-sm">
-        <div className="doc-imprimible rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
+        <div className="doc-imprimible print-area ticket-print rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
           <div className="text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

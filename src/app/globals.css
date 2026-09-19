@@ -134,6 +134,16 @@ body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  /* La POS-8360 usa rollo de 80 mm. Dejamos 72 mm útiles para tolerar los
+     márgenes físicos del mecanismo y evitar que Chrome reduzca o recorte el
+     ticket al enviarlo al controlador. */
+  .print-area.ticket-print {
+    position: static;
+    width: 72mm;
+    max-width: 72mm;
+    margin: 0;
+    padding: 2mm !important;
+  }
   .no-print {
     display: none !important;
   }
