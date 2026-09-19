@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.19] - 2026-09-19
+
+- Prepara el conteo fisico de inventario desde el archivo actualizado sin
+  modificar la fuente ni importar datos automaticamente.
+- Ajusta el ticket a una banda imprimible de 72 mm para la prueba fisica con
+  la impresora termica de 80 mm.
+- Ordena el selector de plantillas de receta sin mostrar discrepancias internas
+  entre carpeta y fase.
+
 ## [0.1.18] - 2026-09-15
 
 - Agrega captura rapida de historia clinica con preguntas condicionales, IMC
