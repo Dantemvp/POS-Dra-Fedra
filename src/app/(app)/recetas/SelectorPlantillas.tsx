@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   categoriasDe,
-  etiquetaDiscrepa,
   type PlantillaReceta,
 } from "./plantillas";
 
@@ -60,7 +59,6 @@ export default function SelectorPlantillas({
 
           <ul className="mt-3 space-y-1.5">
             {visibles.map((p) => {
-              const discrepa = etiquetaDiscrepa(p);
               return (
                 <li key={p.id}>
                   <button
@@ -80,11 +78,6 @@ export default function SelectorPlantillas({
                       {p.fase_texto && (
                         <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] text-zinc-600">
                           Imprime &ldquo;{p.fase_texto}&rdquo;
-                        </span>
-                      )}
-                      {discrepa && (
-                        <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-800">
-                          La hoja dice otra fase que la carpeta. Revisa antes de imprimir.
                         </span>
                       )}
                     </span>
