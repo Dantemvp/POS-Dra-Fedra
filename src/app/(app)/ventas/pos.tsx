@@ -133,6 +133,12 @@ export default function POS({
       setError(`"${p.nombre}" no tiene stock.`);
       return;
     }
+    const cantidadActual =
+      carrito.find((l) => l.producto_id === p.id)?.cantidad ?? 0;
+    if (cantidadActual >= p.stock) {
+      setError(`Ya agregaste toda la existencia disponible de "${p.nombre}".`);
+      return;
+    }
     setCarrito((prev) => {
       const ex = prev.find((l) => l.producto_id === p.id);
       if (ex) {
@@ -336,7 +342,7 @@ export default function POS({
       {/* Productos */}
       <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 lg:sticky lg:top-4">
         <div className="mb-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8c7a63]">Agregar productos</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#756a5c] dark:text-[#d9c7a7]">Agregar productos</p>
           <p className="mt-1 text-xs text-zinc-500">Escanea o escribe el nombre. La lista solo aparece mientras buscas.</p>
         </div>
         <div className="mb-2">
@@ -351,7 +357,7 @@ export default function POS({
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="…o busca producto por nombre"
-          className="mb-2 w-full rounded-xl border border-zinc-300 bg-[#faf9f7] px-4 py-3 text-base outline-none transition focus:border-[#3f5148] focus:bg-white focus:ring-2 focus:ring-[#3f5148]/10"
+          className="mb-2 w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-base text-zinc-900 outline-none transition focus:border-[#3f5148] focus:bg-white focus:ring-2 focus:ring-[#3f5148]/10"
         />
         <div className="space-y-1">
           {busqueda.trim() && filtrados.length === 0 && (
@@ -361,7 +367,7 @@ export default function POS({
             <button
               key={p.id}
               onClick={() => agregar(p)}
-              disabled={p.stock <= 0}
+              disabled={p.stock <= 0 || (carrito.find((l) => l.producto_id === p.id)?.cantidad ?? 0) >= p.stock}
               className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-3 text-left text-sm transition hover:border-[#cbb89c] hover:bg-[#f8f6f2] disabled:opacity-40"
             >
               <span className="font-medium text-zinc-900">{p.nombre}</span>
@@ -378,10 +384,10 @@ export default function POS({
       <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8c7a63]">Venta actual</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#756a5c] dark:text-[#d9c7a7]">Venta actual</p>
             <h2 className="text-xl font-semibold text-zinc-900">Carrito</h2>
           </div>
-          <span className="rounded-full bg-[#f2eeec] px-3 py-1 text-sm font-semibold text-[#3f5148]">{carrito.reduce((s, l) => s + l.cantidad, 0)} artículos</span>
+          <span className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-semibold text-zinc-700">{carrito.reduce((s, l) => s + l.cantidad, 0)} {carrito.reduce((s, l) => s + l.cantidad, 0) === 1 ? "artículo" : "artículos"}</span>
         </div>
         {carrito.length === 0 ? (
           <p className="py-6 text-center text-sm text-zinc-400">
@@ -392,7 +398,7 @@ export default function POS({
             {carrito.map((l) => (
               <div
                 key={l.producto_id}
-                className="flex items-center justify-between gap-3 rounded-xl bg-[#faf9f7] p-3 text-sm"
+                className="flex items-center justify-between gap-3 rounded-xl bg-zinc-50 p-3 text-sm"
               >
                 <span className="flex-1 truncate text-zinc-900">{l.nombre}</span>
                 <div className="flex items-center gap-1">
@@ -521,7 +527,7 @@ export default function POS({
           <button
             onClick={finalizar}
             disabled={carrito.length === 0 || pending}
-            className="w-full rounded-xl bg-[#3f5148] py-4 text-base font-semibold text-white shadow-sm transition hover:bg-[#34443c] disabled:opacity-50"
+            className="w-full rounded-xl bg-[#3f5148] py-4 text-base font-semibold text-[#fff] shadow-sm transition hover:bg-[#34443c] disabled:opacity-50"
           >
             {pending ? "Cobrando…" : `Cobrar ${money(total)}`}
           </button>

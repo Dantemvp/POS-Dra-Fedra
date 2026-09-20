@@ -40,7 +40,7 @@ export default function FormsInventario({
               </p>
             </div>
             <button type="button" onClick={() => setPanel(null)} className="rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900">
-              Guardar panel
+              Cerrar
             </button>
           </div>
           {panel === "producto" ? <NuevoProducto /> : <Entrada productos={productos} />}
@@ -64,7 +64,7 @@ function TabBtn({
       onClick={onClick}
       aria-expanded={active}
       className={`flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm ring-1 transition ${
-        active ? "bg-[#3f5148] text-white ring-[#3f5148]" : "bg-white text-[#3f5148] ring-black/10 hover:bg-[#f2eeec]"
+        active ? "bg-[#3f5148] text-[#fff] ring-[#3f5148]" : "bg-white text-[#3f5148] ring-black/10 hover:bg-[#f2eeec] dark:text-[#d9c7a7]"
       }`}
     >
       {children}

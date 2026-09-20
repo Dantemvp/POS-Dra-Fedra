@@ -72,18 +72,18 @@ export default function TablaProductos({
           className="min-w-[16rem] flex-[2] rounded-xl border border-zinc-300 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-[#3f5148] focus:ring-2 focus:ring-[#3f5148]/10"
         />
         <SelectorHistorico valor={vista} onChange={setVista} />
-        <select value={stock} onChange={(e) => setStock(e.target.value as typeof stock)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
+        <select aria-label="Filtrar por existencia" value={stock} onChange={(e) => setStock(e.target.value as typeof stock)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
           <option value="todos">Todo el stock</option>
           <option value="disponible">Con existencia</option>
           <option value="bajo">Stock bajo</option>
           <option value="agotado">Agotados</option>
         </select>
-        <select value={tipo} onChange={(e) => setTipo(e.target.value as typeof tipo)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
+        <select aria-label="Filtrar por tipo de producto" value={tipo} onChange={(e) => setTipo(e.target.value as typeof tipo)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
           <option value="todos">Todos los tipos</option>
           <option value="controlado">Controlados</option>
           <option value="libre">No controlados</option>
         </select>
-        <select value={fraccion} onChange={(e) => setFraccion(e.target.value)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
+        <select aria-label="Filtrar por fracción COFEPRIS" value={fraccion} onChange={(e) => setFraccion(e.target.value)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
           <option value="todas">Toda COFEPRIS</option>
           <option value="na">No aplica</option>
           {['I','II','III','IV','V','VI'].map((f) => <option key={f} value={f}>Fracción {f}</option>)}

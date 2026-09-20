@@ -42,11 +42,16 @@ export default function Sidebar({ rol }: { rol: Rol }) {
       </button>
 
       {plegado ? (
-        <div className="flex flex-1 items-start justify-center pt-20">
+        <button
+          type="button"
+          onClick={alternar}
+          aria-label="Mostrar menú lateral"
+          className="flex flex-1 items-start justify-center pt-20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#8c7a63]"
+        >
           <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
-            Sistema Fedra
+            Mostrar menú
           </span>
-        </div>
+        </button>
       ) : (
         <>
           <div className="px-6 pb-5 pt-6">

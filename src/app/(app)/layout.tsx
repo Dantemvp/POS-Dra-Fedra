@@ -17,7 +17,7 @@ export default async function AppLayout({
   return (
     <div className="fedra-shell flex min-h-screen bg-[#f8f6f2]">
       <Sidebar rol={usuario.rol} />
-      <div className="relative z-[1] flex flex-1 flex-col">
+      <div className="relative z-[1] flex min-w-0 flex-1 flex-col">
         {/* Móvil: barra con hamburguesa + menú deslizable */}
         <MobileTopBar rol={usuario.rol} nombre={usuario.nombre} />
 
