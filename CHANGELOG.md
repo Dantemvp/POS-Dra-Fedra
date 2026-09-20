@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.20] - 2026-09-20
+
+- Permite plegar el menu lateral y recuerda la preferencia en el equipo.
+- Mantiene cerrados los formularios de inventario hasta que se necesitan y
+  agrega filtros por existencia, tipo, antiguedad y fraccion COFEPRIS.
+- Da prioridad al carrito en el punto de venta, muestra resultados solo durante
+  la busqueda y agranda los controles operativos.
+- Corrige contraste en tema oscuro y contiene la tabla de inventario en movil.
+
 ## [0.1.19] - 2026-09-19
 
 - Prepara el conteo fisico de inventario desde el archivo actualizado sin

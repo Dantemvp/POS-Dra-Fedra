@@ -12,22 +12,39 @@ export default function FormsInventario({
 }: {
   productos: { id: string; nombre: string }[];
 }) {
-  const [tab, setTab] = useState<"producto" | "entrada">("producto");
+  const [panel, setPanel] = useState<"producto" | "entrada" | null>(null);
+
+  function alternar(siguiente: "producto" | "entrada") {
+    setPanel((actual) => (actual === siguiente ? null : siguiente));
+  }
 
   return (
-    <div className="mb-6 rounded-xl bg-white p-4 ring-1 ring-zinc-200">
-      <div className="mb-4 flex gap-2">
-        <TabBtn active={tab === "producto"} onClick={() => setTab("producto")}>
-          Nuevo producto
+    <div className="mb-6">
+      <div className="flex flex-wrap gap-3">
+        <TabBtn active={panel === "entrada"} onClick={() => alternar("entrada")}>
+          <span className="text-lg leading-none">＋</span> Registrar entrada
         </TabBtn>
-        <TabBtn active={tab === "entrada"} onClick={() => setTab("entrada")}>
-          Registrar entrada
+        <TabBtn active={panel === "producto"} onClick={() => alternar("producto")}>
+          <span className="text-lg leading-none">＋</span> Nuevo producto
         </TabBtn>
       </div>
-      {tab === "producto" ? (
-        <NuevoProducto />
-      ) : (
-        <Entrada productos={productos} />
+      {panel && (
+        <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
+          <div className="mb-4 flex items-center justify-between border-b border-zinc-100 pb-3">
+            <div>
+              <h2 className="font-semibold text-zinc-900">
+                {panel === "producto" ? "Crear producto" : "Registrar entrada de inventario"}
+              </h2>
+              <p className="text-xs text-zinc-500">
+                {panel === "producto" ? "Agrega un artículo nuevo al catálogo." : "Suma existencias, lote y costo a un producto existente."}
+              </p>
+            </div>
+            <button type="button" onClick={() => setPanel(null)} className="rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900">
+              Cerrar
+            </button>
+          </div>
+          {panel === "producto" ? <NuevoProducto /> : <Entrada productos={productos} />}
+        </div>
       )}
     </div>
   );
@@ -45,8 +62,9 @@ function TabBtn({
   return (
     <button
       onClick={onClick}
-      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-        active ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+      aria-expanded={active}
+      className={`flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm ring-1 transition ${
+        active ? "bg-[#3f5148] text-[#fff] ring-[#3f5148]" : "bg-white text-[#3f5148] ring-black/10 hover:bg-[#f2eeec] dark:text-[#d9c7a7]"
       }`}
     >
       {children}
