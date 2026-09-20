@@ -29,6 +29,9 @@ export default function TablaProductos({
 }) {
   const [q, setQ] = useState("");
   const [vista, setVista] = useState<VistaHistorico>("todos");
+  const [stock, setStock] = useState<"todos" | "disponible" | "bajo" | "agotado">("todos");
+  const [tipo, setTipo] = useState<"todos" | "controlado" | "libre">("todos");
+  const [fraccion, setFraccion] = useState("todas");
 
   const filtrados = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -36,24 +39,64 @@ export default function TablaProductos({
       (p) =>
         (!s ||
           `${p.nombre}${textoBusqueda(p.es_historico)}`.toLowerCase().includes(s)) &&
-        coincideVista(p.es_historico, vista),
+        coincideVista(p.es_historico, vista) &&
+        (stock === "todos" ||
+          (stock === "disponible" && p.stock > 0) ||
+          (stock === "bajo" && p.bajo) ||
+          (stock === "agotado" && p.stock <= 0)) &&
+        (tipo === "todos" ||
+          (tipo === "controlado" && p.es_controlado) ||
+          (tipo === "libre" && !p.es_controlado)) &&
+        (fraccion === "todas" || p.fraccion_cofepris === fraccion),
     );
-  }, [q, vista, productos]);
+  }, [q, vista, stock, tipo, fraccion, productos]);
+
+  const hayFiltros = q || vista !== "todos" || stock !== "todos" || tipo !== "todos" || fraccion !== "todas";
+
+  function limpiar() {
+    setQ("");
+    setVista("todos");
+    setStock("todos");
+    setTipo("todos");
+    setFraccion("todas");
+  }
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-zinc-200">
+        <div className="flex flex-wrap gap-2">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar producto por nombre para revisar o editar…"
-          className="min-w-[12rem] flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-900"
+          className="min-w-[16rem] flex-[2] rounded-xl border border-zinc-300 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-[#3f5148] focus:ring-2 focus:ring-[#3f5148]/10"
         />
         <SelectorHistorico valor={vista} onChange={setVista} />
+        <select value={stock} onChange={(e) => setStock(e.target.value as typeof stock)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
+          <option value="todos">Todo el stock</option>
+          <option value="disponible">Con existencia</option>
+          <option value="bajo">Stock bajo</option>
+          <option value="agotado">Agotados</option>
+        </select>
+        <select value={tipo} onChange={(e) => setTipo(e.target.value as typeof tipo)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
+          <option value="todos">Todos los tipos</option>
+          <option value="controlado">Controlados</option>
+          <option value="libre">No controlados</option>
+        </select>
+        <select value={fraccion} onChange={(e) => setFraccion(e.target.value)} className="rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700">
+          <option value="todas">Toda COFEPRIS</option>
+          <option value="na">No aplica</option>
+          {['I','II','III','IV','V','VI'].map((f) => <option key={f} value={f}>Fracción {f}</option>)}
+        </select>
+        </div>
+        <div className="mt-2 flex items-center justify-between px-1 text-xs text-zinc-500">
+          <span>{filtrados.length} de {productos.length} productos</span>
+          {hayFiltros && <button type="button" onClick={limpiar} className="font-medium text-[#3f5148] hover:underline">Limpiar filtros</button>}
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
-        <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto rounded-xl bg-white ring-1 ring-zinc-200">
+        <table className="min-w-[760px] w-full text-left text-sm">
           <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
             <tr>
               <th className="px-4 py-3">Producto</th>

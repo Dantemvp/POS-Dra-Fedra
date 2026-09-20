@@ -72,6 +72,7 @@ export default async function InventarioPage() {
           bajo: p.bajo,
           es_controlado: p.es_controlado,
           fraccion_cofepris: p.fraccion_cofepris,
+          es_historico: p.es_historico,
         }))}
       />
     </div>

@@ -106,10 +106,10 @@ export default function POS({
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    const base = q
-      ? productos.filter((p) => p.nombre.toLowerCase().includes(q))
-      : productos;
-    return base.slice(0, 8);
+    if (!q) return [];
+    return productos
+      .filter((p) => p.nombre.toLowerCase().includes(q))
+      .slice(0, 6);
   }, [busqueda, productos]);
 
   const total = carrito.reduce((s, l) => s + l.precio * l.cantidad, 0);
@@ -146,6 +146,7 @@ export default function POS({
         { producto_id: p.id, nombre: p.nombre, precio: p.precio, cantidad: 1, stock: p.stock },
       ];
     });
+    setBusqueda("");
   }
 
   function cambiarCantidad(id: string, delta: number) {
@@ -331,9 +332,13 @@ export default function POS({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)]">
       {/* Productos */}
-      <div className="rounded-xl bg-white p-4 ring-1 ring-zinc-200">
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 lg:sticky lg:top-4">
+        <div className="mb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8c7a63]">Agregar productos</p>
+          <p className="mt-1 text-xs text-zinc-500">Escanea o escribe el nombre. La lista solo aparece mientras buscas.</p>
+        </div>
         <div className="mb-2">
           <BarcodeInput onScan={onScan} />
         </div>
@@ -346,20 +351,18 @@ export default function POS({
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="…o busca producto por nombre"
-          className="mb-3 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900"
+          className="mb-2 w-full rounded-xl border border-zinc-300 bg-[#faf9f7] px-4 py-3 text-base outline-none transition focus:border-[#3f5148] focus:bg-white focus:ring-2 focus:ring-[#3f5148]/10"
         />
         <div className="space-y-1">
-          {filtrados.length === 0 && (
-            <p className="py-6 text-center text-sm text-zinc-400">
-              Sin productos.
-            </p>
+          {busqueda.trim() && filtrados.length === 0 && (
+            <p className="rounded-xl bg-zinc-50 px-3 py-5 text-center text-sm text-zinc-400">No encontramos ese producto.</p>
           )}
           {filtrados.map((p) => (
             <button
               key={p.id}
               onClick={() => agregar(p)}
               disabled={p.stock <= 0}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-zinc-100 disabled:opacity-40"
+              className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-3 text-left text-sm transition hover:border-[#cbb89c] hover:bg-[#f8f6f2] disabled:opacity-40"
             >
               <span className="font-medium text-zinc-900">{p.nombre}</span>
               <span className="flex items-center gap-3">
@@ -372,24 +375,30 @@ export default function POS({
       </div>
 
       {/* Carrito */}
-      <div className="rounded-xl bg-white p-4 ring-1 ring-zinc-200">
-        <h2 className="mb-3 font-medium text-zinc-900">Carrito</h2>
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8c7a63]">Venta actual</p>
+            <h2 className="text-xl font-semibold text-zinc-900">Carrito</h2>
+          </div>
+          <span className="rounded-full bg-[#f2eeec] px-3 py-1 text-sm font-semibold text-[#3f5148]">{carrito.reduce((s, l) => s + l.cantidad, 0)} artículos</span>
+        </div>
         {carrito.length === 0 ? (
           <p className="py-6 text-center text-sm text-zinc-400">
-            Agrega productos desde la izquierda.
+            Busca o escanea un producto para comenzar.
           </p>
         ) : (
           <div className="space-y-2">
             {carrito.map((l) => (
               <div
                 key={l.producto_id}
-                className="flex items-center justify-between gap-2 text-sm"
+                className="flex items-center justify-between gap-3 rounded-xl bg-[#faf9f7] p-3 text-sm"
               >
                 <span className="flex-1 truncate text-zinc-900">{l.nombre}</span>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => cambiarCantidad(l.producto_id, -1)} className="h-6 w-6 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200">−</button>
-                  <span className="w-6 text-center tabular-nums">{l.cantidad}</span>
-                  <button onClick={() => cambiarCantidad(l.producto_id, 1)} className="h-6 w-6 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200">+</button>
+                  <button onClick={() => cambiarCantidad(l.producto_id, -1)} className="h-10 w-10 rounded-xl bg-white text-lg text-zinc-700 shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-100">−</button>
+                  <span className="w-8 text-center text-base font-semibold tabular-nums">{l.cantidad}</span>
+                  <button onClick={() => cambiarCantidad(l.producto_id, 1)} className="h-10 w-10 rounded-xl bg-white text-lg text-zinc-700 shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-100">+</button>
                 </div>
                 <span className="w-20 text-right tabular-nums text-zinc-700">
                   {money(l.precio * l.cantidad)}
@@ -512,7 +521,7 @@ export default function POS({
           <button
             onClick={finalizar}
             disabled={carrito.length === 0 || pending}
-            className="w-full rounded-lg bg-zinc-900 py-2.5 font-medium text-white transition hover:bg-zinc-800 disabled:opacity-50"
+            className="w-full rounded-xl bg-[#3f5148] py-4 text-base font-semibold text-white shadow-sm transition hover:bg-[#34443c] disabled:opacity-50"
           >
             {pending ? "Cobrando…" : `Cobrar ${money(total)}`}
           </button>
