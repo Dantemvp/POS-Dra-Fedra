@@ -247,21 +247,21 @@ export default function POS({
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           main { padding: 0 !important; }
         }`}</style>
-        <div className="doc-imprimible print-area ticket-print rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
+        <div className="doc-imprimible print-area ticket-print ticket-thermal-strong rounded-xl bg-white p-6 text-black ring-1 ring-zinc-200 print:shadow-none print:ring-0">
           <div className="text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo-farmacia.png"
               alt={FISCAL_FARMACIA.nombreComercial}
-              className="mx-auto h-12 w-auto object-contain"
+              className="ticket-logo mx-auto h-12 w-auto object-contain"
             />
           </div>
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs font-semibold text-black">
             Folio #{ticket.folio} · {ticket.fecha}
           </p>
           {vendedor && (
-            <p className="text-xs text-zinc-500">Atendió: {vendedor}</p>
+            <p className="text-xs font-semibold text-black">Atendió: {vendedor}</p>
           )}
           <table className="mt-3 w-full text-sm">
             <tbody>
@@ -269,7 +269,7 @@ export default function POS({
                 <tr key={l.producto_id}>
                   <td className="py-1 pr-2 align-top">
                     <span className="block">{l.cantidad} × {l.nombre}</span>
-                    <span className="block text-[10px] text-zinc-500">
+                    <span className="block text-xs font-medium text-black">
                       {money(l.precio)} c/u
                     </span>
                   </td>
@@ -286,7 +286,7 @@ export default function POS({
             <span className="tabular-nums">{money(ticket.total)}</span>
           </div>
           {ticket.pagos && ticket.pagos.length > 0 ? (
-            <div className="mt-1 space-y-0.5 text-xs text-zinc-500">
+            <div className="mt-1 space-y-0.5 text-xs font-semibold text-black">
               {ticket.pagos.map((p, i) => (
                 <div key={i} className="flex justify-between capitalize">
                   <span>{p.metodo}</span>
@@ -295,17 +295,17 @@ export default function POS({
               ))}
             </div>
           ) : (
-            <p className="mt-1 text-right text-xs capitalize text-zinc-500">
+            <p className="mt-1 text-right text-xs font-semibold capitalize text-black">
               {ticket.metodo}
             </p>
           )}
           {ticket.cambio != null && (
-            <div className="mt-1 space-y-0.5 text-xs text-zinc-500">
+            <div className="mt-1 space-y-0.5 text-xs font-semibold text-black">
               <div className="flex justify-between">
                 <span>Recibido</span>
                 <span className="tabular-nums">{money(ticket.recibido ?? 0)}</span>
               </div>
-              <div className="flex justify-between font-medium text-zinc-700">
+              <div className="flex justify-between font-bold text-black">
                 <span>Cambio</span>
                 <span className="tabular-nums">{money(ticket.cambio)}</span>
               </div>
@@ -313,8 +313,8 @@ export default function POS({
           )}
 
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <div className="space-y-0.5 text-center text-[10px] leading-tight text-zinc-500">
-            <p className="font-medium text-zinc-700">
+          <div className="space-y-1 text-center text-xs font-semibold leading-tight text-black">
+            <p className="font-bold text-black">
               {FISCAL_FARMACIA.razonSocial}
             </p>
             <p>RFC: {FISCAL_FARMACIA.rfc}</p>
@@ -324,7 +324,7 @@ export default function POS({
               {FISCAL_FARMACIA.ciudad}
             </p>
           </div>
-          <p className="mt-2 text-center text-[10px] leading-snug text-zinc-500">
+          <p className="mt-2 text-center text-[11px] font-semibold leading-snug text-black">
             {leyendaFacturacion()}
           </p>
           <div className="mt-3 flex flex-col items-center border-t border-dashed border-zinc-300 pt-3 text-center">
@@ -333,9 +333,11 @@ export default function POS({
               size={84}
               level="M"
               marginSize={2}
+              bgColor="#ffffff"
+              fgColor="#000000"
               title="Código QR para dejar una reseña en Google"
             />
-            <p className="mt-1.5 text-[10px] font-medium leading-tight text-zinc-700">
+            <p className="mt-1.5 text-xs font-bold leading-tight text-black">
               ¿Te atendimos bien? Escanea y déjanos tu reseña en Google.
             </p>
           </div>

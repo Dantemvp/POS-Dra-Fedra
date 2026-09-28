@@ -11,7 +11,7 @@ El código ya contiene estos cambios. En esta sesión se valida el uso real y la
 
 ## Lector Eyoyo
 
-1. Conectarlo por USB o receptor inalámbrico. Usar Bluetooth HID solo si no está disponible el receptor.
+1. Montarlo en el celular y emparejarlo por Bluetooth en modo HID.
 2. Confirmar modo de carga inmediata, no modo almacenamiento.
 3. Configurar sufijo Enter o CR desde el manual del lector.
 4. Abrir el punto de venta y dejar activo el campo "Escanea o escribe el código".
@@ -19,6 +19,7 @@ El código ya contiene estos cambios. En esta sesión se valida el uso real y la
 6. Escanearlo otra vez. Debe subir a dos sin exceder la existencia disponible.
 7. Probar un código no registrado. Debe mostrar el código y no agregar otro producto.
 8. Probar un producto sin existencia. Debe rechazarlo sin borrar el carrito.
+9. Confirmar que Android permita mostrar el teclado virtual aunque detecte el lector como teclado físico.
 
 Si aparecen caracteres distintos a la etiqueta, revisar el idioma del teclado del lector. Si el código aparece pero no se agrega, comprobar el sufijo Enter.
 
@@ -27,7 +28,7 @@ Si aparecen caracteres distintos a la etiqueta, revisar el idioma del teclado de
 1. Instalarla como impresora de 80 mm mediante USB. Probar LAN después, no durante la primera validación.
 2. En preferencias usar papel de 80 mm, escala 100 %, márgenes ninguno y desactivar encabezado y pie del navegador.
 3. Hacer una venta ficticia con dos artículos, uno con cantidad mayor a uno, pago mixto y efectivo con cambio.
-4. Imprimir y revisar que no se corte el borde izquierdo, los importes ni el QR.
+4. Imprimir y revisar que no se corte el borde izquierdo, los importes ni el QR. Todo el texto debe salir negro y legible, sin zonas transparentes.
 5. Escanear el QR con dos celulares y confirmar que abre directamente la pantalla de reseña de Google.
 6. Confirmar que el logotipo sea legible y que el cortador corte después del QR.
 
