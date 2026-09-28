@@ -1,9 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { cobrar, cargarReceta } from "./actions";
 import BarcodeInput from "@/components/BarcodeInput";
-import { FISCAL_FARMACIA, leyendaFacturacion } from "@/lib/fiscal";
+import {
+  FISCAL_FARMACIA,
+  GOOGLE_REVIEW_URL,
+  leyendaFacturacion,
+} from "@/lib/fiscal";
 
 type Producto = {
   id: string;
@@ -262,10 +267,13 @@ export default function POS({
             <tbody>
               {ticket.lineas.map((l) => (
                 <tr key={l.producto_id}>
-                  <td className="py-1">
-                    {l.cantidad} × {l.nombre}
+                  <td className="py-1 pr-2 align-top">
+                    <span className="block">{l.cantidad} × {l.nombre}</span>
+                    <span className="block text-[10px] text-zinc-500">
+                      {money(l.precio)} c/u
+                    </span>
                   </td>
-                  <td className="py-1 text-right tabular-nums">
+                  <td className="py-1 text-right align-top tabular-nums">
                     {money(l.precio * l.cantidad)}
                   </td>
                 </tr>
@@ -310,6 +318,7 @@ export default function POS({
               {FISCAL_FARMACIA.razonSocial}
             </p>
             <p>RFC: {FISCAL_FARMACIA.rfc}</p>
+            <p>Régimen fiscal: {FISCAL_FARMACIA.regimen}</p>
             <p>
               {FISCAL_FARMACIA.domicilio}, C.P. {FISCAL_FARMACIA.cp},{" "}
               {FISCAL_FARMACIA.ciudad}
@@ -318,6 +327,18 @@ export default function POS({
           <p className="mt-2 text-center text-[10px] leading-snug text-zinc-500">
             {leyendaFacturacion()}
           </p>
+          <div className="mt-3 flex flex-col items-center border-t border-dashed border-zinc-300 pt-3 text-center">
+            <QRCodeSVG
+              value={GOOGLE_REVIEW_URL}
+              size={84}
+              level="M"
+              marginSize={2}
+              title="Código QR para dejar una reseña en Google"
+            />
+            <p className="mt-1.5 text-[10px] font-medium leading-tight text-zinc-700">
+              ¿Te atendimos bien? Escanea y déjanos tu reseña en Google.
+            </p>
+          </div>
         </div>
         <div className="mt-4 flex gap-2 print:hidden">
           <button
