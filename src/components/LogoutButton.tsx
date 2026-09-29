@@ -8,7 +8,7 @@ export default function LogoutButton() {
   const router = useRouter();
   async function logout() {
     const supabase = createClient();
-    borrarCobroBorrador(sessionStorage);
+    borrarCobroBorrador(() => window.sessionStorage);
     await supabase.auth.signOut();
     router.replace("/login");
     router.refresh();

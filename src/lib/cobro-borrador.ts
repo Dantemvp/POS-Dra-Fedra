@@ -66,10 +66,13 @@ export function tieneContenidoCobro(borrador: CobroBorrador) {
   return Boolean(borrador.paciente_id || borrador.items.length || borrador.nota.trim());
 }
 
-export function borrarCobroBorrador(storage: Pick<Storage, "removeItem">) {
+export function borrarCobroBorrador(
+  obtenerStorage: () => Pick<Storage, "removeItem">,
+) {
   try {
+    const storage = obtenerStorage();
     storage.removeItem(COBRO_BORRADOR_KEY);
   } catch {
-    // Cerrar sesión o limpiar la interfaz no debe depender del storage.
+    // El navegador puede bloquear tanto el acceso como removeItem.
   }
 }

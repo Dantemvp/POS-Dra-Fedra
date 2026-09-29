@@ -49,7 +49,17 @@ test("un formulario vacío no se conserva", () => {
 
 test("cerrar sesión elimina el borrador sin bloquear si storage falla", () => {
   let clave = "";
-  borrarCobroBorrador({ removeItem: (valor) => { clave = valor; } });
+  borrarCobroBorrador(() => ({ removeItem: (valor) => { clave = valor; } }));
   assert.equal(clave, COBRO_BORRADOR_KEY);
-  assert.doesNotThrow(() => borrarCobroBorrador({ removeItem: () => { throw new Error("bloqueado"); } }));
+  assert.doesNotThrow(() => borrarCobroBorrador(() => ({
+    removeItem: () => { throw new Error("bloqueado"); },
+  })));
+});
+
+test("tolera SecurityError al intentar obtener sessionStorage", () => {
+  assert.doesNotThrow(() => borrarCobroBorrador(() => {
+    const error = new Error("Access is denied for this document");
+    error.name = "SecurityError";
+    throw error;
+  }));
 });

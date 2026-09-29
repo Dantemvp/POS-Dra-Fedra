@@ -175,7 +175,7 @@ export default function NuevoCobro({
       setError(r.error ?? "Error al guardar.");
       return;
     }
-    borrarCobroBorrador(sessionStorage);
+    borrarCobroBorrador(() => window.sessionStorage);
     router.push("/cobros");
     router.refresh();
   }
@@ -190,7 +190,7 @@ export default function NuevoCobro({
     setNota("");
     setError("");
     setAviso("");
-    borrarCobroBorrador(sessionStorage);
+    borrarCobroBorrador(() => window.sessionStorage);
   }
 
   return (
