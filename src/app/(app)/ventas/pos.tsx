@@ -1,9 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { cobrar, cargarReceta } from "./actions";
 import BarcodeInput from "@/components/BarcodeInput";
-import { FISCAL_FARMACIA, leyendaFacturacion } from "@/lib/fiscal";
+import {
+  FISCAL_FARMACIA,
+  GOOGLE_REVIEW_URL,
+  leyendaFacturacion,
+} from "@/lib/fiscal";
 
 type Producto = {
   id: string;
@@ -242,30 +247,33 @@ export default function POS({
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           main { padding: 0 !important; }
         }`}</style>
-        <div className="doc-imprimible print-area ticket-print rounded-xl bg-white p-6 ring-1 ring-zinc-200 print:shadow-none print:ring-0">
+        <div className="doc-imprimible print-area ticket-print ticket-thermal-strong rounded-xl bg-white p-6 text-black ring-1 ring-zinc-200 print:shadow-none print:ring-0">
           <div className="text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo-farmacia.png"
               alt={FISCAL_FARMACIA.nombreComercial}
-              className="mx-auto h-12 w-auto object-contain"
+              className="ticket-logo mx-auto h-16 w-auto object-contain"
             />
           </div>
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <p className="text-xs text-zinc-500">
+          <p className="text-sm font-bold text-black">
             Folio #{ticket.folio} · {ticket.fecha}
           </p>
           {vendedor && (
-            <p className="text-xs text-zinc-500">Atendió: {vendedor}</p>
+            <p className="text-sm font-bold text-black">Atendió: {vendedor}</p>
           )}
-          <table className="mt-3 w-full text-sm">
+          <table className="mt-3 w-full text-sm font-semibold">
             <tbody>
               {ticket.lineas.map((l) => (
                 <tr key={l.producto_id}>
-                  <td className="py-1">
-                    {l.cantidad} × {l.nombre}
+                  <td className="py-1 pr-2 align-top">
+                    <span className="block">{l.cantidad} × {l.nombre}</span>
+                    <span className="block text-xs font-semibold text-black">
+                      {money(l.precio)} c/u
+                    </span>
                   </td>
-                  <td className="py-1 text-right tabular-nums">
+                  <td className="py-1 text-right align-top tabular-nums">
                     {money(l.precio * l.cantidad)}
                   </td>
                 </tr>
@@ -273,12 +281,12 @@ export default function POS({
             </tbody>
           </table>
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <div className="flex justify-between font-semibold text-zinc-900">
+          <div className="flex justify-between text-lg font-bold text-black">
             <span>Total</span>
             <span className="tabular-nums">{money(ticket.total)}</span>
           </div>
           {ticket.pagos && ticket.pagos.length > 0 ? (
-            <div className="mt-1 space-y-0.5 text-xs text-zinc-500">
+            <div className="mt-1 space-y-0.5 text-sm font-bold text-black">
               {ticket.pagos.map((p, i) => (
                 <div key={i} className="flex justify-between capitalize">
                   <span>{p.metodo}</span>
@@ -287,17 +295,17 @@ export default function POS({
               ))}
             </div>
           ) : (
-            <p className="mt-1 text-right text-xs capitalize text-zinc-500">
+            <p className="mt-1 text-right text-sm font-bold capitalize text-black">
               {ticket.metodo}
             </p>
           )}
           {ticket.cambio != null && (
-            <div className="mt-1 space-y-0.5 text-xs text-zinc-500">
+            <div className="mt-1 space-y-0.5 text-sm font-bold text-black">
               <div className="flex justify-between">
                 <span>Recibido</span>
                 <span className="tabular-nums">{money(ticket.recibido ?? 0)}</span>
               </div>
-              <div className="flex justify-between font-medium text-zinc-700">
+              <div className="flex justify-between font-bold text-black">
                 <span>Cambio</span>
                 <span className="tabular-nums">{money(ticket.cambio)}</span>
               </div>
@@ -305,19 +313,34 @@ export default function POS({
           )}
 
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <div className="space-y-0.5 text-center text-[10px] leading-tight text-zinc-500">
-            <p className="font-medium text-zinc-700">
+          <div className="space-y-1 text-center text-[13px] font-bold leading-tight text-black">
+            <p className="font-bold text-black">
               {FISCAL_FARMACIA.razonSocial}
             </p>
             <p>RFC: {FISCAL_FARMACIA.rfc}</p>
+            <p>Régimen fiscal: {FISCAL_FARMACIA.regimen}</p>
             <p>
               {FISCAL_FARMACIA.domicilio}, C.P. {FISCAL_FARMACIA.cp},{" "}
               {FISCAL_FARMACIA.ciudad}
             </p>
           </div>
-          <p className="mt-2 text-center text-[10px] leading-snug text-zinc-500">
+          <p className="mt-2 text-center text-xs font-bold leading-snug text-black">
             {leyendaFacturacion()}
           </p>
+          <div className="mt-3 flex flex-col items-center border-t border-dashed border-zinc-300 pt-3 text-center">
+            <QRCodeSVG
+              value={GOOGLE_REVIEW_URL}
+              size={96}
+              level="M"
+              marginSize={2}
+              bgColor="#ffffff"
+              fgColor="#000000"
+              title="Código QR para dejar una reseña en Google"
+            />
+            <p className="mt-1.5 text-xs font-bold leading-tight text-black">
+              ¿Te atendimos bien? Escanea y déjanos tu reseña en Google.
+            </p>
+          </div>
         </div>
         <div className="mt-4 flex gap-2 print:hidden">
           <button

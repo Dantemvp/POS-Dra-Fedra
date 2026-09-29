@@ -14,9 +14,12 @@ export const FISCAL_FARMACIA = {
   telFacturacion: "668 152 6539",
 } as const;
 
-// Leyenda genérica y conforme al SAT: el cliente solicita su factura dentro
-// del mismo mes de la compra, comunicándose a la farmacia con su folio y CSF.
+export const GOOGLE_REVIEW_URL =
+  "https://g.page/r/CWoJbgnS1y-NEBM/review";
+
+// Para solicitar CFDI no se exige la Constancia de Situación Fiscal. El SAT
+// indica que bastan RFC, nombre o razón social, código postal y uso fiscal.
 export function leyendaFacturacion() {
   const f = FISCAL_FARMACIA;
-  return `¿Necesitas factura? Solicítala dentro del mes en curso de tu compra al ${f.telFacturacion} (${f.nombreComercial}). Ten a la mano tu folio de ticket y tu Constancia de Situación Fiscal (RFC, régimen y C.P.). Se emite conforme a la normatividad vigente del SAT.`;
+  return `¿Necesitas factura? Solicítala dentro del mes en curso al ${f.telFacturacion}. Ten a la mano tu folio, RFC, nombre o razón social, código postal y uso fiscal.`;
 }

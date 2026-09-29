@@ -145,6 +145,20 @@ body {
     margin: 0;
     padding: 2mm !important;
   }
+  /* En papel térmico los grises y las fuentes delgadas se pierden. El ticket
+     usa negro puro y un peso mínimo legible sin alterar los documentos A4. */
+  .ticket-print.ticket-thermal-strong,
+  .ticket-print.ticket-thermal-strong * {
+    color: #000 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+  .ticket-print.ticket-thermal-strong .border-dashed {
+    border-color: #000 !important;
+  }
+  .ticket-print.ticket-thermal-strong .ticket-logo {
+    filter: grayscale(1) contrast(2.4);
+  }
   .no-print {
     display: none !important;
   }
