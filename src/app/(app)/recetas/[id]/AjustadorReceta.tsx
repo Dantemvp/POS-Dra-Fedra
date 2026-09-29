@@ -35,6 +35,7 @@ type Props = {
   ajustes: Record<string, unknown> | null;
   metricasReceta: Record<string, unknown> | null;
   plantillas: PlantillaReceta[];
+  puedeAjustar: boolean;
 };
 
 // Los seis renglones ya vienen impresos en recetario.png (2000 x 1294 px). Las
@@ -150,7 +151,7 @@ function TextoConVinetas({ texto }: { texto: string }) {
   });
 }
 
-export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, fase: faseInicial, items: itemsIniciales, ajustes, metricasReceta, plantillas }: Props) {
+export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, fase: faseInicial, items: itemsIniciales, ajustes, metricasReceta, plantillas, puedeAjustar }: Props) {
   const originales = useMemo(() => prepararItems(itemsIniciales), [itemsIniciales]);
   const [guardando, iniciarGuardado] = useTransition();
   const [editando, setEditando] = useState(false);
@@ -286,18 +287,20 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2 no-print">
-        <button
-          type="button"
-          onClick={() => setEditando((valor) => !valor)}
-          className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-        >
-          {editando ? "Cerrar ajustes" : "Ajustar antes de imprimir"}
-        </button>
+        {puedeAjustar && (
+          <button
+            type="button"
+            onClick={() => setEditando((valor) => !valor)}
+            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
+          >
+            {editando ? "Cerrar ajustes" : "Ajustar antes de imprimir"}
+          </button>
+        )}
         <PrintButton />
       </div>
 
       <div className={editando ? "grid items-start gap-5 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)]" : ""}>
-      {editando ? (
+      {puedeAjustar && editando ? (
         <section className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm no-print lg:sticky lg:top-4">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
