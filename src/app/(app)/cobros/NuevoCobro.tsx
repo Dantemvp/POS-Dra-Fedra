@@ -1,10 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarcodeInput from "@/components/BarcodeInput";
 import ComboBuscador from "@/components/ComboBuscador";
 import { crearCobro, type ItemCobro } from "./actions";
+import {
+  COBRO_BORRADOR_KEY,
+  borrarCobroBorrador,
+  leerCobroBorrador,
+  tieneContenidoCobro,
+  type MetodoCobro,
+} from "@/lib/cobro-borrador";
 
 export type Paciente = { id: string; nombre: string };
 export type Servicio = { id: string; nombre: string; precio: number };
@@ -15,8 +22,6 @@ export type Producto = {
   stock: number;
   codigo_barras: string | null;
 };
-
-type Metodo = "transferencia" | "efectivo" | "tarjeta" | "otro";
 
 export default function NuevoCobro({
   pacientes,
@@ -30,12 +35,56 @@ export default function NuevoCobro({
   const router = useRouter();
   const [pacienteId, setPacienteId] = useState("");
   const [items, setItems] = useState<ItemCobro[]>([]);
-  const [metodo, setMetodo] = useState<Metodo>("transferencia");
+  const [metodo, setMetodo] = useState<MetodoCobro>("transferencia");
   const [nota, setNota] = useState("");
   const [busca, setBusca] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
+  const [borradorListo, setBorradorListo] = useState(false);
+
+  useEffect(() => {
+    const tarea = window.setTimeout(() => {
+      let borrador = null;
+      try {
+        borrador = leerCobroBorrador(sessionStorage.getItem(COBRO_BORRADOR_KEY));
+      } catch {
+        // El navegador puede bloquear el almacenamiento. El cobro sigue usable.
+      }
+      if (borrador) {
+        setPacienteId(borrador.paciente_id);
+        setItems(borrador.items);
+        setMetodo(borrador.metodo);
+        setNota(borrador.nota);
+      }
+      setBorradorListo(true);
+    }, 0);
+    return () => window.clearTimeout(tarea);
+  }, []);
+
+  useEffect(() => {
+    if (!borradorListo) return;
+    const borrador = {
+      version: 1 as const,
+      paciente_id: pacienteId,
+      items,
+      metodo,
+      nota,
+    };
+    if (tieneContenidoCobro(borrador)) {
+      try {
+        sessionStorage.setItem(COBRO_BORRADOR_KEY, JSON.stringify(borrador));
+      } catch {
+        // No bloqueamos un cobro si el almacenamiento local no está disponible.
+      }
+    } else {
+      try {
+        sessionStorage.removeItem(COBRO_BORRADOR_KEY);
+      } catch {
+        // Sin almacenamiento, no hay borrador que limpiar.
+      }
+    }
+  }, [borradorListo, pacienteId, items, metodo, nota]);
 
   const total = useMemo(
     () => items.reduce((s, i) => s + (i.precio_unit || 0) * (i.cantidad || 1), 0),
@@ -126,6 +175,7 @@ export default function NuevoCobro({
       setError(r.error ?? "Error al guardar.");
       return;
     }
+    borrarCobroBorrador(() => window.sessionStorage);
     router.push("/cobros");
     router.refresh();
   }
@@ -133,8 +183,30 @@ export default function NuevoCobro({
   const fmt = (n: number) =>
     n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
+  function descartarBorrador() {
+    setPacienteId("");
+    setItems([]);
+    setMetodo("transferencia");
+    setNota("");
+    setError("");
+    setAviso("");
+    borrarCobroBorrador(() => window.sessionStorage);
+  }
+
   return (
     <div className="space-y-5 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+      {borradorListo && (pacienteId || items.length > 0 || nota.trim()) && (
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <span>Cobro pendiente guardado mientras esta pestaña permanezca abierta.</span>
+          <button
+            type="button"
+            onClick={descartarBorrador}
+            className="shrink-0 font-semibold underline underline-offset-2"
+          >
+            Descartar
+          </button>
+        </div>
+      )}
       <div>
         <label className="block text-xs text-zinc-500">Paciente</label>
         <div className="mt-1">
@@ -264,7 +336,7 @@ export default function NuevoCobro({
           <label className="block text-xs text-zinc-500">Método de pago</label>
           <select
             value={metodo}
-            onChange={(e) => setMetodo(e.target.value as Metodo)}
+            onChange={(e) => setMetodo(e.target.value as MetodoCobro)}
             className="mt-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
           >
             <option value="transferencia">Transferencia</option>
