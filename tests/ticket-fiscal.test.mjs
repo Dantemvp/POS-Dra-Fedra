@@ -40,5 +40,6 @@ test("el ticket térmico fuerza negro puro y alto contraste", () => {
   assert.match(componente, /fgColor="#000000"/);
   assert.match(componente, /bgColor="#ffffff"/);
   assert.match(estilos, /\.ticket-print\.ticket-thermal-strong[\s\S]*color: #000 !important/);
+  assert.match(estilos, /\.ticket-print\.ticket-thermal-strong \.border-dashed[\s\S]*border-color: #000 !important/);
   assert.match(estilos, /filter: grayscale\(1\) contrast\(2\.4\)/);
 });

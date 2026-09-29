@@ -153,6 +153,9 @@ body {
     opacity: 1 !important;
     text-shadow: none !important;
   }
+  .ticket-print.ticket-thermal-strong .border-dashed {
+    border-color: #000 !important;
+  }
   .ticket-print.ticket-thermal-strong .ticket-logo {
     filter: grayscale(1) contrast(2.4);
   }

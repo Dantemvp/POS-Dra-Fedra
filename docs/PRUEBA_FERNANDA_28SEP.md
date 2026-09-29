@@ -49,4 +49,5 @@ El ticket es comprobante de la operación, no un CFDI timbrado. No debe imprimir
 - ¿La farmacia tiene política de cambios o devoluciones que deba imprimirse?
 - ¿El teléfono de facturación 668 152 6539 sigue siendo correcto?
 - ¿Prefieren el QR antes o después de la leyenda de facturación?
-- ¿El lector se usará con receptor USB, cable o Bluetooth?
+
+El lector se usa montado en el celular y conectado por Bluetooth HID.

@@ -253,23 +253,23 @@ export default function POS({
             <img
               src="/logo-farmacia.png"
               alt={FISCAL_FARMACIA.nombreComercial}
-              className="ticket-logo mx-auto h-12 w-auto object-contain"
+              className="ticket-logo mx-auto h-16 w-auto object-contain"
             />
           </div>
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <p className="text-xs font-semibold text-black">
+          <p className="text-sm font-bold text-black">
             Folio #{ticket.folio} · {ticket.fecha}
           </p>
           {vendedor && (
-            <p className="text-xs font-semibold text-black">Atendió: {vendedor}</p>
+            <p className="text-sm font-bold text-black">Atendió: {vendedor}</p>
           )}
-          <table className="mt-3 w-full text-sm">
+          <table className="mt-3 w-full text-sm font-semibold">
             <tbody>
               {ticket.lineas.map((l) => (
                 <tr key={l.producto_id}>
                   <td className="py-1 pr-2 align-top">
                     <span className="block">{l.cantidad} × {l.nombre}</span>
-                    <span className="block text-xs font-medium text-black">
+                    <span className="block text-xs font-semibold text-black">
                       {money(l.precio)} c/u
                     </span>
                   </td>
@@ -281,12 +281,12 @@ export default function POS({
             </tbody>
           </table>
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <div className="flex justify-between font-semibold text-zinc-900">
+          <div className="flex justify-between text-lg font-bold text-black">
             <span>Total</span>
             <span className="tabular-nums">{money(ticket.total)}</span>
           </div>
           {ticket.pagos && ticket.pagos.length > 0 ? (
-            <div className="mt-1 space-y-0.5 text-xs font-semibold text-black">
+            <div className="mt-1 space-y-0.5 text-sm font-bold text-black">
               {ticket.pagos.map((p, i) => (
                 <div key={i} className="flex justify-between capitalize">
                   <span>{p.metodo}</span>
@@ -295,12 +295,12 @@ export default function POS({
               ))}
             </div>
           ) : (
-            <p className="mt-1 text-right text-xs font-semibold capitalize text-black">
+            <p className="mt-1 text-right text-sm font-bold capitalize text-black">
               {ticket.metodo}
             </p>
           )}
           {ticket.cambio != null && (
-            <div className="mt-1 space-y-0.5 text-xs font-semibold text-black">
+            <div className="mt-1 space-y-0.5 text-sm font-bold text-black">
               <div className="flex justify-between">
                 <span>Recibido</span>
                 <span className="tabular-nums">{money(ticket.recibido ?? 0)}</span>
@@ -313,7 +313,7 @@ export default function POS({
           )}
 
           <div className="my-3 border-t border-dashed border-zinc-300" />
-          <div className="space-y-1 text-center text-xs font-semibold leading-tight text-black">
+          <div className="space-y-1 text-center text-[13px] font-bold leading-tight text-black">
             <p className="font-bold text-black">
               {FISCAL_FARMACIA.razonSocial}
             </p>
@@ -324,13 +324,13 @@ export default function POS({
               {FISCAL_FARMACIA.ciudad}
             </p>
           </div>
-          <p className="mt-2 text-center text-[11px] font-semibold leading-snug text-black">
+          <p className="mt-2 text-center text-xs font-bold leading-snug text-black">
             {leyendaFacturacion()}
           </p>
           <div className="mt-3 flex flex-col items-center border-t border-dashed border-zinc-300 pt-3 text-center">
             <QRCodeSVG
               value={GOOGLE_REVIEW_URL}
-              size={84}
+              size={96}
               level="M"
               marginSize={2}
               bgColor="#ffffff"
