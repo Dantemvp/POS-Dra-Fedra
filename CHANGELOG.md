@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.22] - 2026-09-29
+
+- Agrega al expediente desplegables para consultar las recetas anteriores y el
+  historial InBody de cada paciente.
+- Permite que la asistente consulte e imprima una receta guardada sin mostrarle
+  controles que alteren medicamentos, dosis, fase o formato.
+- Muestra las fechas de InBody e historias clinicas en la hora de Sinaloa.
+
 ## [0.1.21] - 2026-09-29
 
 - Refuerza la impresion del ticket termico con tipografia mas grande, negro
