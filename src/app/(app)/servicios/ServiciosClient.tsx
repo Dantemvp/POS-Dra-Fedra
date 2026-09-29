@@ -21,6 +21,11 @@ function FilaServicio({ s }: { s: Servicio }) {
   const [mensaje, setMensaje] = useState("");
 
   async function guardar() {
+    if (!precio.trim()) {
+      setGuardado("err");
+      setMensaje("Escribe el precio. Usa 0 solo si realmente es gratuito.");
+      return;
+    }
     setGuardado("saving");
     const n = Number(precio) || 0;
     const r = await actualizarServicio(s.id, { nombre, categoria, precio: n });
@@ -37,7 +42,11 @@ function FilaServicio({ s }: { s: Servicio }) {
       <td className="py-2 pr-2">
         <input
           value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          onChange={(e) => {
+            setNombre(e.target.value);
+            setGuardado("idle");
+            setMensaje("");
+          }}
           className="w-full min-w-40 rounded border border-zinc-300 px-2 py-1 text-sm font-medium text-zinc-800"
           aria-label={`Nombre de ${s.nombre}`}
         />
@@ -45,7 +54,11 @@ function FilaServicio({ s }: { s: Servicio }) {
       <td className="py-2 pr-2">
         <input
           value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
+          onChange={(e) => {
+            setCategoria(e.target.value);
+            setGuardado("idle");
+            setMensaje("");
+          }}
           className="w-full min-w-28 rounded border border-zinc-300 px-2 py-1 text-sm text-zinc-700"
           aria-label={`Categoría de ${s.nombre}`}
         />
@@ -56,7 +69,11 @@ function FilaServicio({ s }: { s: Servicio }) {
           <input
             type="number"
             value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
+            onChange={(e) => {
+              setPrecio(e.target.value);
+              setGuardado("idle");
+              setMensaje("");
+            }}
             className="w-24 rounded border border-zinc-300 px-2 py-1 text-right text-sm"
           />
         </div>

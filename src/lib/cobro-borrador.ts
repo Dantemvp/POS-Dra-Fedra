@@ -65,3 +65,11 @@ export function leerCobroBorrador(raw: string | null): CobroBorrador | null {
 export function tieneContenidoCobro(borrador: CobroBorrador) {
   return Boolean(borrador.paciente_id || borrador.items.length || borrador.nota.trim());
 }
+
+export function borrarCobroBorrador(storage: Pick<Storage, "removeItem">) {
+  try {
+    storage.removeItem(COBRO_BORRADOR_KEY);
+  } catch {
+    // Cerrar sesión o limpiar la interfaz no debe depender del storage.
+  }
+}

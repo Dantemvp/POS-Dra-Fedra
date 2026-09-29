@@ -7,6 +7,7 @@ import ComboBuscador from "@/components/ComboBuscador";
 import { crearCobro, type ItemCobro } from "./actions";
 import {
   COBRO_BORRADOR_KEY,
+  borrarCobroBorrador,
   leerCobroBorrador,
   tieneContenidoCobro,
   type MetodoCobro,
@@ -174,11 +175,7 @@ export default function NuevoCobro({
       setError(r.error ?? "Error al guardar.");
       return;
     }
-    try {
-      sessionStorage.removeItem(COBRO_BORRADOR_KEY);
-    } catch {
-      // El cobro ya quedó registrado en servidor.
-    }
+    borrarCobroBorrador(sessionStorage);
     router.push("/cobros");
     router.refresh();
   }
@@ -193,11 +190,7 @@ export default function NuevoCobro({
     setNota("");
     setError("");
     setAviso("");
-    try {
-      sessionStorage.removeItem(COBRO_BORRADOR_KEY);
-    } catch {
-      // La interfaz ya quedó limpia aunque el navegador bloquee el storage.
-    }
+    borrarCobroBorrador(sessionStorage);
   }
 
   return (

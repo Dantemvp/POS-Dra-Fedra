@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { leerCobroBorrador, tieneContenidoCobro } from "../src/lib/cobro-borrador.ts";
+import {
+  COBRO_BORRADOR_KEY,
+  borrarCobroBorrador,
+  leerCobroBorrador,
+  tieneContenidoCobro,
+} from "../src/lib/cobro-borrador.ts";
 
 const valido = {
   version: 1,
@@ -40,4 +45,11 @@ test("un formulario vacío no se conserva", () => {
     nota: "",
     items: [],
   }), false);
+});
+
+test("cerrar sesión elimina el borrador sin bloquear si storage falla", () => {
+  let clave = "";
+  borrarCobroBorrador({ removeItem: (valor) => { clave = valor; } });
+  assert.equal(clave, COBRO_BORRADOR_KEY);
+  assert.doesNotThrow(() => borrarCobroBorrador({ removeItem: () => { throw new Error("bloqueado"); } }));
 });
