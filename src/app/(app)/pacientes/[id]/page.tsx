@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUsuarioActual } from "@/lib/auth";
-import { etiquetaDiaCorta } from "@/lib/tz";
+import { etiquetaDiaCorta, fechaSinaloa } from "@/lib/tz";
 import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
 import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
@@ -70,6 +70,15 @@ type Historia = {
   tipos_historia: { nombre: string } | null;
 };
 
+type RecetaPaciente = {
+  id: string;
+  folio: number;
+  fecha: string;
+  fase: number | null;
+  es_historico: boolean | null;
+  receta_items: { medicamento: string; orden: number | null }[];
+};
+
 export default async function PacienteDetalle({
   params,
 }: {
@@ -123,6 +132,20 @@ export default async function PacienteDetalle({
     .order("fecha", { ascending: false });
 
   const historias = (histData ?? []) as unknown as Historia[];
+  const inbodys = historias.filter(
+    (historia) => historia.tipos_historia?.nombre.trim().toLowerCase() === "inbody",
+  );
+  const historiasClinicas = historias.filter(
+    (historia) => historia.tipos_historia?.nombre.trim().toLowerCase() !== "inbody",
+  );
+
+  const { data: recetasData } = await supabase
+    .from("recetas")
+    .select("id, folio, fecha, fase, es_historico, receta_items(medicamento, orden)")
+    .eq("paciente_id", id)
+    .order("fecha", { ascending: false })
+    .order("orden", { referencedTable: "receta_items", ascending: true });
+  const recetas = (recetasData ?? []) as unknown as RecetaPaciente[];
 
   // Fase actual del tratamiento (de la última receta).
   const { data: ultRecetaArr } = await supabase
@@ -209,6 +232,85 @@ export default async function PacienteDetalle({
 
       {puntos.length > 0 && <ProgresoPeso puntos={puntos} />}
 
+      <div className="mb-6 space-y-3">
+        <details className="group overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-zinc-900 hover:bg-zinc-50">
+            <span className="font-medium">Recetas anteriores</span>
+            <span className="flex items-center gap-3 text-sm text-zinc-500">
+              {recetas.length} {recetas.length === 1 ? "receta" : "recetas"}
+              <span aria-hidden="true" className="transition-transform group-open:rotate-180">⌄</span>
+            </span>
+          </summary>
+          <div className="border-t border-zinc-100 px-5 py-3">
+            {recetas.length === 0 ? (
+              <p className="py-3 text-sm text-zinc-400">Este paciente todavía no tiene recetas guardadas.</p>
+            ) : (
+              <div className="divide-y divide-zinc-100">
+                {recetas.map((receta) => {
+                  const medicamentos = receta.receta_items
+                    .map((item) => item.medicamento)
+                    .filter(Boolean);
+                  return (
+                    <div key={receta.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-zinc-900">Receta #{receta.folio}</span>
+                          {receta.fase != null && (
+                            <span className="rounded-full bg-[#efe7db] px-2 py-0.5 text-xs font-medium text-[#7b6a55]">
+                              Fase {receta.fase}
+                            </span>
+                          )}
+                          {receta.es_historico && <BadgeHistorico compacto />}
+                        </div>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {fechaSinaloa(receta.fecha)}
+                          {medicamentos.length > 0 && ` · ${medicamentos.join(", ")}`}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/recetas/${receta.id}`}
+                        className="shrink-0 rounded-lg border border-zinc-200 px-3 py-1.5 text-center text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                      >
+                        Ver e imprimir
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </details>
+
+        <details className="group overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-zinc-900 hover:bg-zinc-50">
+            <span className="font-medium">Historial InBody</span>
+            <span className="flex items-center gap-3 text-sm text-zinc-500">
+              {inbodys.length} {inbodys.length === 1 ? "registro" : "registros"}
+              <span aria-hidden="true" className="transition-transform group-open:rotate-180">⌄</span>
+            </span>
+          </summary>
+          <div className="space-y-3 border-t border-zinc-100 p-4">
+            {inbodys.length === 0 ? (
+              <p className="px-1 py-3 text-sm text-zinc-400">Este paciente todavía no tiene registros InBody.</p>
+            ) : (
+              inbodys.map((historia) => (
+                <HistoriaCard
+                  key={historia.id}
+                  historiaId={historia.id}
+                  pacienteId={p.id}
+                  titulo={historia.tipos_historia?.nombre ?? "InBody"}
+                  fecha={new Date(historia.fecha).toLocaleString("es-MX")}
+                  datos={historia.datos ?? {}}
+                  labels={Object.fromEntries(etiquetas)}
+                  defs={defs}
+                  esAdmin={esAdmin}
+                />
+              ))
+            )}
+          </div>
+        </details>
+      </div>
+
       <ImportarInBody
         pacienteId={p.id}
         inbodyTipoId={tipos.find((t) => t.nombre === "InBody")?.id ?? null}
@@ -220,12 +322,12 @@ export default async function PacienteDetalle({
         Historias clínicas
       </h2>
       <div className="space-y-3">
-        {historias.length === 0 && (
+        {historiasClinicas.length === 0 && (
           <p className="rounded-xl bg-white p-6 text-center text-sm text-zinc-400 ring-1 ring-zinc-200">
             Sin historias clínicas aún.
           </p>
         )}
-        {historias.map((h) => (
+        {historiasClinicas.map((h) => (
           <HistoriaCard
             key={h.id}
             historiaId={h.id}

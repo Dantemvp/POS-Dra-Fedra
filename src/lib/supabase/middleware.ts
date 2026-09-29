@@ -11,6 +11,9 @@ const RUTAS_ROL: { prefijo: string; roles: string[] }[] = [
   { prefijo: "/cortes", roles: ["admin", "doctora", "gerente"] },
   { prefijo: "/pacientes", roles: ["admin", "doctora", "asistente", "gerente"] },
   { prefijo: "/agenda", roles: ["admin", "doctora", "asistente", "gerente"] },
+  // La asistente consulta e imprime una receta desde el expediente del
+  // paciente, pero no recibe acceso al módulo para crear recetas.
+  { prefijo: "/recetas/", roles: ["admin", "doctora", "asistente", "gerente"] },
   { prefijo: "/recetas", roles: ["admin", "doctora", "gerente"] },
   { prefijo: "/cobros", roles: ["admin", "doctora", "asistente", "gerente"] },
   { prefijo: "/servicios", roles: ["admin", "doctora", "gerente"] },
