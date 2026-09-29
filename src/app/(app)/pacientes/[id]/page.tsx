@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUsuarioActual } from "@/lib/auth";
-import { etiquetaDiaCorta, fechaSinaloa } from "@/lib/tz";
+import { etiquetaDiaCorta, fechaSinaloa, horaSinaloa } from "@/lib/tz";
 import NuevaHistoria, { type Tipo } from "./NuevaHistoria";
 import ImportarInBody from "./ImportarInBody";
 import HistoriaCard from "./HistoriaCard";
@@ -299,7 +299,7 @@ export default async function PacienteDetalle({
                   historiaId={historia.id}
                   pacienteId={p.id}
                   titulo={historia.tipos_historia?.nombre ?? "InBody"}
-                  fecha={new Date(historia.fecha).toLocaleString("es-MX")}
+                  fecha={`${fechaSinaloa(historia.fecha)} ${horaSinaloa(historia.fecha)}`}
                   datos={historia.datos ?? {}}
                   labels={Object.fromEntries(etiquetas)}
                   defs={defs}
@@ -333,7 +333,7 @@ export default async function PacienteDetalle({
             historiaId={h.id}
             pacienteId={p.id}
             titulo={h.tipos_historia?.nombre ?? "Historia"}
-            fecha={new Date(h.fecha).toLocaleString("es-MX")}
+            fecha={`${fechaSinaloa(h.fecha)} ${horaSinaloa(h.fecha)}`}
             datos={h.datos ?? {}}
             labels={Object.fromEntries(etiquetas)}
             defs={defs}
