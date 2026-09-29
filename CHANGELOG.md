@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.21] - 2026-09-29
+
+- Refuerza la impresion del ticket termico con tipografia mas grande, negro
+  solido, logotipo legible y un codigo QR para reseñas en Google Maps.
+- Conserva el cobro pendiente durante la sesion y lo limpia al cobrar,
+  descartarlo o cerrar sesion, incluso si el navegador bloquea el almacenamiento.
+- Cambia la edicion de servicios a guardado explicito y rechaza precios vacios.
+
 ## [0.1.20] - 2026-09-20
 
 - Permite plegar el menu lateral y recuerda la preferencia en el equipo.
