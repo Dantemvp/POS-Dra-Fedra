@@ -269,7 +269,8 @@ begin
   select count(*) into activas from public.plantillas_receta where origen_actualizacion = '20261008';
   select count(*) into vacias
   from public.plantillas_receta
-  where activo and (jsonb_typeof(items) <> 'array' or jsonb_array_length(items) = 0);
+  where origen_actualizacion = '20261008' and
+    (items is null or jsonb_typeof(items) <> 'array' or jsonb_array_length(items) = 0);
   if activas <> 61 or vacias <> 0 then
     raise exception 'Actualización de plantillas incompleta: activas=%, vacias=%', activas, vacias;
   end if;

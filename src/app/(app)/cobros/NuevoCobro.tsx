@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import BarcodeInput from "@/components/BarcodeInput";
 import ComboBuscador from "@/components/ComboBuscador";
 import { crearCobro, type ItemCobro } from "./actions";
+import { totalCobro } from "@/lib/cobro-total";
 import {
   COBRO_BORRADOR_KEY,
   borrarCobroBorrador,
@@ -94,7 +95,7 @@ export default function NuevoCobro({
   }, [borradorListo, pacienteId, items, metodo, nota, dividir, metodo2, monto1]);
 
   const total = useMemo(
-    () => items.reduce((s, i) => s + (i.precio_unit || 0) * (i.cantidad || 1), 0),
+    () => totalCobro(items),
     [items],
   );
 
@@ -321,6 +322,7 @@ export default function NuevoCobro({
             <input
               type="number"
               min={1}
+              step="0.01"
               value={it.cantidad}
               onChange={(e) => setItem(i, { cantidad: Number(e.target.value) || 1 })}
               className="w-14 rounded-lg border border-zinc-300 px-2 py-1.5 text-center text-sm"

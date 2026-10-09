@@ -56,6 +56,12 @@ export type CobroInput = {
 
 export async function crearCobro(input: CobroInput): Promise<Result> {
   if (!input.paciente_id) return { ok: false, error: "Selecciona un paciente." };
+  if ((input.items ?? []).some(i => !Number.isFinite(i.cantidad) || i.cantidad <= 0 ||
+      Math.abs(i.cantidad * 100 - Math.round(i.cantidad * 100)) > 0.000001 ||
+      !Number.isFinite(i.precio_unit) || i.precio_unit < 0 ||
+      Math.abs(i.precio_unit * 100 - Math.round(i.precio_unit * 100)) > 0.000001)) {
+    return { ok: false, error: "Usa cantidades positivas y precios válidos, con máximo dos decimales." };
+  }
   const items = (input.items ?? []).filter(
     (i) => (i.descripcion || i.servicio_id || i.producto_id) && i.precio_unit >= 0,
   );
@@ -73,8 +79,8 @@ export async function crearCobro(input: CobroInput): Promise<Result> {
       servicio_id: i.servicio_id,
       producto_id: i.producto_id,
       descripcion: i.descripcion,
-      cantidad: i.cantidad || 1,
-      precio_unit: i.precio_unit || 0,
+      cantidad: i.cantidad,
+      precio_unit: i.precio_unit,
     })),
   });
 

@@ -82,9 +82,11 @@ test("conserva las ediciones anteriores y las plantillas personalizadas", async 
     create function current_rol() returns rol_usuario language sql stable as $$ select 'admin'::rol_usuario $$;`);
   await db.exec(INICIAL);
   await db.exec(`update plantillas_receta set items = '[{"medicamento":"EDICION SINTETICA"}]' where categoria='FASE 1' and nombre='PASTILLA FASE 1';
-    insert into plantillas_receta(categoria,nombre,items) values ('FASE 1','PERSONALIZADA SINTETICA','[{"medicamento":"PRUEBA"}]');`);
+    insert into plantillas_receta(categoria,nombre,items) values ('FASE 1','PERSONALIZADA SINTETICA','[{"medicamento":"PRUEBA"}]');
+    insert into plantillas_receta(categoria,nombre,items) values ('FASE 1','PERSONALIZADA VACIA','[]');`);
   await db.exec(ACTUALIZACION);
   assert.equal(await contar(db, `select count(*)::int as n from plantillas_receta where nombre='PERSONALIZADA SINTETICA' and activo`), 1);
+  assert.equal(await contar(db, `select count(*)::int as n from plantillas_receta where nombre='PERSONALIZADA VACIA' and activo and items='[]'::jsonb`), 1);
   const previas = await filas(db, `select versiones_anteriores from plantillas_receta where categoria='FASE 1' and nombre='PASTILLA FASE 1'`);
   assert.match(JSON.stringify(previas), /EDICION SINTETICA/);
   await db.exec(`update plantillas_receta set items='[{"medicamento":"EDICION POSTERIOR"}]' where categoria='FASE 1' and nombre='PASTILLA FASE 1'`);
