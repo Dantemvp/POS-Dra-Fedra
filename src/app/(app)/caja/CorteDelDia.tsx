@@ -57,8 +57,37 @@ export default function CorteDelDia({
     });
   }
 
+  function exportarCSV() {
+    const filas = [
+      ["Concepto", "Valor"], ["Fecha", fecha],
+      ["Ventas farmacia", totalVentas], ["Cobros consultorio", totalCobros],
+      ["Total del día", totalVentas + totalCobros], ["Número de ventas", numVentas],
+      ["Productos salidos", productosSalidos], ["Pacientes atendidos", pacientesAtendidos],
+      ...metodos.map(([metodo, monto]) => [ETIQUETA_METODO[metodo] ?? metodo, monto]),
+      ["Efectivo esperado", efectivoEsperado], ["Efectivo contado", contadoNum ?? ""],
+      ["Diferencia", diferencia ?? ""],
+    ];
+    const csv = filas.map(fila => fila.map(valor => {
+      let texto = String(valor);
+      if (/^[=+@\-]/.test(texto) && typeof valor !== "number") texto = "'" + texto;
+      return '"' + texto.replaceAll('"', '""') + '"';
+    }).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = "corte-de-caja.csv";
+    enlace.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   return (
-    <div className="doc-imprimible rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+    <div className="doc-imprimible print-area corte-print rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+      <style>{`@media print {
+        @page { size: letter; margin: 12mm; }
+        html, body, main { padding: 0 !important; margin: 0 !important; }
+        .print-area.corte-print { position: static; width: 100%; color: #000; }
+        .corte-print * { color: #000 !important; }
+      }`}</style>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">
@@ -66,12 +95,13 @@ export default function CorteDelDia({
           </h2>
           <p className="text-xs text-zinc-500">{fecha}</p>
         </div>
-        <div className="flex gap-2 print:hidden">
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <button onClick={exportarCSV} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700">Exportar Excel (CSV)</button>
           <button
             onClick={() => window.print()}
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
           >
-            Imprimir
+            Imprimir / PDF
           </button>
           <button
             onClick={cerrarCorte}

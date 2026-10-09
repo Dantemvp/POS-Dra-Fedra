@@ -117,6 +117,10 @@ function NuevoProducto() {
           <div className="flex gap-2">
             <input
               name="codigo_barras"
+              onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
               value={codigo}
               onChange={(e) => setCodigo(e.target.value)}
               className={input}

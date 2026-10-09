@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { cobrar, cargarReceta } from "./actions";
 import BarcodeInput from "@/components/BarcodeInput";
+import AutoPrint from "@/components/AutoPrint";
 import {
   FISCAL_FARMACIA,
   GOOGLE_REVIEW_URL,
@@ -242,6 +243,7 @@ export default function POS({
   if (ticket) {
     return (
       <div className="mx-auto max-w-sm">
+        <AutoPrint />
         <style>{`@media print {
           @page { size: 80mm auto; margin: 0; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
@@ -347,7 +349,7 @@ export default function POS({
             onClick={() => window.print()}
             className="flex-1 rounded-lg border border-zinc-300 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
           >
-            Imprimir ticket
+            Reimprimir ticket
           </button>
           <button
             onClick={() => setTicket(null)}

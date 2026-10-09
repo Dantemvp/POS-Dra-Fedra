@@ -1,0 +1,1395 @@
+[
+  {
+    "categoria": "FASE 1",
+    "nombre": "COMBINADO 2 PASTILLAS FASE 1",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (2) (27 días)",
+        "duracion_dias": 27,
+        "dosis": "1) 0.6 mg x 7 días.\n2) 1.2 mg x 7 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "COMBINADO 21 DIAS",
+    "fase_texto": "FASE 1: 21 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (2) (27 días)",
+        "duracion_dias": 27,
+        "dosis": "1) 0.6 mg x 7 días.\n2) 1.2 mg x 7 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "COMBINADO FASE 1-FEDRA",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1/2 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (2) (27 días)",
+        "duracion_dias": 27,
+        "dosis": "1) 0.6 mg x 7 días.\n2) 1.2 mg x 7 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "KWIKPEN 2.5 COMBINADO FASE 1",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1/2 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "KwikPen 2.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "KWIKPEN 2.5 mg",
+    "fase_texto": "FASE 1: 28 días",
+    "items": [
+      {
+        "medicamento": "KwikPen 2.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- Después de algún alimento.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "NOTA",
+    "fase_texto": null,
+    "items": [
+      {
+        "medicamento": "Difenidol tabletas",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas por 4 días en caso de\nnáuseas molestas.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metoclopramida 10 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 8 horas por 5 días en caso de\neructos, gas, colitis, reflujo o malestar estomacal.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Difenidol inyectable",
+        "duracion_dias": null,
+        "dosis": "1 ámpula dosis única vía IM en caso de vómito\nsevero.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "PASTILLA FASE 1 15 DIAS",
+    "fase_texto": "FASE 1: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "PASTILLA FASE 1 de 21 días",
+    "fase_texto": "FASE 1: 21 días",
+    "items": [
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "PASTILLA FASE 1",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1/2 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "RYBELSUS 3mg COMBINADO FASE 1",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1/2 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Rybelsus 3 mg (1) (30 días)",
+        "duracion_dias": 30,
+        "dosis": "1 diaria en ayuno, 30 minutos antes de desayunar\npor 10 días.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "RYBELSUS FASE 1 30 DÍAS",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Rybelsus 3 mg (1) (30 días)",
+        "duracion_dias": 30,
+        "dosis": "1 diaria en ayuno, 30 minutos antes de desayunar\npor 30 días.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "SAXENDA FASE 1-FEDRA",
+    "fase_texto": "FASE 1: 27 días",
+    "items": [
+      {
+        "medicamento": "Saxenda (1) (17 días)",
+        "duracion_dias": 17,
+        "dosis": "1) 0.6 mg x 7 días.\n2) 1.2 mg x 7 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "WEGOVY COMBINADO FASE 1",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1/2 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 1",
+    "nombre": "WEGOVY FASE 1",
+    "fase_texto": "FASE 1: 28 días",
+    "items": [
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- Después de algún alimento.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "COMBINADO FASE 2 15 DÍAS",
+    "fase_texto": "FASE 2: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "COMBINADO FASE 2 21 DIAS",
+    "fase_texto": "FASE 2: 21 días",
+    "items": [
+      {
+        "medicamento": "Acxion 30 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "COMBINADO FASE 2 de 30 días pdf",
+    "fase_texto": "FASE 2: 30 días",
+    "items": [
+      {
+        "medicamento": "Acxion 30 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "KWIKPEN COMBINADO FASE 2",
+    "fase_texto": "FASE 2: 21 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "KwikPen 2.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "KWIKPEN FASE 2",
+    "fase_texto": "FASE 2: 28 días",
+    "items": [
+      {
+        "medicamento": "KwikPen 2.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "PASTILLA FASE 2 21 DIAS",
+    "fase_texto": "FASE 2: 21 días",
+    "items": [
+      {
+        "medicamento": "Acxion 30 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "PASTILLA fase 2 de 15 días",
+    "fase_texto": "FASE 2: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "RYBELSUS 3",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Rybelsus 3 mg (1) (30 días)",
+        "duracion_dias": 30,
+        "dosis": "1 diaria en ayuno, 30 minutos antes de desayunar\npor 30 días.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "RYBELSUS COMBINADO 3 mg",
+    "fase_texto": "FASE 2: 21 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Rybelsus 3 mg (1) (30 días)",
+        "duracion_dias": 30,
+        "dosis": "1 diaria en ayuno, 30 minutos antes de desayunar\npor 30 días.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "SAXENDA",
+    "fase_texto": "FASE 2: 20 días",
+    "items": [
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg. diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "WEGOVY COMBINADO FASE 2 21 DIAS",
+    "fase_texto": "FASE 2: 21 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 2",
+    "nombre": "WEGOVY FASE 2",
+    "fase_texto": "FASE 2: 28 días",
+    "items": [
+      {
+        "medicamento": "Wegovy 0.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.5 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "COMBINADO 30 DIAS FASE 3",
+    "fase_texto": "FASE 3: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Acxion 30  mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "COMBINADO FASE 3 15 DIAS",
+    "fase_texto": "FASE 3: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "COMBINADO RYBELSUS 30 DIAS",
+    "fase_texto": "FASE 3: 30 días",
+    "items": [
+      {
+        "medicamento": "Acxion 30 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Rybelsus 7 mg (1) (30 días)",
+        "duracion_dias": 30,
+        "dosis": "1 diaria en ayuno, 30 minutos antes antes de desayunar\npor 30 días.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "KWIKPEN COMBINADO FASE 3",
+    "fase_texto": "FASE 3: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Acxion 30  mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "KwikPen 2.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas.\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- Después de algún alimento.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "MOUNJARO COMBINADO FASE 3",
+    "fase_texto": "FASE 3: 30 días",
+    "items": [
+      {
+        "medicamento": "Acxion 30 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Mounjaro 2.5 mg. (1) (7 días)",
+        "duracion_dias": 7,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea,\npor 4 semanas, con jeringa de insulina.\n- Alternar la aplicación en brazo, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "PASTILLAS 15 DIAS FASE 3",
+    "fase_texto": "FASE 3: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "PASTILLAS 30 DIAS FASE 3",
+    "fase_texto": "FASE 3: 30 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "SAXENDA 3",
+    "fase_texto": "FASE 3: 20 días",
+    "items": [
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "WEGOVY COMBINADO FASE 3",
+    "fase_texto": "FASE 3: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Acxion 30  mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas.\n- Alternar aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- Después de algún alimento.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 3 y 4",
+    "nombre": "WEGOVY FASE 3",
+    "fase_texto": "FASE 3: 28 días",
+    "items": [
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicacion en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- Después de algún alimento.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "COMBINADO 15 DIAS.",
+    "fase_texto": "FASE 5: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "COMBINADO FASE 5",
+    "fase_texto": "FASE 5: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Acxion 30  mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (10 días)",
+        "duracion_dias": 10,
+        "dosis": "1.8 mg diarios.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "COMBINADO RYBELSUS",
+    "fase_texto": "FASE 5: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Acxion 30  mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Rybelsus 7 mg (1) (30 días)",
+        "duracion_dias": 30,
+        "dosis": "1 diaria en ayuno, 30 minutos antes antes de desayunar\npor 30 días.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "KWIKPEN COMBINADO FASE 5",
+    "fase_texto": "FASE 5: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Acxion 30  mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "KwikPen 2.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas.\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- Después de algún alimento.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "KWIKPEN FASE 5",
+    "fase_texto": "FASE 5: 30 días",
+    "items": [
+      {
+        "medicamento": "KwikPen 2.5 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas.\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- Después de algún alimento.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "MOUNJARO COMBINADO FASE 5",
+    "fase_texto": "FASE 5: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Mounjaro 2.5 mg. (1) (7 días)",
+        "duracion_dias": 7,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea,\npor 4 semanas, con jeringa de insulina.\n- Alternar la aplicación en brazo, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "PASTILLAS 15 DIAS FASE 5",
+    "fase_texto": "FASE 5: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "PASTILLAS 30 DIAS FASE 5",
+    "fase_texto": "FASE 5: 30 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "WEGOVY FASE 5",
+    "fase_texto": "FASE 5: 28 días",
+    "items": [
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "FASE 5",
+    "nombre": "WEGOVY COMBINADO FASE 5",
+    "fase_texto": "FASE 5: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 cada 12 horas, después del desayuno y la cena.\nEn caso de no tolerar, continuar con 1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "Mantenimiento",
+    "nombre": "Mantenimiento 1 pastilla",
+    "fase_texto": "Mantenimiento",
+    "items": [
+      {
+        "medicamento": "Acxion 30 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno cada 48 hrs. hasta terminar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "COMBINADO 21 DÍAS-FEDRA",
+    "fase_texto": "FASE 1: 21 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (13 días)",
+        "duracion_dias": 13,
+        "dosis": "1) 0.6 mg x 3 días.\n2) 1.2 mg x 3 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "Combinado Retomar 30 días 1 pastilla-FEDRA",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1/2 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Victoza (1) (13 días)",
+        "duracion_dias": 13,
+        "dosis": "1) 0.6 mg x 3 días.\n2) 1.2 mg x 3 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "MOUNJARO COMBINADO RETOMAR",
+    "fase_texto": "FASE 1: 21 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Mounjaro 2.5 mg. (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea,\npor 4 semanas, con jeringa de insulina.\n- Alternar la aplicación en brazo, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "Pastillas 30 días 2 termogenicos",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Lose 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "RETOMAR RYBELSUS Pastillas 30 días",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Lose 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Rybelsus 7 mg (1) (30 días)",
+        "duracion_dias": 30,
+        "dosis": "1 diaria en ayuno, 30 minutos antes de desayunar\npor 30 días.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "Retomar 30 días 1 pastilla",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1/2 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "Saxenda 23 días",
+    "fase_texto": "FASE 1: 23 días",
+    "items": [
+      {
+        "medicamento": "Saxenda (1) (13 días)",
+        "duracion_dias": 13,
+        "dosis": "1) 0.6 mg x 3 días.\n2) 1.2 mg x 3 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "Victoza 23 días",
+    "fase_texto": "FASE 1: 23 días",
+    "items": [
+      {
+        "medicamento": "Victoza (1) (13 días)",
+        "duracion_dias": 13,
+        "dosis": "1) 0.6 mg x 3 días.\n2) 1.2 mg x 3 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "WEGOVY COMBINADO RETOMAR 21 DIAS",
+    "fase_texto": "FASE 1: 21 días",
+    "items": [
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "WEGOVY COMBINADO RETOMAR 30 DIAS",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Wegovy 0.25 mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 0.25 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "Wikpen COMBINADO RETOMAR 30 DIAS",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Lose 2 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "KwikPen 2.5mg (1) (28 días)",
+        "duracion_dias": 28,
+        "dosis": "Aplicar 2.5 mg 1 vez a la semana, vía subcutánea por 4 semanas\n- Alternar la aplicación en brazos, piernas y abdomen.\n- Repetir la dosis el mismo día de la semana a la misma hora.\n- De preferencia después del desayuno o comida.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "combinado 15 días-FEDRA",
+    "fase_texto": "FASE 1: 15 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Victoza (1) (13 días)",
+        "duracion_dias": 13,
+        "dosis": "1) 0.6 mg x 3 días.\n2) 1.2 mg x 3 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "combinado 30 días 2 pastillas-FEDRA",
+    "fase_texto": "FASE 1: 30 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Diety Ap 20 mg",
+        "duracion_dias": null,
+        "dosis": "1 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Saxenda (1) (13 días)",
+        "duracion_dias": 13,
+        "dosis": "1) 0.6 mg x 3 días.\n2) 1.2 mg x 3 días.\n3) 1.8 mg lo restante.",
+        "indicaciones": ""
+      }
+    ]
+  },
+  {
+    "categoria": "RETOMAR",
+    "nombre": "pastilla 21 días",
+    "fase_texto": "FASE 1: 21 días",
+    "items": [
+      {
+        "medicamento": "Norex 50 mg",
+        "duracion_dias": null,
+        "dosis": "1 en ayuno.\n1/2 a las 4:00 pm.",
+        "indicaciones": ""
+      },
+      {
+        "medicamento": "Metformina 850 mg",
+        "duracion_dias": null,
+        "dosis": "1 después de cenar.",
+        "indicaciones": ""
+      }
+    ]
+  }
+]

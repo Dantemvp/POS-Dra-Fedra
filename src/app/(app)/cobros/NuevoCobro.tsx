@@ -36,6 +36,9 @@ export default function NuevoCobro({
   const [pacienteId, setPacienteId] = useState("");
   const [items, setItems] = useState<ItemCobro[]>([]);
   const [metodo, setMetodo] = useState<MetodoCobro>("transferencia");
+  const [dividir, setDividir] = useState(false);
+  const [metodo2, setMetodo2] = useState<MetodoCobro>("tarjeta");
+  const [monto1, setMonto1] = useState("");
   const [nota, setNota] = useState("");
   const [busca, setBusca] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -55,6 +58,9 @@ export default function NuevoCobro({
         setPacienteId(borrador.paciente_id);
         setItems(borrador.items);
         setMetodo(borrador.metodo);
+        setDividir(borrador.dividir ?? false);
+        setMetodo2(borrador.metodo2 ?? "tarjeta");
+        setMonto1(borrador.monto1 ?? "");
         setNota(borrador.nota);
       }
       setBorradorListo(true);
@@ -69,6 +75,7 @@ export default function NuevoCobro({
       paciente_id: pacienteId,
       items,
       metodo,
+      dividir, metodo2, monto1,
       nota,
     };
     if (tieneContenidoCobro(borrador)) {
@@ -84,7 +91,7 @@ export default function NuevoCobro({
         // Sin almacenamiento, no hay borrador que limpiar.
       }
     }
-  }, [borradorListo, pacienteId, items, metodo, nota]);
+  }, [borradorListo, pacienteId, items, metodo, nota, dividir, metodo2, monto1]);
 
   const total = useMemo(
     () => items.reduce((s, i) => s + (i.precio_unit || 0) * (i.cantidad || 1), 0),
@@ -168,15 +175,22 @@ export default function NuevoCobro({
       setError("Agrega al menos un concepto.");
       return;
     }
+    const primero = Math.round(Number(monto1) * 100) / 100;
+    if (dividir && (!Number.isFinite(primero) || primero <= 0 || primero >= total || metodo === metodo2)) {
+      setError("Elige dos métodos distintos y un primer monto mayor a cero y menor al total.");
+      return;
+    }
     setGuardando(true);
-    const r = await crearCobro({ paciente_id: pacienteId, items, metodo, nota });
+    const r = await crearCobro({ paciente_id: pacienteId, items, metodo, nota,
+      pagos: dividir ? [{ metodo, monto: primero }, { metodo: metodo2, monto: Math.round((total - primero) * 100) / 100 }] : undefined,
+    });
     setGuardando(false);
     if (!r.ok) {
       setError(r.error ?? "Error al guardar.");
       return;
     }
     borrarCobroBorrador(() => window.sessionStorage);
-    router.push("/cobros");
+    router.push(r.id ? `/cobros/${r.id}?imprimir=1` : "/cobros");
     router.refresh();
   }
 
@@ -351,6 +365,16 @@ export default function NuevoCobro({
         </div>
       </div>
 
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={dividir} onChange={e => setDividir(e.target.checked)} />Pagar con dos métodos</label>
+        {dividir && <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <label className="text-sm">Monto en {metodo}<input type="number" min="0.01" step="0.01" value={monto1} onChange={e => setMonto1(e.target.value)} className="mt-1 w-full rounded-lg border border-zinc-300 p-2" /></label>
+          <label className="text-sm">Método para el resto<select value={metodo2} onChange={e => setMetodo2(e.target.value as MetodoCobro)} className="mt-1 w-full rounded-lg border border-zinc-300 p-2">
+            <option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option>
+          </select></label>
+          <p className="text-sm font-semibold sm:col-span-2">Resto: {fmt(Math.max(0, total - (Number(monto1) || 0)))}</p>
+        </div>}
+      </div>
       <input
         placeholder="Nota (opcional)"
         value={nota}

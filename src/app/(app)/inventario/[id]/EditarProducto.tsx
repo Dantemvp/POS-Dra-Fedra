@@ -47,6 +47,10 @@ export default function EditarProducto({ producto }: { producto: ProductoEdit })
             <label className={label}>Código de barras / SKU</label>
             <input
               name="codigo_barras"
+              onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
               defaultValue={producto.codigo_barras ?? ""}
               className={input}
             />

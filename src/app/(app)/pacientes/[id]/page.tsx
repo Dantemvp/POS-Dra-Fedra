@@ -262,7 +262,7 @@ export default async function PacienteDetalle({
                           )}
                           {receta.es_historico && <BadgeHistorico compacto />}
                         </div>
-                        <p className="mt-1 text-xs text-zinc-500">
+                        <p className="mt-2 text-base font-medium leading-relaxed text-zinc-700">
                           {fechaSinaloa(receta.fecha)}
                           {medicamentos.length > 0 && ` · ${medicamentos.join(", ")}`}
                         </p>

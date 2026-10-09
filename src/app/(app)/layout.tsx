@@ -5,6 +5,7 @@ import MobileTopBar from "@/components/MobileTopBar";
 import LogoutButton from "@/components/LogoutButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import { APP_VERSION } from "@/lib/version";
+import AreaStatus from "@/components/AreaStatus";
 
 export default async function AppLayout({
   children,
@@ -23,7 +24,7 @@ export default async function AppLayout({
 
         {/* Escritorio: header con usuario, tema y salir */}
         <header className="hidden items-center justify-between border-b border-black/5 bg-[#f8f6f2] px-6 py-3 print:hidden md:flex">
-          <div />
+          <AreaStatus rol={usuario.rol} />
           <div className="flex items-center gap-3">
             <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 ring-1 ring-black/5">
               v{APP_VERSION}

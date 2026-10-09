@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import ReportActions from "@/components/ReportActions";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -101,11 +102,27 @@ export default async function DetalleCortePage({
     p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : null;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="print-area corte-print mx-auto max-w-4xl space-y-6">
+      <style>{`@media print {
+        @page { size: letter; margin: 12mm; }
+        html, body, main { margin: 0 !important; padding: 0 !important; }
+        .print-area.corte-print { position: static; width: 100%; }
+        .corte-print * { color: #000 !important; }
+        .corte-print thead { display: table-header-group; }
+        .corte-print tr { break-inside: avoid; }
+      }`}</style>
+      <ReportActions nombre={`corte-${id}`} filas={[
+        ["Concepto","Valor"], ["Cierre", cierre],
+        ["Ventas farmacia", Number(corte.total_ventas ?? 0)], ["Cobros consultorio", Number(corte.total_cobros ?? 0)],
+        ["Efectivo esperado", Number(corte.total_efectivo ?? 0)], ["Efectivo contado", corte.efectivo_contado ?? ""], ["Diferencia", corte.diferencia ?? ""],
+        [], ["Tipo", "Referencia", "Fecha", "Cliente", "Total"],
+        ...ventas.map(v => ["Venta", v.folio, v.fecha, nombre(v.pacientes) ?? "Cliente", Number(v.total)]),
+        ...cobros.map(c => ["Cobro", c.id, c.fecha, nombre(c.pacientes) ?? "Cliente", Number(c.total)]),
+      ]} />
       <div>
         <Link
           href="/cortes"
-          className="text-sm text-zinc-500 hover:text-zinc-800"
+          className="text-sm text-zinc-500 hover:text-zinc-800 print:hidden"
         >
           ← Cortes
         </Link>

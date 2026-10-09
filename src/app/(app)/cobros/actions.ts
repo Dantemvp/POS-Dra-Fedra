@@ -51,6 +51,7 @@ export type CobroInput = {
   items: ItemCobro[];
   metodo: "efectivo" | "tarjeta" | "transferencia" | "otro";
   nota?: string;
+  pagos?: { metodo: CobroInput["metodo"]; monto: number }[];
 };
 
 export async function crearCobro(input: CobroInput): Promise<Result> {
@@ -62,10 +63,11 @@ export async function crearCobro(input: CobroInput): Promise<Result> {
     return { ok: false, error: "Agrega al menos un concepto." };
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("registrar_cobro", {
+  const { data, error } = await supabase.rpc(input.pagos ? "registrar_cobro_mixto" : "registrar_cobro", {
     p_paciente: input.paciente_id,
     p_metodo: input.metodo,
     p_nota: input.nota ?? "",
+    ...(input.pagos ? { p_pagos: input.pagos } : {}),
     p_items: items.map((i) => ({
       tipo: i.tipo,
       servicio_id: i.servicio_id,
