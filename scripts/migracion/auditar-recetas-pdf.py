@@ -182,7 +182,7 @@ def sugerencias(nombre: str, claves: list[str]) -> list[dict[str, Any]]:
     return [{"nombre_normalizado": clave, "similitud": round(puntaje, 3)} for puntaje, clave in mejores if puntaje >= 0.72]
 
 
-def auditar(source: Path, patients_path: Path) -> dict[str, Any]:
+def auditar(source: Path, patients_path: Path, incluir_sugerencias: bool = True) -> dict[str, Any]:
     pacientes, indice = cargar_pacientes(patients_path)
     archivos = sorted(source.rglob("*.pdf"))
     registros = []
@@ -256,7 +256,7 @@ def auditar(source: Path, patients_path: Path) -> dict[str, Any]:
                 "fase": fase_numero(partes["fase_texto"]),
                 "fase_texto": partes["fase_texto"] or None,
                 "items": items,
-                "sugerencias": [] if estado == "listo" else sugerencias(nombre_busqueda, list(indice)),
+                "sugerencias": [] if estado == "listo" or not incluir_sugerencias else sugerencias(nombre_busqueda, list(indice)),
             }
         )
         estados[estado] += 1
@@ -267,6 +267,7 @@ def auditar(source: Path, patients_path: Path) -> dict[str, Any]:
         "pacientes_fuente": str(patients_path.resolve()),
         "pacientes_sha256": hashlib.sha256(patients_path.read_bytes()).hexdigest(),
         "pacientes_archivo_modificado_en": datetime.fromtimestamp(patients_path.stat().st_mtime).astimezone().isoformat(),
+        "incluye_sugerencias_aproximadas": incluir_sugerencias,
         "resumen": {
             "pdfs": len(archivos),
             "pacientes_disponibles": len(pacientes),
@@ -282,6 +283,7 @@ def main() -> int:
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--patients", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--sin-sugerencias", action="store_true", help="Solo cotejo exacto; omitir similitudes orientativas.")
     args = parser.parse_args()
 
     if not args.source.is_dir():
@@ -298,7 +300,7 @@ def main() -> int:
     if any(args.output.resolve().is_relative_to(raiz) for raiz in raices):
         parser.error("El manifiesto clínico debe guardarse fuera de cualquier repositorio Git.")
 
-    resultado = auditar(args.source, args.patients)
+    resultado = auditar(args.source, args.patients, incluir_sugerencias=not args.sin_sugerencias)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(resultado, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(resultado["resumen"], ensure_ascii=False, indent=2))
