@@ -97,12 +97,20 @@ for (const archivo of fs.readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort
 fs.writeFileSync(path.join(DIR, "..", "plantillas.json"), JSON.stringify(salida, null, 2), "utf8");
 
 console.log(`${salida.length} plantillas\n`);
+let errores = 0;
 for (const p of salida) {
   const aviso = p.items.length === 0 ? "  <-- SIN MEDICAMENTOS" : "";
   const sinFase = p.fase_texto ? "" : "  <-- SIN ETIQUETA DE FASE";
+  const nombresVacios = p.items.filter((i) => !i.medicamento.trim()).length;
+  if (p.items.length === 0 || nombresVacios > 0 || (!p.fase_texto && p.nombre !== "NOTA")) errores++;
   console.log(`[${p.categoria}] ${p.nombre}  |  fase: ${p.fase_texto ?? "-"}  |  ${p.items.length} med${aviso}${sinFase}`);
   for (const i of p.items) {
     console.log(`      * ${i.medicamento}${i.duracion_dias ? ` (${i.duracion_dias}d)` : ""}`);
     for (const d of i.dosis.split("\n").filter(Boolean)) console.log(`          ${d}`);
   }
+}
+
+if (errores > 0) {
+  console.error(`\n${errores} plantilla(s) requieren corrección antes de generar SQL.`);
+  process.exitCode = 1;
 }

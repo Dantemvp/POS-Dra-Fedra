@@ -7,6 +7,7 @@ import AreaNavigation from "@/components/AreaNavigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
 import { APP_VERSION } from "@/lib/version";
+import AreaStatus from "@/components/AreaStatus";
 
 export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string }) {
   const [abierto, setAbierto] = useState(false);
@@ -18,12 +19,15 @@ export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string
 
   return (
     <div className="md:hidden print:hidden">
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-2.5">
+      <header className="sticky top-0 z-30 grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b border-zinc-200 bg-white px-3 py-2.5">
         <button onClick={() => setAbierto(true)} aria-label="Abrir menú" className="rounded-lg p-2 text-zinc-700 hover:bg-zinc-100">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
         </button>
-        <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="h-auto w-40" />
-        <ThemeToggle />
+        <div className="flex min-w-0 flex-col items-center gap-1">
+          <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="h-auto w-36" />
+          <AreaStatus rol={rol} compacto />
+        </div>
+        <ThemeToggle compacto />
       </header>
       {abierto && (
         <div className="fixed inset-0 z-40">
@@ -37,6 +41,9 @@ export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string
             </div>
             <AreaNavigation rol={rol} onNavigate={() => setAbierto(false)} />
             <div className="mt-auto border-t border-zinc-200 px-3 py-3">
+              <div className="mb-2">
+                <ThemeToggle />
+              </div>
               <LogoutButton />
               <p className="mt-2 px-1 text-[11px] text-zinc-400">
                 Sistema Fedra · v{APP_VERSION}

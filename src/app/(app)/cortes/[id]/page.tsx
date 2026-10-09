@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import ReportActions from "@/components/ReportActions";
+import { fechaCorte, filasPagosCorte } from "@/lib/corte-exportacion";
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -39,6 +41,7 @@ type Cobro = {
   fecha: string;
   total: number;
   pacientes: { nombre: string; apellidos: string | null } | null;
+  cobro_pagos: { metodo: string; monto: number }[];
 };
 
 export default async function DetalleCortePage({
@@ -86,7 +89,7 @@ export default async function DetalleCortePage({
 
   const { data: cobrosData } = await supabase
     .from("cobros")
-    .select("id, fecha, total, pacientes(nombre, apellidos)")
+    .select("id, fecha, total, pacientes(nombre, apellidos), cobro_pagos(metodo, monto)")
     .gte("fecha", desde)
     .lte("fecha", cierre)
     .order("fecha", { ascending: true });
@@ -101,11 +104,33 @@ export default async function DetalleCortePage({
     p ? `${p.nombre} ${p.apellidos ?? ""}`.trim() : null;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="print-area corte-print mx-auto max-w-4xl space-y-6">
+      <style>{`@media print {
+        @page { size: letter; margin: 12mm; }
+        html, body, main { margin: 0 !important; padding: 0 !important; }
+        .print-area.corte-print { position: static; width: 100%; }
+        .corte-print * { color: #000 !important; }
+        .corte-print thead { display: table-header-group; }
+        .corte-print tr { break-inside: avoid; }
+      }`}</style>
+      <ReportActions nombre={`corte-${id}`} filas={[
+        ["Concepto","Valor"], ["Cierre (Sinaloa)", fechaCorte(cierre)],
+        ["Ventas farmacia", Number(corte.total_ventas ?? 0)], ["Cobros consultorio", Number(corte.total_cobros ?? 0)],
+        ["Efectivo esperado", Number(corte.total_efectivo ?? 0)], ["Efectivo contado", corte.efectivo_contado ?? ""], ["Diferencia", corte.diferencia ?? ""],
+        [], ["Tipo", "Referencia", "Fecha (Sinaloa)", "Cliente", "Total operación (una vez)", "Método", "Monto del pago"],
+        ...filasPagosCorte([
+          ...ventas.map(v => ({ tipo: "Venta", referencia: v.folio, fecha: v.fecha,
+            cliente: nombre(v.pacientes) ?? "Cliente", total: Number(v.total),
+            pagos: (v.pagos ?? []).map(p => ({ metodo: p.metodo, monto: Number(p.monto) })) })),
+          ...cobros.map(c => ({ tipo: "Cobro", referencia: c.id, fecha: c.fecha,
+            cliente: nombre(c.pacientes) ?? "Cliente", total: Number(c.total),
+            pagos: (c.cobro_pagos ?? []).map(p => ({ metodo: p.metodo, monto: Number(p.monto) })) })),
+        ]),
+      ]} />
       <div>
         <Link
           href="/cortes"
-          className="text-sm text-zinc-500 hover:text-zinc-800"
+          className="text-sm text-zinc-500 hover:text-zinc-800 print:hidden"
         >
           ← Cortes
         </Link>

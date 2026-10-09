@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ compacto = false }: { compacto?: boolean }) {
   const [oscuro, setOscuro] = useState(false);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function ThemeToggle() {
       onClick={alternar}
       aria-label={oscuro ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
       title={oscuro ? "Tema claro" : "Tema oscuro"}
-      className="rounded-lg p-2 text-zinc-600 transition hover:bg-zinc-100"
+      className="flex min-h-10 items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 text-zinc-700 shadow-sm transition hover:border-[#8c7a63] hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-[#8c7a63]/40"
     >
       {oscuro ? (
         // Sol
@@ -39,6 +39,7 @@ export default function ThemeToggle() {
           <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
         </svg>
       )}
+      {!compacto && <span className="text-xs font-semibold">{oscuro ? "Tema claro" : "Tema oscuro"}</span>}
     </button>
   );
 }

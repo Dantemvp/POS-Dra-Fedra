@@ -9,7 +9,7 @@ import BarcodeScanner from "./BarcodeScanner";
 // En ambos casos emite onScan(codigo).
 export default function BarcodeInput({
   onScan,
-  placeholder = "Escanea o escribe el código…",
+  placeholder = "Lector Bluetooth: escanea o escribe el código…",
   autoFocus = true,
 }: {
   onScan: (code: string) => void;
@@ -54,14 +54,17 @@ export default function BarcodeInput({
         className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
         inputMode="text"
         autoComplete="off"
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
       />
       <button
         type="button"
         onClick={() => setScanner(true)}
-        className="shrink-0 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+        className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:border-[#8c7a63] hover:bg-zinc-50"
         title="Escanear con cámara"
       >
-        📷
+        <span aria-hidden="true">▣</span> <span className="hidden sm:inline">Cámara</span>
       </button>
     </div>
   );

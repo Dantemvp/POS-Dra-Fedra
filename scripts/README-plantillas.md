@@ -6,11 +6,9 @@ fase. Estos dos scripts los convierten en la migración que siembra
 poder repetirla cuando Mayira mande material nuevo.
 
 ```sh
-# 1. Extraer el texto de cada PDF (requiere poppler)
-find "<carpeta FASES>" -name "*.pdf" -print0 | while IFS= read -r -d '' f; do
-  rel="${f#<carpeta FASES>/}"
-  pdftotext -layout -enc UTF-8 "$f" "fases/$(echo "$rel" | tr '/' '~' | sed 's/\.pdf$//').txt"
-done
+# 1. Extraer únicamente tratamiento y fase de los campos AcroForm.
+#    Requiere pypdf; no copia nombre, edad ni fecha del paciente.
+python scripts/plantillas-extraer-pdf.py --source "<carpeta FASES>" --output fases
 
 # 2. Leer los recetarios y volcarlos a plantillas.json
 node plantillas-parsear.mjs
@@ -18,6 +16,10 @@ node plantillas-parsear.mjs
 # 3. Generar la migración a partir de ese JSON
 node plantillas-generar-migracion.mjs
 ```
+
+Los archivos entregados en octubre de 2026 guardan el contenido como campos de
+formulario. Un extractor de texto normal muestra el recetario en blanco, por eso
+el primer paso lee el valor canónico de los campos.
 
 `plantillas-parsear.mjs` distingue dos formas de documento: la receta, que
 lista medicamentos con asterisco y usa guiones para aclarar la aplicación de un

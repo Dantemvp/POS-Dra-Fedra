@@ -43,3 +43,17 @@ export function areasParaRol(rol: Rol): AreaTrabajo[] {
 export function areaInicialParaRol(rol: Rol): AreaTrabajo {
   return rol === "farmacia" ? "farmacia" : "consultorio";
 }
+
+const RUTAS_AREA: Record<AreaTrabajo, string[]> = {
+  farmacia: ["/ventas", "/inventario", "/compras", "/caja"],
+  consultorio: ["/pacientes", "/agenda", "/recetas", "/cobros", "/servicios"],
+};
+
+export function areaDeRuta(pathname: string): AreaTrabajo | null {
+  for (const area of ["farmacia", "consultorio"] as const) {
+    if (RUTAS_AREA[area].some((ruta) => pathname === ruta || pathname.startsWith(`${ruta}/`))) {
+      return area;
+    }
+  }
+  return null;
+}

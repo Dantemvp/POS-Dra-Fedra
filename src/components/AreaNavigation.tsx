@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { Rol } from "@/lib/auth";
 import {
   areaInicialParaRol,
+  areaDeRuta,
   areasParaRol,
   navParaRol,
   type AreaTrabajo,
@@ -17,23 +18,11 @@ const ETIQUETA_AREA: Record<AreaTrabajo, string> = {
   consultorio: "Consultorio",
 };
 
-const RUTAS_AREA: Record<AreaTrabajo, string[]> = {
-  farmacia: ["/ventas", "/inventario", "/compras", "/caja"],
-  consultorio: ["/pacientes", "/agenda", "/recetas", "/cobros", "/servicios"],
-};
-
-function areaDeRuta(pathname: string): AreaTrabajo | null {
-  for (const area of ["farmacia", "consultorio"] as const) {
-    if (RUTAS_AREA[area].some((ruta) => pathname === ruta || pathname.startsWith(`${ruta}/`))) return area;
-  }
-  return null;
-}
-
-function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: string; onNavigate?: () => void }) {
+function NavLink({ item, pathname, area, onNavigate }: { item: NavItem; pathname: string; area: AreaTrabajo; onNavigate?: () => void }) {
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
   return (
     <Link
-      href={item.href}
+      href={areaDeRuta(item.href) ? item.href : `${item.href}?area=${area}`}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${active ? "bg-[#3f5148] font-medium text-white shadow-sm" : "text-zinc-700 hover:bg-[#f2eeec] hover:text-zinc-950"}`}
@@ -61,14 +50,19 @@ export default function AreaNavigation({ rol, onNavigate }: { rol: Rol; onNaviga
   return (
     <>
       {areas.length > 1 && (
-        <div className="mx-3 mb-4 grid grid-cols-2 rounded-xl bg-[#f2eeec] p-1" aria-label="Área de trabajo">
+        <div className="mx-3 mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-zinc-100 p-1.5 ring-1 ring-black/5" aria-label="Área de trabajo">
           {areas.map((area) => (
             <Link
               key={area}
               href={`/dashboard?area=${area}`}
               onClick={onNavigate}
-              className={`rounded-lg px-2 py-2 text-center text-xs font-semibold transition ${areaActiva === area ? "bg-white text-[#3f5148] shadow-sm ring-1 ring-black/5" : "text-[#756a5c] hover:text-zinc-900"}`}
+              className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-center text-xs font-bold transition ${areaActiva === area
+                ? area === "farmacia"
+                  ? "bg-[#3f5148] text-white shadow-sm"
+                  : "bg-[#8c6f6b] text-white shadow-sm"
+                : "text-zinc-600 hover:bg-white hover:text-zinc-900"}`}
             >
+              <span aria-hidden="true" className="text-base leading-none">{area === "farmacia" ? "+" : "♡"}</span>
               {ETIQUETA_AREA[area]}
             </Link>
           ))}
@@ -79,7 +73,7 @@ export default function AreaNavigation({ rol, onNavigate }: { rol: Rol; onNaviga
           <section key={grupo.id}>
             <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400">{grupo.titulo}</p>
             <div className="space-y-1">
-              {grupo.items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />)}
+              {grupo.items.map((item) => <NavLink key={item.href} item={item} pathname={pathname} area={areaActiva} onNavigate={onNavigate} />)}
             </div>
           </section>
         ) : null)}
