@@ -35,3 +35,15 @@ La aplicación abre la impresión automáticamente. El envío sin diálogo requi
 Confirmar papel de 80 mm, escala, ticket completo con QR, cajón si está conectado, papel agotado y reimpresión sin registrar otra venta. Revisar además si el Enter del lector envía formularios de inventario al capturar el código.
 
 Las credenciales y las transcripciones con datos personales quedan fuera del repositorio.
+
+## Cotejo histórico con padrón vigente
+
+Consulta de producción del 8 de octubre: 550 pacientes. Barrido completo de 11049 PDF, sin sugerencias aproximadas:
+
+- 522 registros candidatos a importar, con paciente único, fuentes concordantes, fecha y tratamiento; 1577 renglones.
+- 21 copias duplicadas por hash.
+- 675 conflictos entre nombres y 5 conflictos de paciente.
+- 3374 archivos con varios candidatos de nombre interno.
+- 6377 sin coincidencia de paciente, 15 sin fecha y 60 sin tratamiento.
+
+El manifiesto clínico permanece fuera de Git. No se ha importado ningún registro. Debe resolverse el cotejo pendiente antes de completar la carga de todas las recetas; no se asignan por similitud.
