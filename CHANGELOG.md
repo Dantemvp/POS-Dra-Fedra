@@ -1,5 +1,16 @@
 # Historial de versiones
 
+## [0.1.23] - 2026-10-09
+
+- Actualiza Next.js a 16.3.8 y las dependencias corregidas ya preparadas en la rama de trabajo.
+
+- Muestra las hojas históricas importadas en Historial InBody de cada paciente,
+  conservando sus estudios anteriores y permitiendo abrir el documento completo.
+- Permite consultar las recetas históricas originales desde el expediente.
+- Protege la apertura de documentos con rol clínico, pertenencia al paciente
+  y enlaces temporales al archivo privado.
+- Publicación de interfaz únicamente, sin migraciones ni cambios de datos.
+
 ## [0.1.22] - 2026-09-29
 
 - Agrega al expediente desplegables para consultar las recetas anteriores y el
