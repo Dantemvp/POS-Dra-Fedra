@@ -55,6 +55,9 @@ class Cliente:
 
 def importar(manifiesto,reporte,aplicar=False):
     registros = plan(manifiesto)
+    tipo = manifiesto.get("tipo_documento", "receta")
+    if tipo not in ("receta", "inbody"):
+        raise ValueError("Tipo de documento histórico no permitido.")
     fuente = Path(manifiesto["origen"]).resolve()
     padron = Path(manifiesto["pacientes_fuente"])
     if hashlib.sha256(padron.read_bytes()).hexdigest() != manifiesto["pacientes_sha256"]:
@@ -93,7 +96,7 @@ def importar(manifiesto,reporte,aplicar=False):
     respaldo.write_text(json.dumps({"proyecto":PROYECTO,"documentos_anteriores":anteriores},indent=2),encoding="utf-8")
     resultados = []
     for r in registros:
-        ruta = f"receta/{r['paciente_id']}/{r['sha256']}.pdf"
+        ruta = f"{tipo}/{r['paciente_id']}/{r['sha256']}.pdf"
         contenido = (fuente/r["archivo_relativo"]).read_bytes()
         try:
             if hashlib.sha256(contenido).hexdigest() != r["sha256"]:
@@ -105,9 +108,9 @@ def importar(manifiesto,reporte,aplicar=False):
                 existente = cliente.pedir(f"storage/v1/object/{BUCKET}/{ruta}",pdf=True)
                 if hashlib.sha256(existente).hexdigest() != r["sha256"]:
                     raise ValueError("El objeto existente tiene una huella distinta.") from None
-            fila = {"paciente_id":r["paciente_id"],"tipo":"receta","sha256":r["sha256"],
+            fila = {"paciente_id":r["paciente_id"],"tipo":tipo,"sha256":r["sha256"],
                 "storage_path":ruta,"nombre_archivo":Path(r["archivo_relativo"]).name,
-                "fecha_documento":r.get("fecha"),"origen_datos":"recetas_pdf_20261008"}
+                "fecha_documento":r.get("fecha"),"origen_datos":manifiesto.get("origen_datos", "recetas_pdf_20261008")}
             guardado = cliente.pedir("rest/v1/archivos_paciente_historicos?on_conflict=paciente_id,tipo,sha256","POST",fila)
             resumen["nuevos" if guardado else "ya_existentes"] += 1
             resultados.append({"sha256":r["sha256"],"paciente_id":r["paciente_id"],"storage_path":ruta,
@@ -117,6 +120,9 @@ def importar(manifiesto,reporte,aplicar=False):
             # No incluir respuestas del proveedor, nombres ni credenciales.
             resultados.append({"sha256":r["sha256"],"estado":"fallo","tipo_error":type(error).__name__})
         reporte.write_text(json.dumps({"resumen":resumen,"resultados":resultados},indent=2),encoding="utf-8")
+        if len(resultados) % 25 == 0:
+            print(json.dumps({"procesados":len(resultados),"total":len(registros),
+                "nuevos":resumen["nuevos"],"ya_existentes":resumen["ya_existentes"],"fallidos":resumen["fallidos"]}),flush=True)
     print(json.dumps(resumen))
     if resumen["fallidos"]: raise SystemExit(2)
 
