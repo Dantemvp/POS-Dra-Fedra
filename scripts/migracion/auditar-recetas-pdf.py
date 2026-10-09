@@ -182,7 +182,7 @@ def sugerencias(nombre: str, claves: list[str]) -> list[dict[str, Any]]:
     return [{"nombre_normalizado": clave, "similitud": round(puntaje, 3)} for puntaje, clave in mejores if puntaje >= 0.72]
 
 
-def auditar(source: Path, patients_path: Path, incluir_sugerencias: bool = True) -> dict[str, Any]:
+def auditar(source: Path, patients_path: Path, incluir_sugerencias: bool = True, por_nombre: bool = False) -> dict[str, Any]:
     pacientes, indice = cargar_pacientes(patients_path)
     archivos = sorted(source.rglob("*.pdf"))
     registros = []
@@ -232,6 +232,9 @@ def auditar(source: Path, patients_path: Path, incluir_sugerencias: bool = True)
         elif len(ids_unicos) > 1:
             estado = "conflicto_paciente"
             paciente_id = None
+        elif por_nombre and len(ids_unicos) == 1:
+            # Vincular el PDF no requiere inventar fecha ni medicamentos.
+            estado = "listo" if items and partes["fecha"] else "listo_documento"
         elif not items:
             estado = "sin_tratamiento"
         elif not partes["fecha"]:
@@ -261,6 +264,9 @@ def auditar(source: Path, patients_path: Path, incluir_sugerencias: bool = True)
         )
         estados[estado] += 1
 
+    if not por_nombre:
+        marcar_coincidencias_fecha(registros)
+    estados = Counter(r["estado"] for r in registros)
     return {
         "generado_en": datetime.now().astimezone().isoformat(),
         "origen": str(source.resolve()),
@@ -268,14 +274,33 @@ def auditar(source: Path, patients_path: Path, incluir_sugerencias: bool = True)
         "pacientes_sha256": hashlib.sha256(patients_path.read_bytes()).hexdigest(),
         "pacientes_archivo_modificado_en": datetime.fromtimestamp(patients_path.stat().st_mtime).astimezone().isoformat(),
         "incluye_sugerencias_aproximadas": incluir_sugerencias,
+        "criterio_vinculacion": "nombre_unico" if por_nombre else "estructurado_estricto",
         "resumen": {
             "pdfs": len(archivos),
             "pacientes_disponibles": len(pacientes),
             "estados": dict(sorted(estados.items())),
             "items_listos": sum(len(r.get("items", [])) for r in registros if r.get("estado") == "listo"),
+            "documentos_vinculables": sum(r.get("estado") in ("listo", "listo_documento") for r in registros),
         },
         "recetas": registros,
     }
+
+
+def marcar_coincidencias_fecha(registros: list[dict[str, Any]]) -> None:
+    """Dos recetas del mismo día pueden ser legítimas. No decidir sin cotejo."""
+    grupos = defaultdict(list)
+    for registro in registros:
+        if registro.get("estado") == "listo":
+            grupos[(registro["paciente_id"], registro["fecha"])].append(registro)
+    for grupo in grupos.values():
+        if len(grupo) < 2:
+            continue
+        identicos = len({json.dumps({k: r.get(k) for k in ("fase", "fase_texto", "items")},
+            sort_keys=True, ensure_ascii=False) for r in grupo}) == 1
+        for registro in grupo:
+            registro["estado"] = "revisar_misma_fecha"
+            registro["coincidencias_misma_fecha"] = [r["id_legacy"] for r in grupo if r is not registro]
+            registro["tratamiento_identico_en_grupo"] = identicos
 
 
 def main() -> int:
@@ -284,6 +309,7 @@ def main() -> int:
     parser.add_argument("--patients", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--sin-sugerencias", action="store_true", help="Solo cotejo exacto; omitir similitudes orientativas.")
+    parser.add_argument("--por-nombre", action="store_true", help="Vincular documentos por nombre único, sin exigir fecha, tratamiento ni distinta fecha.")
     args = parser.parse_args()
 
     if not args.source.is_dir():
@@ -300,7 +326,7 @@ def main() -> int:
     if any(args.output.resolve().is_relative_to(raiz) for raiz in raices):
         parser.error("El manifiesto clínico debe guardarse fuera de cualquier repositorio Git.")
 
-    resultado = auditar(args.source, args.patients, incluir_sugerencias=not args.sin_sugerencias)
+    resultado = auditar(args.source, args.patients, incluir_sugerencias=not args.sin_sugerencias, por_nombre=args.por_nombre)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(resultado, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(resultado["resumen"], ensure_ascii=False, indent=2))

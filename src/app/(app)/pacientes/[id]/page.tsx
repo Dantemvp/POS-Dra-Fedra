@@ -147,6 +147,10 @@ export default async function PacienteDetalle({
     .order("orden", { referencedTable: "receta_items", ascending: true });
   const recetas = (recetasData ?? []) as unknown as RecetaPaciente[];
 
+  const { data: documentosHistoricos } = await supabase.from("archivos_paciente_historicos")
+    .select("id, tipo, nombre_archivo, fecha_documento")
+    .eq("paciente_id",id).order("fecha_documento",{ascending:false,nullsFirst:false});
+
   // Fase actual del tratamiento (de la última receta).
   const { data: ultRecetaArr } = await supabase
     .from("recetas")
@@ -233,6 +237,23 @@ export default async function PacienteDetalle({
       {puntos.length > 0 && <ProgresoPeso puntos={puntos} />}
 
       <div className="mb-6 space-y-3">
+        <details className="group overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-zinc-900 hover:bg-zinc-50">
+            <span className="font-medium">Documentos históricos originales</span>
+            <span className="text-sm text-zinc-500">{documentosHistoricos?.length ?? 0} documentos ⌄</span>
+          </summary>
+          <div className="space-y-3 border-t border-zinc-100 px-5 py-3">
+            {!documentosHistoricos?.length && <p className="text-sm text-zinc-500">Sin documentos históricos importados.</p>}
+            {documentosHistoricos?.map(d => <div key={d.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-zinc-50 p-3">
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-sm font-medium text-zinc-900">{d.nombre_archivo}</p>
+                <p className="text-xs text-zinc-600">{d.tipo === "inbody" ? "InBody" : "Receta"} histórica · {d.fecha_documento ?? "Sin fecha original"}</p>
+              </div>
+              <Link href={`/pacientes/${id}/documentos/${d.id}`} target="_blank" rel="noreferrer"
+                className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white">Ver PDF original</Link>
+            </div>)}
+          </div>
+        </details>
         <details className="group overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-zinc-900 hover:bg-zinc-50">
             <span className="font-medium">Recetas anteriores</span>
