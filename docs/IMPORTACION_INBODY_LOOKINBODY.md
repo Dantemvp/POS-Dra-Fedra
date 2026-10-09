@@ -32,3 +32,12 @@ El enlace verifica rol clínico y pertenencia al paciente en el servidor antes d
 Antes de cargar, el importador respalda los metadatos existentes fuera de Git. El reporte identifica las altas nuevas y sus rutas. Si se autoriza una reversa, retirar únicamente objetos y filas con `nuevo=true` en esa corrida; no vaciar tablas ni eliminar originales locales. Un reintento no sobrescribe objetos y omite metadatos con la misma combinación paciente, tipo y huella.
 
 Los Excel, JPG, PDFs, padrones, manifiestos y reportes clínicos permanecen fuera del repositorio. Git contiene código, pruebas sintéticas y conteos agregados, nunca nombres de pacientes reales.
+
+## Carga del 9 de octubre de 2026
+
+- Padrón vigente consultado: 550 pacientes. Carpeta recibida: 5150 JPG, correspondientes a los 5150 estudios del Excel por ID y fecha/hora. Cero estudios del Excel sin imagen.
+- Carga autorizada completada: 833 hojas nuevas para 292 pacientes, cero fallos. Cada uno de los 833 PDF conservó los bytes del JPEG original.
+- Pendientes de identidad: 4313 hojas sin coincidencia exacta en el padrón y 4 con nombre ambiguo. Se conservaron localmente y se generó una lista privada agrupada por nombre e ID de LookinBody. No se crearon pacientes.
+- Verificación remota: 833 vínculos con paciente, huella y fecha correctos; cinco descargas con SHA-256 idéntico; 543 documentos previos intactos; bucket privado.
+- Respaldo previo, manifiesto, reporte de altas y verificación en la carpeta externa `inbody-lookinbody-20261009`. No hay documentos clínicos dentro de Git.
+- No hubo migraciones, merge ni despliegue en este paso. Los datos están cargados; la interfaz permanece en el PR 37, pendiente de revisión independiente y publicación.

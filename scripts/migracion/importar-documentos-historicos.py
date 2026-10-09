@@ -1,4 +1,4 @@
-"""Sube PDFs originales por nombre único. No emite ni reescribe recetas.
+"""Sube documentos históricos PDF por nombre único. No emite ni reescribe recetas.
 
 Credencial: sesión de Supabase CLI de la cuenta dueña de producción.
 Nunca imprime ni guarda la clave de servicio obtenida del CLI.
