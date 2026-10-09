@@ -24,6 +24,11 @@ enviar `Enter` después del código.
 - [ ] Escanear una receta `REC<folio>`: agrega solo los productos ligados y reporta los faltantes.
 - [ ] Confirmar que el lector manda `Enter`; si solo escribe números, configurar sufijo CR/Enter.
 - [ ] Bloquear y desbloquear el celular, volver al POS y repetir un escaneo.
+- [ ] Escanear con el foco en cantidad o en otro buscador: confirmar dónde llega el código y volver al campo de escaneo antes de continuar.
+- [ ] Hacer dos escaneos rápidos: códigos separados, dos unidades y ningún código concatenado.
+- [ ] En iPhone, confirmar que el teclado y autocorrector no alteran `REC<folio>`.
+- [ ] Confirmar que el idioma del teclado del lector coincide con el celular.
+- [ ] En alta y edición de inventario, el Enter del lector no guarda el formulario.
 
 ## 3. Venta y ticket POS-8360
 
@@ -40,6 +45,12 @@ navegador desactivados, orientación vertical.
 - [ ] El QR abre exactamente la página de reseña de Google.
 - [ ] El cortador corta después del QR y no deja texto fuera del papel.
 - [ ] Reimprimir el ticket no registra una segunda venta.
+- [ ] Identificar el equipo conectado a la POS-8360. La captura desde celular no garantiza impresión desde ese celular.
+- [ ] Con el perfil de impresión directa configurado, cobrar abre la impresión sin otro clic.
+- [ ] Si se acaba el papel, reponer y reimprimir el comprobante existente sin cobrar de nuevo.
+- [ ] Si hay cajón conectado, comprobar su apertura con el controlador real.
+- [ ] Consultorio: cobro mixto, ticket con logo de la doctora y desglose de ambos pagos.
+- [ ] Corte actual y corte guardado: imprimir/PDF y exportar CSV; comparar totales contra pantalla.
 
 ## 4. Consultorio
 
