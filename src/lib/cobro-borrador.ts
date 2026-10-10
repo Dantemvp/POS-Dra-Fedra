@@ -17,6 +17,9 @@ export type CobroBorrador = {
   items: ItemCobroBorrador[];
   metodo: MetodoCobro;
   nota: string;
+  dividir?: boolean;
+  metodo2?: MetodoCobro;
+  monto1?: string;
 };
 
 const METODOS = new Set<MetodoCobro>([
@@ -33,6 +36,9 @@ export function leerCobroBorrador(raw: string | null): CobroBorrador | null {
     if (valor.version !== 1 || !METODOS.has(valor.metodo as MetodoCobro)) return null;
     if (typeof valor.paciente_id !== "string" || typeof valor.nota !== "string") return null;
     if (!Array.isArray(valor.items) || valor.items.length > 100) return null;
+    if (valor.dividir !== undefined && typeof valor.dividir !== "boolean") return null;
+    if (valor.metodo2 !== undefined && !METODOS.has(valor.metodo2)) return null;
+    if (valor.monto1 !== undefined && (typeof valor.monto1 !== "string" || valor.monto1.length > 30 || (valor.monto1 !== "" && (!Number.isFinite(Number(valor.monto1)) || Number(valor.monto1) < 0)))) return null;
 
     const items: ItemCobroBorrador[] = [];
     for (const item of valor.items) {
@@ -56,6 +62,9 @@ export function leerCobroBorrador(raw: string | null): CobroBorrador | null {
       items,
       metodo: valor.metodo as MetodoCobro,
       nota: valor.nota.slice(0, 1000),
+      ...(valor.dividir !== undefined ? { dividir: valor.dividir } : {}),
+      ...(valor.metodo2 !== undefined ? { metodo2: valor.metodo2 } : {}),
+      ...(valor.monto1 !== undefined ? { monto1: valor.monto1 } : {}),
     };
   } catch {
     return null;
