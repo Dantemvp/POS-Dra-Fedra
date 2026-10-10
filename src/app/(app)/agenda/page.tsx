@@ -3,6 +3,8 @@ import NuevaCita from "./NuevaCita";
 import CitaCard from "./CitaCard";
 import CalendarioAgenda, { type CitaCal } from "./CalendarioAgenda";
 import { confirmacionVencida, necesitaConfirmar } from "./confirmacion";
+import GoogleCalendario from './GoogleCalendario';
+import { perfilCalendario } from '@/lib/google-calendario-servidor';
 
 export type Cita = {
   id: string;
@@ -49,8 +51,10 @@ function tituloDia(iso: string) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-export default async function AgendaPage() {
+export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const supabase = await createClient();
+  const perfilGoogle = await perfilCalendario();
+  const { google: estadoOAuth } = await searchParams;
 
   // Desde el inicio del día de hoy (en Sinaloa) en adelante.
   const hoyClave = claveDia(new Date().toISOString());
@@ -163,6 +167,8 @@ export default async function AgendaPage() {
           </span>
         </div>
       )}
+
+      {perfilGoogle && <GoogleCalendario puedeConectar={['admin', 'doctora'].includes(perfilGoogle.rol)} estadoOAuth={estadoOAuth} />}
 
       <div className="mb-6">
         <CalendarioAgenda citas={citasCal} />
