@@ -126,6 +126,7 @@ export default async function CobrosPage() {
                       <span className={cancelado ? "line-through" : ""}>
                         {fmt(c.total)}
                       </span>
+                      <Link href={`/cobros/${c.id}`} className="mt-1 block text-sm font-medium underline">Ver ticket / Reimprimir</Link>
                       {!cancelado && (puedeCancelar || puedeBorrar) && (
                         <div className="mt-1 flex items-center justify-end gap-3">
                           {puedeCancelar && <CancelarCobro id={c.id} />}
