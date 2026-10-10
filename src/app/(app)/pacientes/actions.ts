@@ -2,8 +2,36 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { puedeEditarPaciente, validarEdicionPaciente } from "@/lib/paciente-edicion";
 
 export type Result = { ok: boolean; error?: string; id?: string };
+
+export async function editarPaciente(
+  pacienteId: string,
+  anterior: { nombre: string; apellidos: string | null; telefono_wpp: string | null },
+  entrada: Record<string, unknown>,
+): Promise<Result> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Inicia sesión para editar." };
+  const { data: perfil } = await supabase.from("usuarios").select("rol").eq("auth_uid", user.id).single();
+  if (!puedeEditarPaciente(perfil?.rol)) return { ok: false, error: "No tienes permiso para editar pacientes." };
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pacienteId)) {
+    return { ok: false, error: "Paciente inválido." };
+  }
+  const validado = validarEdicionPaciente(entrada);
+  if (!validado.ok) return validado;
+  let consulta = supabase.from("pacientes").update(validado.datos).eq("id", pacienteId).eq("nombre", anterior.nombre);
+  consulta = anterior.apellidos === null ? consulta.is("apellidos", null) : consulta.eq("apellidos", anterior.apellidos);
+  consulta = anterior.telefono_wpp === null ? consulta.is("telefono_wpp", null) : consulta.eq("telefono_wpp", anterior.telefono_wpp);
+  const { data, error } = await consulta.select("id").maybeSingle();
+  if (error) return { ok: false, error: "No se pudieron guardar los datos. Intenta de nuevo." };
+  if (!data) return { ok: false, error: "Los datos cambiaron desde que abriste el expediente. Recarga y vuelve a revisar." };
+  revalidatePath(`/pacientes/${pacienteId}`);
+  revalidatePath("/pacientes");
+  revalidatePath("/agenda");
+  return { ok: true, id: data.id };
+}
 
 type CampoHistoria = {
   id: string;

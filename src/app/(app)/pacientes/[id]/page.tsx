@@ -9,6 +9,8 @@ import HistoriaCard from "./HistoriaCard";
 import { BadgeHistorico } from "@/components/Historico";
 import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
 import ReviewGoogle from "./ReviewGoogle";
+import EditarPaciente from "./EditarPaciente";
+import { puedeEditarPaciente } from "@/lib/paciente-edicion";
 
 // Edad en años a partir de la fecha de nacimiento.
 function edadDe(fnac: string | null): string | null {
@@ -237,6 +239,7 @@ export default async function PacienteDetalle({
         </div>
       </div>
 
+      {puedeEditarPaciente(usuario?.rol) && <div className="mb-6"><EditarPaciente key={`${p.nombre}|${p.apellidos}|${p.telefono_wpp}`} paciente={p} /></div>}
       {puntos.length > 0 && <ProgresoPeso puntos={puntos} />}
 
       <div className="mb-6 space-y-3">
