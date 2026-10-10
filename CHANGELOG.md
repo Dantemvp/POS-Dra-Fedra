@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.28] - 2026-10-10
+
+- Habilita pagos mixtos de Consultorio con redondeo por concepto y reversión atómica.
+- Abre la impresión del ticket al completar el cobro en Farmacia y Consultorio.
+- Agrega ticket de Consultorio guardado y reimpresión sin registrar otro cobro.
+- Aplica únicamente la migración 047; Supabase la registra como 20261010204558
+  (cobros_pagos_mixtos_047). No volver a aplicarla por su fecha local anterior.
+- La impresión sin diálogo requiere configurar Chrome en el equipo de la impresora.
+
 ## [0.1.27] - 2026-10-10
 
 - Agrega Preparar WhatsApp en la agenda del POS y en las citas de Google,
