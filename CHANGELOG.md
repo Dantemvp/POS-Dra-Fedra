@@ -1,5 +1,16 @@
 # Historial de versiones
 
+## [0.1.26] - 2026-10-10
+
+- Une Google y POS en el calendario y en la lista de próximas citas del mes,
+  identificando el origen y respetando la hora de Sinaloa.
+- Consulta Google cada minuto mientras la agenda está visible y al volver
+  a la pestaña; conserva la última lectura con aviso si la actualización falla.
+- Muestra notas, ubicación y enlace original de Google; conserva el WhatsApp
+  de las citas del POS. No envía nuevos recordatorios ni liga pacientes por nombre.
+- Simplifica los controles y adapta el calendario al tema y al ancho disponible.
+- Sin migraciones ni copias de eventos a la base de datos.
+
 ## [0.1.25] - 2026-10-10
 
 - Recupera el callback OAuth de junio para reutilizar el cliente de Google

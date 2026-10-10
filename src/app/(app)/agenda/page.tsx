@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import NuevaCita from "./NuevaCita";
 import CitaCard from "./CitaCard";
-import CalendarioAgenda, { type CitaCal } from "./CalendarioAgenda";
+import type { CitaCal } from "./CalendarioAgenda";
 import { confirmacionVencida, necesitaConfirmar } from "./confirmacion";
 import GoogleCalendario from './GoogleCalendario';
 import { perfilCalendario } from '@/lib/google-calendario-servidor';
@@ -84,7 +84,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       supabase
         .from("citas")
         .select(
-          "id, fecha_hora, estado, tipo, titulo, paciente:pacientes(id, nombre, apellidos)",
+          "id, fecha_hora, estado, tipo, titulo, notas, paciente:pacientes(id, nombre, apellidos, telefono_wpp)",
         )
         .gte("fecha_hora", calDesde.toISOString())
         .lte("fecha_hora", calHasta.toISOString())
@@ -100,7 +100,8 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
     estado: string;
     tipo: string;
     titulo: string | null;
-    paciente: { id: string; nombre: string; apellidos: string | null } | null;
+    notas: string | null;
+    paciente: { id: string; nombre: string; apellidos: string | null; telefono_wpp: string | null } | null;
   };
   const citasCal: CitaCal[] = ((calData ?? []) as unknown as CalRow[]).map(
     (c) => ({
@@ -109,6 +110,8 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       estado: c.estado,
       tipo: c.tipo ?? "cita_paciente",
       paciente_id: c.paciente?.id ?? null,
+      descripcion: c.notas ?? undefined,
+      telefono_wpp: c.paciente?.telefono_wpp ?? null,
       nombre: c.paciente
         ? `${c.paciente.nombre} ${c.paciente.apellidos ?? ""}`.trim()
         : c.titulo ?? "Evento",
@@ -168,15 +171,11 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         </div>
       )}
 
-      {perfilGoogle && <GoogleCalendario puedeConectar={['admin', 'doctora'].includes(perfilGoogle.rol)} estadoOAuth={estadoOAuth} />}
-
-      <div className="mb-6">
-        <CalendarioAgenda citas={citasCal} />
-      </div>
+      <GoogleCalendario citas={citasCal} puedeConectar={Boolean(perfilGoogle && ['admin', 'doctora'].includes(perfilGoogle.rol))} estadoOAuth={estadoOAuth} />
 
       <NuevaCita pacientes={pacientes} />
 
-      <h2 className="mb-3 mt-8 text-lg font-medium text-zinc-900">Próximas citas</h2>
+      <h2 className="mb-3 mt-8 text-lg font-medium text-zinc-900">Gestión de citas del POS</h2>
       {grupos.size === 0 ? (
         <div className="rounded-xl bg-white px-4 py-12 text-center text-sm text-zinc-400 ring-1 ring-zinc-200">
           No hay citas próximas.

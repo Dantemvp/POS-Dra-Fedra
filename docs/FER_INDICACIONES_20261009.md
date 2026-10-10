@@ -7,7 +7,7 @@ Base: main `3a64426`, producción 0.1.23. Este documento no acredita un desplieg
 
 1. En el expediente, **Editar datos del paciente** permite corregir nombre, apellidos y WhatsApp. Guarda sobre el mismo ID; no crea otro paciente ni cambia el origen histórico o sus vínculos con recetas e InBody. Admin, doctora, asistente y gerente pueden usarlo según los permisos existentes. La acción verifica la sesión y el rol real en el servidor y detecta cambios concurrentes. Farmacia no puede usarla. Conserva la auditoría existente de actualizaciones de pacientes; no agrega otra bitácora.
 2. La migración `20261009000048_hc_inhibidores_detalle.sql` agrega “¿Cuáles inhibidores del apetito ha consumido?” después de la pregunta existente. La respuesta Sí abre el detalle; No lo cierra y el formulario lo excluye del guardado. El detalle es opcional. No reescribe respuestas anteriores ni modifica las plantillas de fases. Si falta la pregunta o hay una configuración incompatible, aborta. Un reintento correcto no duplica campos.
-3. Agenda incorpora un panel plegable de Google Calendar, separado de las citas del POS. Consulta el calendario principal por mes, en hora de Sinaloa, al abrir el panel o pulsar Actualizar. No hay tarea periódica ni sincronización de citas hacia la base. No solicita acceso a Gmail, ni crea, modifica o elimina eventos en Google.
+3. Desde 0.1.26, Agenda une Google Calendar y POS en el mismo calendario y muestra próximas citas del mes. Consulta el calendario principal por mes, en hora de Sinaloa, al entrar, cada 60 segundos mientras la pestaña está visible y al volver a ella. No hay cron ni sincronización de citas hacia la base. No solicita acceso a Gmail, ni crea, modifica o elimina eventos en Google.
 
 ## Activación de Google
 
@@ -18,7 +18,7 @@ Antes de activar:
 - Confirmar que la tabla de la migración 040 existe, mantiene RLS y no tiene políticas que expongan sus tokens a usuarios normales.
 - El retorno conserva la ruta de junio: `https://sistema-fedra.vercel.app/api/google/oauth/callback`. Si Google ya la tiene registrada, no hace falta cambiar el cliente. Si sigue dando `redirect_uri_mismatch`, comprobar esa URI exacta en el cliente existente de Google Cloud y que Calendar API esté habilitada. La cuenta administradora del proyecto Cloud no consta en Git; no confundirla con la cuenta del calendario.
 - Si la aplicación OAuth está en modo de pruebas, agregar la cuenta de la doctora como usuario de prueba. Google puede caducar la autorización de prueba; no confundirla con una conexión permanente.
-- Después de publicar, entrar al POS como admin o doctora, abrir Agenda, desplegar Google y pulsar Conectar. Autorizar la cuenta indicada por el consultorio. Asistente y gerente pueden consultar, pero no conectar otra cuenta.
+- Después de publicar, entrar al POS como admin o doctora, abrir Agenda y pulsar Conectar Google cuando no exista conexión. Autorizar la cuenta indicada por el consultorio. Asistente y gerente pueden consultar, pero no conectar otra cuenta.
 - Dante confirmó la cuenta fijada en el código. No usar la cuenta anterior. Esta entrega consulta su calendario principal y no selecciona calendarios secundarios.
 - Si existe un permiso anterior de la misma aplicación, revocarlo en Google antes del nuevo consentimiento, no después. Una revocación posterior también puede invalidar la conexión nueva.
 
@@ -38,7 +38,16 @@ Referencias: [OAuth para servidor](https://developers.google.com/identity/protoc
 - Corregir nombre y WhatsApp de un paciente de prueba; recargar y comprobar el enlace de WhatsApp y que recetas e InBody sigan en el mismo expediente.
 - Cancelar una edición y confirmar que nada se guardó. Abrir el mismo paciente en dos pestañas; la segunda debe pedir recargar si la primera ya cambió sus datos.
 - En la historia que contiene la pregunta, marcar Sí, escribir un detalle ficticio, guardar y revisar su vista imprimible. En otra captura marcar Sí, escribir y cambiar a No: no debe conservar ese detalle.
-- Consultar Google con la sesión de asistente después de autorizarlo como doctora/admin. Cambiar un evento ficticio en Google y pulsar Actualizar en el POS. Confirmar fecha, hora y eventos de todo el día; comprobar que no aparece otra cita dentro del calendario propio del POS.
+- Consultar Google con la sesión de asistente después de autorizarlo como doctora/admin. Cambiar un evento ficticio en Google y comprobar que aparece en el calendario unificado y próximas citas en menos de un minuto con la pestaña visible. Probar Actualizar y volver a una pestaña oculta. Confirmar fecha, hora, eventos de todo el día y cambios de mes; comprobar que no se crea una fila duplicada en citas del POS.
+
+## Prueba de la agenda unificada (0.1.26)
+
+- Crear o mover una cita ficticia en el calendario principal de Google. Verla en el día correspondiente y en próximas citas del mes. Eliminarla y confirmar que desaparece tras actualizar.
+- Revisar Google y POS con un título igual: no se fusionan ni se asigna un paciente por nombre. Cada fuente lleva su etiqueta.
+- Abrir notas y ubicación. El HTML de las notas se presenta como texto, nunca se ejecuta. El enlace solo admite destinos de Google Calendar.
+- Las citas del POS conservan WhatsApp y sus acciones existentes. Los eventos de Google todavía no tienen botón de recordatorio ni destinatario confirmado. No se extrae automáticamente un número de sus notas.
+- Ocultar la pestaña pausa la consulta; al volver se actualiza. Si Google falla, el aviso identifica la lectura anterior como posiblemente desactualizada, sin ocultar citas del POS.
+- No hay persistencia de eventos, notas o teléfonos de Google en la base o almacenamiento del navegador. Esta ronda no manda mensajes, no altera permisos OAuth y no modifica Google.
 
 Las pruebas automatizadas usan datos ficticios y conexiones externas simuladas, excepto las pruebas SQL de 048 que ejecutan la migración en PostgreSQL/PGlite local. No acreditan consentimiento real de Google, RLS efectivo remoto ni impresión física. Los videos y datos de pacientes no entran al repositorio.
 
