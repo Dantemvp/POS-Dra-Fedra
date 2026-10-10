@@ -3,7 +3,9 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 export const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 export const GOOGLE_EMAIL = 'drafedraaldama@gmail.com';
 export const POS_ORIGIN = 'https://sistema-fedra.vercel.app';
-export const CALLBACK = `${POS_ORIGIN}/api/google-calendario/callback`;
+// Conservar el retorno usado por el cliente OAuth desde junio de 2026.
+export const CALLBACK = `${POS_ORIGIN}/api/google/oauth/callback`;
+export const OAUTH_COOKIE_PATH = '/api/google/oauth';
 
 // Claves separadas por propósito. Cambiar el secreto OAuth requiere reconectar.
 function clave(secreto: string, proposito: string) {

@@ -16,7 +16,7 @@ El POS usa las variables existentes `GOOGLE_OAUTH_CLIENT_ID` y `GOOGLE_OAUTH_CLI
 Antes de activar:
 
 - Confirmar que la tabla de la migración 040 existe, mantiene RLS y no tiene políticas que expongan sus tokens a usuarios normales.
-- En el cliente OAuth de Google Cloud, habilitar Calendar API y registrar exactamente `https://sistema-fedra.vercel.app/api/google-calendario/callback` como URI de redirección autorizada.
+- El retorno conserva la ruta de junio: `https://sistema-fedra.vercel.app/api/google/oauth/callback`. Si Google ya la tiene registrada, no hace falta cambiar el cliente. Si sigue dando `redirect_uri_mismatch`, comprobar esa URI exacta en el cliente existente de Google Cloud y que Calendar API esté habilitada. La cuenta administradora del proyecto Cloud no consta en Git; no confundirla con la cuenta del calendario.
 - Si la aplicación OAuth está en modo de pruebas, agregar la cuenta de la doctora como usuario de prueba. Google puede caducar la autorización de prueba; no confundirla con una conexión permanente.
 - Después de publicar, entrar al POS como admin o doctora, abrir Agenda, desplegar Google y pulsar Conectar. Autorizar la cuenta indicada por el consultorio. Asistente y gerente pueden consultar, pero no conectar otra cuenta.
 - Dante confirmó la cuenta fijada en el código. No usar la cuenta anterior. Esta entrega consulta su calendario principal y no selecciona calendarios secundarios.
