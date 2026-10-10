@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import RecordatorioWhatsApp from './RecordatorioWhatsApp';
 import { agruparAgenda, diaAgenda, horaAgenda, type CitaCalendario } from '@/lib/agenda-vista';
 export type { CitaCalendario as CitaCal } from '@/lib/agenda-vista';
 
@@ -24,6 +25,7 @@ export function DetalleCitaAgenda({ cita: c, mostrarFecha = false }: { cita: Cit
     </div>
     <div className="mt-2 flex flex-wrap items-center justify-between gap-2 pl-5 text-xs text-zinc-600"><span>{c.origen === 'google' ? 'Solo lectura' : c.estado}</span>{c.url && <a href={c.url} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4">Ver en Google</a>}</div>
     {c.descripcion && <details className="mt-2 pl-5 text-sm text-zinc-700"><summary className="cursor-pointer py-2 font-medium">Notas y datos de la cita</summary><p className="whitespace-pre-wrap break-words rounded-lg border border-zinc-200 p-3">{c.descripcion}</p></details>}
+    {!['cancelada', 'atendida', 'cedida'].includes(c.estado) && (c.origen === 'google' || c.tipo === 'cita_paciente') && <RecordatorioWhatsApp key={`${c.id}:${c.fecha_hora}:${c.nombre}:${c.telefono_wpp ?? ''}`} nombre={c.origen === 'google' ? '' : c.nombre} telefono={c.telefono_wpp} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google={c.origen === 'google'} />}
   </article>;
 }
 

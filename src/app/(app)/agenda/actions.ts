@@ -79,7 +79,7 @@ export async function cambiarEstadoCita(
   return { ok: true };
 }
 
-// Marca que ya se mandó el recordatorio por WhatsApp (al abrir el wa.me).
+// La persona que captura confirma explícitamente que lo envió en WhatsApp.
 export async function marcarRecordatorio(id: string): Promise<Result> {
   const supabase = await createClient();
   const { error } = await supabase

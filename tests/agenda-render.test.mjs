@@ -6,10 +6,12 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { whatsappModuleUrl } from './helpers/whatsapp-render.mjs';
 
 const require = createRequire(import.meta.url);
 const archivo = new URL('../src/app/(app)/agenda/CalendarioAgenda.tsx', import.meta.url);
 let fuente = fs.readFileSync(archivo, 'utf8').replace("import Link from 'next/link';", "const Link = ({href, children, ...props}) => React.createElement('a', {href, ...props}, children);");
+fuente = fuente.replace("'./RecordatorioWhatsApp'", JSON.stringify(whatsappModuleUrl));
 fuente = `import React from ${JSON.stringify(pathToFileURL(require.resolve('react')).href)};\n` + fuente.replaceAll("'@/lib/agenda-vista'", JSON.stringify(new URL('../src/lib/agenda-vista.ts', import.meta.url).href));
 const codigo = ts.transpileModule(fuente, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText.replaceAll("from 'react'", `from ${JSON.stringify(pathToFileURL(require.resolve('react')).href)}`);
 const { default: Calendario, DetalleCitaAgenda } = await import(`data:text/javascript;base64,${Buffer.from(codigo).toString('base64')}`);
@@ -29,4 +31,5 @@ test('agenda render: conserva notas como texto, sin ejecutar HTML ni ligar pacie
   assert.match(html, /Notas y datos de la cita/);
   assert.match(html, /&lt;script&gt;/);
   assert.doesNotMatch(html, /<script>|\/pacientes\//);
+  assert.match(html, /Preparar WhatsApp/);
 });
