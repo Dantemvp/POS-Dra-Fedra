@@ -8,6 +8,7 @@ import {
 } from "./actions";
 import { TIPOS_CITA } from "./tipos";
 import type { Cita } from "./page";
+import RecordatorioWhatsApp from './RecordatorioWhatsApp';
 
 const TZ = "America/Mazatlan";
 
@@ -32,15 +33,6 @@ function hora(iso: string) {
   }).format(new Date(iso));
 }
 
-// Normaliza el teléfono a formato internacional para wa.me (México = 52).
-function waNumero(tel: string | null): string | null {
-  if (!tel) return null;
-  let d = tel.replace(/\D/g, "");
-  if (!d) return null;
-  if (d.length === 10) d = "52" + d; // celular MX sin lada país
-  return d;
-}
-
 export default function CitaCard({
   cita,
   vencida = false,
@@ -63,20 +55,6 @@ export default function CitaCard({
       if (!r.ok) setError(r.error ?? "Error.");
     });
   }
-
-  const numero = waNumero(p?.telefono_wpp ?? null);
-  const fechaTexto = new Intl.DateTimeFormat("es-MX", {
-    timeZone: TZ,
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date(cita.fecha_hora));
-  const mensaje = `Hola ${p?.nombre ?? ""}, le recordamos su cita con la Dra. Fedra Aldama el ${fechaTexto} a las ${hora(
-    cita.fecha_hora,
-  )}. Por favor confirme su asistencia. ¡Gracias!`;
-  const waLink = numero
-    ? `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`
-    : null;
 
   const cerrada =
     cita.estado === "atendida" ||
@@ -123,20 +101,7 @@ export default function CitaCard({
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-          {waLink && !cerrada && (
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => {
-                if (!cita.recordatorio_enviado)
-                  run(() => marcarRecordatorio(cita.id));
-              }}
-              className="rounded-lg bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700"
-            >
-              WhatsApp
-            </a>
-          )}
+          {esPaciente && !cerrada && !cita.recordatorio_enviado && <button type="button" disabled={pending} onClick={() => { if (window.confirm('¿Ya envió el recordatorio desde WhatsApp? Abrir el chat no lo envía.')) run(() => marcarRecordatorio(cita.id)); }} className="min-h-11 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-700">Ya envié el recordatorio</button>}
           {esPaciente && cita.estado === "agendada" && (
             <button
               disabled={pending}
@@ -167,6 +132,7 @@ export default function CitaCard({
         </div>
       </div>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {esPaciente && !cerrada && <RecordatorioWhatsApp key={`${cita.id}:${cita.fecha_hora}:${nombre}:${p?.telefono_wpp ?? ''}`} nombre={nombre} telefono={p?.telefono_wpp} fecha={cita.fecha_hora} />}
     </div>
   );
 }
