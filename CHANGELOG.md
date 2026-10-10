@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.27] - 2026-10-10
+
+- Agrega Preparar WhatsApp en la agenda del POS y en las citas de Google,
+  con mensaje editable de agendamiento o recordatorio y hora de Sinaloa.
+- Abre WhatsApp o WhatsApp Web sin enviar automáticamente ni confirmar la cita.
+  El registro de recordatorio enviado exige confirmación humana.
+- Mantiene las políticas opcionales hasta recibir el texto autorizado por Fer.
+  No guarda borradores, modifica Google ni aplica migraciones.
+
 ## [0.1.26] - 2026-10-10
 
 - Une Google y POS en el calendario y en la lista de próximas citas del mes,
