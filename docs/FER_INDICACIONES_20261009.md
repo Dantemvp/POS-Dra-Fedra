@@ -1,6 +1,6 @@
 # Indicaciones de Fer, 9 de octubre de 2026
 
-Autor: Codex. Revisión independiente pendiente de Claude.
+Autor: Codex. Claude aprobó el código `ca19b61` en [la revisión del PR #39](https://github.com/Dantemvp/POS-Dra-Fedra/pull/39#issuecomment-6099457679).
 Base: main `3a64426`, producción 0.1.23. Este documento no acredita un despliegue.
 
 ## Cambios
@@ -19,7 +19,8 @@ Antes de activar:
 - En el cliente OAuth de Google Cloud, habilitar Calendar API y registrar exactamente `https://sistema-fedra.vercel.app/api/google-calendario/callback` como URI de redirección autorizada.
 - Si la aplicación OAuth está en modo de pruebas, agregar la cuenta de la doctora como usuario de prueba. Google puede caducar la autorización de prueba; no confundirla con una conexión permanente.
 - Después de publicar, entrar al POS como admin o doctora, abrir Agenda, desplegar Google y pulsar Conectar. Autorizar la cuenta indicada por el consultorio. Asistente y gerente pueden consultar, pero no conectar otra cuenta.
-- Confirmar con Fer que usa el calendario **principal** de esa cuenta. Esta entrega no selecciona calendarios secundarios.
+- Dante confirmó la cuenta fijada en el código. No usar la cuenta anterior. Esta entrega consulta su calendario principal y no selecciona calendarios secundarios.
+- Si existe un permiso anterior de la misma aplicación, revocarlo en Google antes del nuevo consentimiento, no después. Una revocación posterior también puede invalidar la conexión nueva.
 
 El servidor rechaza otra cuenta, permisos de escritura, acceso a correo, tokens antiguos sin cifrar y estados OAuth ajenos o vencidos. Solicita consentimiento nuevo con PKCE. Los errores se muestran como errores, no como ausencia de citas. El navegador y el service worker no guardan respuestas de esta API en caché. Google sigue siendo el lugar para editar la agenda. Para retirar el acceso, revocarlo desde los permisos de la cuenta de Google.
 
@@ -40,3 +41,14 @@ Referencias: [OAuth para servidor](https://developers.google.com/identity/protoc
 - Consultar Google con la sesión de asistente después de autorizarlo como doctora/admin. Cambiar un evento ficticio en Google y pulsar Actualizar en el POS. Confirmar fecha, hora y eventos de todo el día; comprobar que no aparece otra cita dentro del calendario propio del POS.
 
 Las pruebas automatizadas usan datos ficticios y conexiones externas simuladas, excepto las pruebas SQL de 048 que ejecutan la migración en PostgreSQL/PGlite local. No acreditan consentimiento real de Google, RLS efectivo remoto ni impresión física. Los videos y datos de pacientes no entran al repositorio.
+
+## Operación del 10 de octubre
+
+Dante autorizó respaldo, migración y publicación después de la revisión independiente. Confirmó la cuenta de Google que fija el código; esa condición está resuelta.
+
+- Respaldo local de 98 definiciones, con manifiesto SHA-256 y SQL de restauración; sin pacientes, respuestas ni secretos. Se comprobó su restauración y reintento en PostgreSQL/PGlite antes de tocar la base.
+- 048 aplicada y registrada en el historial remoto dentro de la misma transacción, con bloqueo breve y comprobación de que las definiciones no habían cambiado desde el respaldo. Quedaron 99 campos. Se cotejaron los originales: solo cambiaron los órdenes posteriores de General y apareció el detalle en orden 5. No se aplicaron 046/047 ni se creó una tabla de respaldo productiva.
+- La tabla existente de conexión con Google mantiene RLS y cero políticas de acceso directo, comprobado en producción sin leer tokens.
+- Versión de la entrega: 0.1.24. El código funcional conserva el SHA revisado; el commit de preparación solo cambia versión, changelog y este registro. El resultado del despliegue se registrará en el PR al terminar, no se presume aquí.
+
+Para reversa de la aplicación se conserva el despliegue previo de 0.1.23. El SQL del respaldo restaura definiciones originales por ID, sin borrar campos aditivos ni respuestas; no ejecutarlo automáticamente después de nuevas capturas.

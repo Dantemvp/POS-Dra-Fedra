@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.24] - 2026-10-10
+
+- Permite corregir nombre, apellidos y WhatsApp desde el mismo expediente,
+  conservando sus recetas e InBody y comprobando permisos y cambios concurrentes.
+- Agrega el detalle condicional de inhibidores del apetito en la historia General,
+  sin modificar respuestas clínicas anteriores (migración 048).
+- Prepara en Agenda un panel mensual de Google Calendar de solo lectura,
+  sin modificar eventos ni duplicar citas; requiere consentimiento de la cuenta confirmada.
+
 ## [0.1.23] - 2026-10-09
 
 - Actualiza Next.js a 16.3.8 y las dependencias corregidas ya preparadas en la rama de trabajo.
