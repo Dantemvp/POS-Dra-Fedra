@@ -40,7 +40,7 @@ export function validarEstado(texto: string, secreto: string, uid: string, estad
   return datos as { uid: string; state: string; exp: number; verifier: string };
 }
 
-export type EventoGoogle = { id: string; titulo: string; inicio: string; diaCompleto: boolean };
+export type EventoGoogle = { id: string; titulo: string; inicio: string; diaCompleto: boolean; fin?: string; descripcion?: string; ubicacion?: string; url?: string };
 // Solo GET, mes acotado y todas las páginas. Un error no se disfraza de agenda vacía.
 export async function eventosDelMes(accessToken: string, mes: string, calendario = 'primary', pedir: typeof fetch = fetch): Promise<EventoGoogle[]> {
   if (!/^20\d\d-(0[1-9]|1[0-2])$/.test(mes)) throw new Error('Mes inválido.');
@@ -63,7 +63,19 @@ export async function eventosDelMes(accessToken: string, mes: string, calendario
       if (typeof item.id !== 'string' || typeof inicio !== 'string' || !Number.isFinite(Date.parse(inicio))) throw new Error('Google devolvió un evento inválido.');
       if (!vistos.has(item.id)) {
         vistos.add(item.id);
-        eventos.push({ id: item.id, titulo: typeof item.summary === 'string' ? item.summary : 'Sin título', inicio, diaCompleto: !item.start?.dateTime });
+        const fin = item.end?.dateTime ?? item.end?.date;
+        let url: string | undefined;
+        try {
+          const enlace = new URL(item.htmlLink);
+          if (enlace.protocol === 'https:' && (enlace.hostname === 'calendar.google.com' || (enlace.hostname === 'www.google.com' && enlace.pathname.startsWith('/calendar/')))) url = enlace.href;
+        } catch { /* Enlaces ausentes o externos no se ofrecen como acción. */ }
+        eventos.push({
+          id: item.id, titulo: typeof item.summary === 'string' ? item.summary : 'Sin título', inicio, diaCompleto: !item.start?.dateTime,
+          ...(typeof fin === 'string' && Number.isFinite(Date.parse(fin)) ? { fin } : {}),
+          ...(typeof item.description === 'string' ? { descripcion: item.description } : {}),
+          ...(typeof item.location === 'string' ? { ubicacion: item.location } : {}),
+          ...(url ? { url } : {}),
+        });
       }
     }
     pagina = cuerpo.nextPageToken ?? '';
