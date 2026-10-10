@@ -2,13 +2,13 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { perfilCalendario, configuracionGoogle } from '@/lib/google-calendario-servidor';
-import { CALLBACK, GOOGLE_EMAIL, POS_ORIGIN, cifrar, scopesSoloLectura, validarEstado } from '@/lib/google-calendario-seguridad';
+import { CALLBACK, GOOGLE_EMAIL, POS_ORIGIN, OAUTH_COOKIE_PATH, cifrar, scopesSoloLectura, validarEstado } from '@/lib/google-calendario-seguridad';
 
 export const maxDuration = 60;
 export async function GET(request: Request) {
   const jar = await cookies();
   const estadoGuardado = jar.get('fedra_google_ro')?.value;
-  jar.delete({ name: 'fedra_google_ro', path: '/api/google-calendario' });
+  jar.delete({ name: 'fedra_google_ro', path: OAUTH_COOKIE_PATH });
   const regresar = (estado: string) => NextResponse.redirect(`${POS_ORIGIN}/agenda?google=${estado}`, { headers: { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' } });
   try {
     const perfil = await perfilCalendario();

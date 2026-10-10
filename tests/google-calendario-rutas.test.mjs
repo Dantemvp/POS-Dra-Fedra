@@ -2,17 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
-import { cifrar, descifrar, CALENDAR_SCOPE, GOOGLE_EMAIL, POS_ORIGIN } from '../src/lib/google-calendario-seguridad.ts';
+import { cifrar, descifrar, CALENDAR_SCOPE, GOOGLE_EMAIL, POS_ORIGIN, CALLBACK, OAUTH_COOKIE_PATH } from '../src/lib/google-calendario-seguridad.ts';
 
 async function ruta(t, archivo, perfil, respuestas = []) {
   const llave = `__google_${crypto.randomUUID().replaceAll('-', '')}`;
-  const escrituras = [], cookies = new Map(), eliminadas = [], consultas = [];
+  const escrituras = [], cookies = new Map(), opcionesCookies = new Map(), eliminadas = [], consultas = [];
   const config = { id: 'cliente-ficticio', secreto: 'secreto-ficticio' };
   const externo = {
     perfilCalendario: async () => perfil,
     configuracionGoogle: () => config,
     leerMesGoogle: async () => { consultas.push('agenda'); return { conectado: false, eventos: [] }; },
-    cookies: async () => ({ get: nombre => cookies.has(nombre) ? { value: cookies.get(nombre) } : undefined, set: (nombre, valor) => cookies.set(nombre, valor), delete: ({ name }) => { eliminadas.push(name); cookies.delete(name); } }),
+    cookies: async () => ({ get: nombre => cookies.has(nombre) ? { value: cookies.get(nombre) } : undefined, set: (nombre, valor, opciones) => { cookies.set(nombre, valor); opcionesCookies.set(nombre, opciones); }, delete: ({ name, path }) => { eliminadas.push({ name, path }); cookies.delete(name); } }),
     NextResponse: { json: (datos, opciones) => Response.json(datos, opciones), redirect: (url, opciones) => new Response(null, { status: 307, headers: { Location: String(url), ...opciones?.headers } }) },
     createAdminClient: () => ({ from: tabla => ({ upsert: async datos => { escrituras.push({ tabla, datos }); return { error: null }; } }) }),
   };
@@ -21,7 +21,8 @@ async function ruta(t, archivo, perfil, respuestas = []) {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, opciones) => { consultas.push({ url, opciones }); return Response.json(respuestas.shift()); };
   t.after(() => { globalThis.fetch = originalFetch; });
-  let fuente = fs.readFileSync(new URL(`../src/app/api/google-calendario/${archivo}/route.ts`, import.meta.url), 'utf8');
+  const rutaArchivo = archivo === 'callback' ? 'google/oauth/callback' : `google-calendario/${archivo}`;
+  let fuente = fs.readFileSync(new URL(`../src/app/api/${rutaArchivo}/route.ts`, import.meta.url), 'utf8');
   fuente = fuente.replace(/import \{ ([^}]+) \} from '[^']+';/g, (texto, nombres) => {
     if (texto.includes('google-calendario-seguridad')) return `import { ${nombres} } from ${JSON.stringify(new URL('../src/lib/google-calendario-seguridad.ts', import.meta.url).href)};`;
     if (texto.includes('node:crypto')) return texto;
@@ -29,13 +30,13 @@ async function ruta(t, archivo, perfil, respuestas = []) {
   });
   const codigo = ts.transpileModule(fuente, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
   const modulo = await import(`data:text/javascript;base64,${Buffer.from(codigo).toString('base64')}`);
-  return { GET: modulo.GET, escrituras, cookies, eliminadas, consultas };
+  return { GET: modulo.GET, escrituras, cookies, opcionesCookies, eliminadas, consultas };
 }
 const admin = { id: 'usuario-base', uid: 'sesion-ficticia', rol: 'admin' };
 function estado(r, uid = admin.uid) {
   r.cookies.set('fedra_google_ro', cifrar(JSON.stringify({ uid, state: 'csrf', exp: Date.now() + 600_000, verifier: 'pkce-ficticio' }), 'secreto-ficticio', 'state'));
 }
-const callback = () => new Request(`${POS_ORIGIN}/api/google-calendario/callback?state=csrf&code=ficticio`);
+const callback = () => new Request(`${CALLBACK}?state=csrf&code=ficticio`);
 
 test('Google conectar: rechaza asistente y sesión ausente sin iniciar OAuth', async t => {
   for (const perfil of [null, { ...admin, rol: 'asistente' }]) {
@@ -54,6 +55,13 @@ test('Google conectar: pide lectura, consentimiento nuevo y PKCE desde el domini
   assert.equal(destino.searchParams.get('scope'), `openid email ${CALENDAR_SCOPE}`);
   assert.equal(destino.searchParams.get('include_granted_scopes'), 'false');
   assert.equal(destino.searchParams.get('code_challenge_method'), 'S256');
+  assert.equal(destino.searchParams.get('redirect_uri'), `${POS_ORIGIN}/api/google/oauth/callback`);
+  const opciones = r.opcionesCookies.get('fedra_google_ro');
+  assert.equal(opciones.path, OAUTH_COOKIE_PATH);
+  assert.ok(new URL(destino.searchParams.get('redirect_uri')).pathname.startsWith(`${opciones.path}/`));
+  assert.equal(opciones.httpOnly, true);
+  assert.equal(opciones.secure, true);
+  assert.equal(opciones.sameSite, 'lax');
   assert.ok(r.cookies.get('fedra_google_ro').startsWith('ro1.'));
   assert.equal((await r.GET(new Request('https://otro-dominio.invalid/api/google-calendario/conectar'))).status, 400);
 });
@@ -93,6 +101,8 @@ test('Google callback: guarda solo el token cifrado y consume el estado', async 
   assert.equal(datos.conectado_por, admin.id);
   assert.equal(descifrar(datos.refresh_token, 'secreto-ficticio'), 'refresh-ficticio');
   assert.equal(r.consultas[0].opciones.body.get('code_verifier'), 'pkce-ficticio');
+  assert.equal(r.consultas[0].opciones.body.get('redirect_uri'), `${POS_ORIGIN}/api/google/oauth/callback`);
+  assert.deepEqual(r.eliminadas, [{ name: 'fedra_google_ro', path: OAUTH_COOKIE_PATH }]);
   assert.equal(r.cookies.size, 0);
   assert.match((await r.GET(callback())).headers.get('location'), /google=autorizacion$/);
   assert.equal(r.escrituras.length, 1);

@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.25] - 2026-10-10
+
+- Recupera el callback OAuth de junio para reutilizar el cliente de Google
+  existente, conservando permisos de solo lectura, PKCE y tokens cifrados.
+- Ajusta la cookie de autorización al callback recuperado y comprueba en
+  pruebas la URI enviada a Google, el intercambio del código y el borrado de la cookie.
+- No incluye migraciones ni cambios de pacientes, recetas o InBody.
+
 ## [0.1.24] - 2026-10-10
 
 - Permite corregir nombre, apellidos y WhatsApp desde el mismo expediente,
