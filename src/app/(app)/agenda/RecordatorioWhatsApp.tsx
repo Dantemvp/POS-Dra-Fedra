@@ -22,13 +22,14 @@ export function FormularioWhatsApp({ nombre = '', telefono = '', fecha, diaCompl
     : '';
   const mensaje = editado ?? (base || generico);
   const enlaces = fechaMensajeCita(fecha, diaCompleto) ? enlacesWhatsApp(numero, mensaje) : null;
-  const pedirNumero = !numeroWhatsApp(numero) || editarTelefono;
+  const pedirNumero = !numeroWhatsApp(telefono ?? '') || editarTelefono;
   const campo = 'mt-1 min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900';
   const boton = 'inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold';
   return <div className="mt-3 min-w-0 space-y-2 text-sm text-zinc-800">
     {pedirNumero && <label className="block" htmlFor={`${id}-telefono`}>Número de WhatsApp<input id={`${id}-telefono`} type="tel" inputMode="tel" value={numero} onChange={e => setNumero(e.target.value)} className={campo} placeholder="10 dígitos o número internacional" autoComplete="tel" /></label>}
     <div className="flex flex-wrap items-center gap-2">
       {enlaces ? <a href={enlaces.app} target="_blank" rel="noopener noreferrer" className={`${boton} bg-green-700 text-white hover:bg-green-800`}>Enviar WhatsApp</a> : <button type="button" disabled className={`${boton} bg-zinc-100 text-zinc-500`}>Enviar WhatsApp</button>}
+      {enlaces && <span className="break-all text-xs text-zinc-600">Destino: +{numeroWhatsApp(numero)}</span>}
       <button type="button" aria-expanded={editar} aria-controls={`${id}-editor`} onClick={() => setEditar(!editar)} className={`${boton} underline underline-offset-4`}>{editar ? 'Cerrar edición' : 'Editar mensaje'}</button>
       {!pedirNumero && <button type="button" onClick={() => setEditarTelefono(true)} className="min-h-11 px-2 text-xs underline">Cambiar número</button>}
     </div>
