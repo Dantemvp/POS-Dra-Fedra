@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## [0.1.30] - 2026-10-11
+
+- Interpreta el importe al final del título de Google como anticipo, según la convención de Fer.
+- Precarga WhatsApp con contacto, teléfono y anticipo cuando la cita permite extraerlos.
+- Conserva notas, invitados y campos adicionales; pide teléfono cuando falta y no liga expedientes por nombre.
+- Los anticipos son anotaciones de agenda, no pagos nuevos. Sin migraciones.
+
 ## [0.1.29] - 2026-10-11
 
 - Simplifica WhatsApp a un botón con mensaje preparado y teléfono solo cuando falta.

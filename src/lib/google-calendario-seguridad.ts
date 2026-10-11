@@ -40,7 +40,10 @@ export function validarEstado(texto: string, secreto: string, uid: string, estad
   return datos as { uid: string; state: string; exp: number; verifier: string };
 }
 
-export type EventoGoogle = { id: string; titulo: string; inicio: string; diaCompleto: boolean; fin?: string; descripcion?: string; ubicacion?: string; url?: string };
+export type EventoGoogle = { id: string; titulo: string; inicio: string; diaCompleto: boolean; fin?: string; descripcion?: string; ubicacion?: string; url?: string;
+  invitados?: { nombre?: string; correo?: string; comentario?: string; respuesta?: string }[];
+  campos?: { origen: string; clave: string; valor: string }[];
+};
 // Solo GET, mes acotado y todas las páginas. Un error no se disfraza de agenda vacía.
 export async function eventosDelMes(accessToken: string, mes: string, calendario = 'primary', pedir: typeof fetch = fetch): Promise<EventoGoogle[]> {
   if (!/^20\d\d-(0[1-9]|1[0-2])$/.test(mes)) throw new Error('Mes inválido.');
@@ -75,6 +78,15 @@ export async function eventosDelMes(accessToken: string, mes: string, calendario
           ...(typeof item.description === 'string' ? { descripcion: item.description } : {}),
           ...(typeof item.location === 'string' ? { ubicacion: item.location } : {}),
           ...(url ? { url } : {}),
+          ...(Array.isArray(item.attendees) ? { invitados: item.attendees.filter((a: { organizer?: boolean; self?: boolean; resource?: boolean }) => !a.organizer && !a.self && !a.resource).map((a: Record<string, unknown>) => ({
+            ...(typeof a.displayName === 'string' ? { nombre: a.displayName } : {}),
+            ...(typeof a.email === 'string' ? { correo: a.email } : {}),
+            ...(typeof a.comment === 'string' ? { comentario: a.comment } : {}),
+            ...(typeof a.responseStatus === 'string' ? { respuesta: a.responseStatus } : {}),
+          })) } : {}),
+          ...(item.extendedProperties ? { campos: ['private', 'shared'].flatMap(origen =>
+            Object.entries(item.extendedProperties[origen] ?? {}).filter(([, valor]) => typeof valor === 'string')
+              .map(([clave, valor]) => ({ origen, clave, valor: valor as string }))) } : {}),
         });
       }
     }
