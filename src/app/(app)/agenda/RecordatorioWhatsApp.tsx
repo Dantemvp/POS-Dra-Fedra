@@ -13,7 +13,7 @@ export function FormularioWhatsApp({ nombre = '', telefono = '', fecha, diaCompl
   const [tipo, setTipo] = useState<TipoMensajeCita>('recordatorio');
   const [politicas, setPoliticas] = useState('');
   const [editado, setEditado] = useState<string | null>(null);
-  // Google puede tener varios nombres o notas en el título. No los usamos como identidad.
+  // El nombre interpretado personaliza el saludo; no vincula un expediente clínico.
   const base = mensajeCita({ nombre: google ? nombreContacto || ' ' : nombre.trim() ? nombre : ' ', fecha, tipo, politicas, diaCompleto });
   const generico = fechaMensajeCita(fecha, diaCompleto)
     ? ['Hola.', tipo === 'agendamiento' ? 'Gracias por agendar su cita con la Dra. Fedra Aldama.' : 'Le recordamos su cita con la Dra. Fedra Aldama.',

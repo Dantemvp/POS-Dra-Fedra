@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { whatsappModuleUrl } from './helpers/whatsapp-render.mjs';
+import { unirAgenda } from '../src/lib/agenda-vista.ts';
 
 const require = createRequire(import.meta.url);
 const archivo = new URL('../src/app/(app)/agenda/CalendarioAgenda.tsx', import.meta.url);
@@ -32,4 +33,30 @@ test('agenda render: conserva notas como texto, sin ejecutar HTML ni ligar pacie
   assert.match(html, /&lt;script&gt;/);
   assert.doesNotMatch(html, /<script>|\/pacientes\//);
   assert.match(html, /Enviar WhatsApp/);
+});
+
+test('agenda a WhatsApp: cada persona conserva su teléfono y anticipo en un mensaje separado', () => {
+  const [cita] = unirAgenda([], [{id:'dos-personas', titulo:'Persona Uno $500 (P) S / Persona Dos $700 (P) s', inicio:'2026-10-15T14:30:00-07:00', diaCompleto:false,
+    descripcion:'Nombre: Persona Uno\nTel: 6681234567\nNombre: Persona Dos\nTel: 6687654321'}]);
+  const html = renderToStaticMarkup(React.createElement(DetalleCitaAgenda, {cita}));
+  const uno = html.match(/<section[^>]*aria-label="WhatsApp de Persona Uno"[\s\S]*?<\/section>/)[0];
+  const dos = html.match(/<section[^>]*aria-label="WhatsApp de Persona Dos"[\s\S]*?<\/section>/)[0];
+  assert.match(uno, /wa.me\/526681234567/);
+  assert.match(uno, /Hola%20Persona%20Uno/);
+  assert.match(uno, /%24500/);
+  assert.doesNotMatch(uno, /Persona%20Dos|%24700|526687654321|<input/);
+  assert.match(dos, /wa.me\/526687654321/);
+  assert.match(dos, /Hola%20Persona%20Dos/);
+  assert.match(dos, /%24700/);
+  assert.doesNotMatch(dos, /Persona%20Uno|%24500|526681234567|<input/);
+  assert.doesNotMatch(html, /\/pacientes\//);
+});
+
+test('agenda a WhatsApp: solo la persona sin teléfono necesita capturarlo', () => {
+  const [cita] = unirAgenda([], [{id:'telefono-ausente', titulo:'Persona Uno $500 / Persona Dos $700', inicio:'2026-10-15T14:30:00-07:00', diaCompleto:false,
+    descripcion:'Nombre: Persona Uno\nTel: 6681234567\nNombre: Persona Dos'}]);
+  const html = renderToStaticMarkup(React.createElement(DetalleCitaAgenda, {cita}));
+  assert.equal((html.match(/<input/g) ?? []).length, 1);
+  assert.match(html, /Google no trae un número único/);
+  assert.match(html, /WhatsApp de Persona Dos/);
 });

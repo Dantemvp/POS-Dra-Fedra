@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.31] - 2026-10-11
+
+- Reconoce nombres y anticipos con los códigos y sufijos que Fer usa en Google.
+- Prepara un mensaje por persona cuando un evento contiene varios contactos, sin repartir teléfonos ni anticipos compartidos.
+- Lee teléfonos en notas con HTML, etiquetas en línea, texto sin etiqueta y enlaces de WhatsApp; pide captura si falta un número único.
+- Conserva los invitados originales y no usa al organizador como paciente. Sin migraciones ni nuevos pagos.
+- Verificado el refresco de Google cada minuto en producción; no se agregan permisos de Gmail ni se enlazan expedientes por nombre.
+
 ## [0.1.30] - 2026-10-11
 
 - Interpreta el importe al final del título de Google como anticipo, según la convención de Fer.

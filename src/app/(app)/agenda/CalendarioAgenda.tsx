@@ -29,7 +29,17 @@ export function DetalleCitaAgenda({ cita: c, mostrarFecha = false }: { cita: Cit
     <div className="mt-2 flex flex-wrap items-center justify-between gap-2 pl-5 text-xs text-zinc-600"><span>{c.origen === 'google' ? 'Solo lectura' : c.estado}</span>{c.url && <a href={c.url} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4">Ver en Google</a>}</div>
     {c.descripcion && <details className="mt-2 pl-5 text-sm text-zinc-700"><summary className="cursor-pointer py-2 font-medium">Notas y datos de la cita</summary><p className="whitespace-pre-wrap break-words rounded-lg border border-zinc-200 p-3">{c.descripcion}</p></details>}
     {(Boolean(c.invitados?.length) || Boolean(c.campos?.length)) && <details className="mt-2 pl-5 text-sm text-zinc-700"><summary className="cursor-pointer py-2 font-medium">Datos adicionales de Google</summary>{c.invitados?.map((i, n) => <p key={`invitado-${n}`} className="whitespace-pre-wrap break-words">{[i.nombre, i.correo, i.comentario, i.respuesta].filter(Boolean).join(' · ')}</p>)}{c.campos?.map((campo, n) => <p key={`campo-${n}`} className="whitespace-pre-wrap break-words">{campo.clave}: {campo.valor}</p>)}</details>}
-    {!['cancelada', 'atendida', 'cedida'].includes(c.estado) && (c.origen === 'google' || c.tipo === 'cita_paciente') && <RecordatorioWhatsApp key={`${c.id}:${c.fecha_hora}:${c.nombre}:${c.telefono_wpp ?? ''}:${c.nombre_contacto ?? ''}:${c.adelanto_google ?? ''}`} nombre={c.origen === 'google' ? '' : c.nombre} nombreContacto={c.nombre_contacto} adelanto={c.adelanto_google} telefono={c.telefono_wpp} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google={c.origen === 'google'} />}
+    {!['cancelada', 'atendida', 'cedida'].includes(c.estado) && (c.origen === 'google' || c.tipo === 'cita_paciente') && (
+      c.origen === 'google' && Boolean(c.contactos_google?.length)
+        ? <div className="mt-3 space-y-3">{c.contactos_google!.map((contacto, n) => <section key={`${c.id}:${n}:${c.fecha_hora}:${contacto.nombre}:${contacto.telefono ?? ''}:${contacto.adelanto ?? ''}`} aria-label={`WhatsApp de ${contacto.nombre}`} className="rounded-lg border border-zinc-200 bg-white p-3">
+          <p className="text-sm font-semibold text-zinc-900">Mensaje para {contacto.nombre}</p>
+          {c.contactos_google!.length > 1 && contacto.adelanto && <p className="mt-1 text-xs text-zinc-700">Anticipo de esta persona: {contacto.adelanto}</p>}
+          {contacto.ambiguo && <p className="mt-1 text-xs text-amber-800">Hay datos distintos para este contacto. Revise el número o anticipo en las notas originales.</p>}
+          {!contacto.telefono && <p className="mt-1 text-xs text-zinc-600">Google no trae un número único para esta persona.</p>}
+          <RecordatorioWhatsApp nombreContacto={contacto.nombre} adelanto={contacto.adelanto} telefono={contacto.telefono} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google />
+        </section>)}</div>
+        : <RecordatorioWhatsApp key={`${c.id}:${c.fecha_hora}:${c.nombre}:${c.telefono_wpp ?? ''}`} nombre={c.origen === 'google' ? '' : c.nombre} telefono={c.telefono_wpp} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google={c.origen === 'google'} />
+    )}
   </article>;
 }
 
