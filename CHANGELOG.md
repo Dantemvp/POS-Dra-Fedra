@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## [0.1.29] - 2026-10-11
+
+- Simplifica WhatsApp a un botón con mensaje preparado y teléfono solo cuando falta.
+- Deja Editar mensaje cerrado por defecto y muestra el número de destino.
+- Mantiene el campo visible al escribir números con lada internacional.
+- Sin envío automático, confirmación de citas, migraciones ni cambios de datos.
+
 ## [0.1.28] - 2026-10-10
 
 - Habilita pagos mixtos de Consultorio con redondeo por concepto y reversión atómica.
