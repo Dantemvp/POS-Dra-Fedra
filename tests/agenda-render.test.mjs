@@ -31,5 +31,5 @@ test('agenda render: conserva notas como texto, sin ejecutar HTML ni ligar pacie
   assert.match(html, /Notas y datos de la cita/);
   assert.match(html, /&lt;script&gt;/);
   assert.doesNotMatch(html, /<script>|\/pacientes\//);
-  assert.match(html, /Preparar WhatsApp/);
+  assert.match(html, /Enviar WhatsApp/);
 });
