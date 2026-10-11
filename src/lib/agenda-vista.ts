@@ -8,7 +8,37 @@ export type CitaCalendario = {
   paciente_id: string | null; nombre: string;
   origen?: 'pos' | 'google'; dia_completo?: boolean;
   fecha_fin?: string; descripcion?: string; ubicacion?: string; url?: string; telefono_wpp?: string | null;
+  nombre_contacto?: string; adelanto_google?: string; contacto_ambiguo?: boolean;
+  invitados?: EventoGoogle['invitados']; campos?: EventoGoogle['campos'];
 };
+
+export function datosContactoGoogle(e: EventoGoogle) {
+  // Solo datos de la cita. No consultar expedientes ni convertir importes en pagos.
+  const texto = [e.titulo, e.descripcion ?? '', ...(e.invitados ?? []).map(i => i.comentario ?? ''),
+    ...(e.campos ?? []).map(c => `${c.clave}: ${c.valor}`)].join('\n')
+    .replace(/<br\s*\/?\s*>|<\/(?:p|div)>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ');
+  const valores = (etiquetas: string) => Array.from(texto.matchAll(new RegExp(`(?:^|\\n)\\s*(?:${etiquetas})\\s*[:=]\\s*([^\\n]+)`, 'gi')), m => m[1].trim());
+  const nombres = [...new Set(valores('nombre(?: completo)?|paciente'))];
+  const telefonos = valores('tel[eé]fono|tel|celular|cel|whatsapp|wpp|phone').map(valor => {
+    if (!/^[+\d\s().-]+$/.test(valor)) return null;
+    let n = valor.replace(/\D/g, '');
+    if (n.length === 10 && !valor.trim().startsWith('+')) n = `52${n}`;
+    if (/^521\d{10}$/.test(n)) n = `52${n.slice(3)}`;
+    return /^[1-9]\d{10,14}$/.test(n) ? n : null;
+  }).filter((n): n is string => Boolean(n));
+  const unicos = [...new Set(telefonos)];
+  const adelantos = [...new Set(valores('anticipo|adelanto|abono|deposito|depósito'))];
+  // Convención confirmada por Fer: el importe al final del título es el anticipo.
+  const importeTitulo = e.titulo.match(/\$\s*\d[\d,]*(?:\.\d{1,2})?\s*(?:\([^)]*\))?\s*$/);
+  if (importeTitulo) adelantos.push(importeTitulo[0].match(/\$\s*\d[\d,]*(?:\.\d{1,2})?/)![0]);
+  const nombreTitulo = importeTitulo ? e.titulo.slice(0, importeTitulo.index).trim().replace(/[-:|\s]+$/, '') : '';
+  if (!nombres.length && nombreTitulo && !/[\/&;]|\s+y\s+/i.test(nombreTitulo)) nombres.push(nombreTitulo);
+  const ambiguo = nombres.length > 1 || unicos.length > 1;
+  return { nombre_contacto: !ambiguo && nombres.length === 1 ? nombres[0] : undefined,
+    telefono_wpp: !ambiguo && unicos.length === 1 ? `+${unicos[0]}` : null,
+    adelanto_google: adelantos.length ? adelantos.join(' / ') : undefined,
+    contacto_ambiguo: ambiguo };
+}
 export function diaAgenda(fecha: string) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
   return formatoDia.format(new Date(fecha));
@@ -27,6 +57,7 @@ export function unirAgenda(citas: CitaCalendario[], eventos: EventoGoogle[]): Ci
     estado: 'Solo lectura', tipo: 'google', origen: 'google' as const,
     paciente_id: null, nombre: e.titulo, dia_completo: e.diaCompleto,
     descripcion: e.descripcion, ubicacion: e.ubicacion, url: e.url,
+    invitados: e.invitados, campos: e.campos, ...datosContactoGoogle(e),
   }]));
   return [...citas.map(c => ({ ...c, origen: 'pos' as const })), ...google.values()];
 }

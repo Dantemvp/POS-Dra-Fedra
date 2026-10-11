@@ -20,12 +20,16 @@ export function DetalleCitaAgenda({ cita: c, mostrarFecha = false }: { cita: Cit
         {c.paciente_id ? <Link href={`/pacientes/${c.paciente_id}`} className="mt-1 block break-words text-sm font-semibold text-zinc-900 hover:underline">{c.nombre}</Link> : <p className="mt-1 break-words text-sm font-semibold text-zinc-900">{c.nombre}</p>}
         {c.ubicacion && <p className="mt-1 break-words text-xs text-zinc-600">{c.ubicacion}</p>}
         {c.telefono_wpp && <p className="mt-1 text-xs text-zinc-600">WhatsApp: {c.telefono_wpp}</p>}
+        {c.nombre_contacto && <p className="mt-1 text-xs text-zinc-600">Contacto: {c.nombre_contacto}</p>}
+        {c.adelanto_google && <p className="mt-1 text-xs font-semibold text-zinc-700">Anticipo en agenda: {c.adelanto_google} (no registra un pago en caja)</p>}
+        {c.contacto_ambiguo && <p className="mt-1 text-xs text-amber-800">Hay varios contactos en las notas; revise el destinatario.</p>}
       </div></div>
       <span className="rounded-md border border-zinc-300 px-2 py-1 text-xs font-semibold text-zinc-700">{c.origen === 'google' ? 'Google' : 'POS'}</span>
     </div>
     <div className="mt-2 flex flex-wrap items-center justify-between gap-2 pl-5 text-xs text-zinc-600"><span>{c.origen === 'google' ? 'Solo lectura' : c.estado}</span>{c.url && <a href={c.url} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4">Ver en Google</a>}</div>
     {c.descripcion && <details className="mt-2 pl-5 text-sm text-zinc-700"><summary className="cursor-pointer py-2 font-medium">Notas y datos de la cita</summary><p className="whitespace-pre-wrap break-words rounded-lg border border-zinc-200 p-3">{c.descripcion}</p></details>}
-    {!['cancelada', 'atendida', 'cedida'].includes(c.estado) && (c.origen === 'google' || c.tipo === 'cita_paciente') && <RecordatorioWhatsApp key={`${c.id}:${c.fecha_hora}:${c.nombre}:${c.telefono_wpp ?? ''}`} nombre={c.origen === 'google' ? '' : c.nombre} telefono={c.telefono_wpp} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google={c.origen === 'google'} />}
+    {(Boolean(c.invitados?.length) || Boolean(c.campos?.length)) && <details className="mt-2 pl-5 text-sm text-zinc-700"><summary className="cursor-pointer py-2 font-medium">Datos adicionales de Google</summary>{c.invitados?.map((i, n) => <p key={`invitado-${n}`} className="whitespace-pre-wrap break-words">{[i.nombre, i.correo, i.comentario, i.respuesta].filter(Boolean).join(' · ')}</p>)}{c.campos?.map((campo, n) => <p key={`campo-${n}`} className="whitespace-pre-wrap break-words">{campo.clave}: {campo.valor}</p>)}</details>}
+    {!['cancelada', 'atendida', 'cedida'].includes(c.estado) && (c.origen === 'google' || c.tipo === 'cita_paciente') && <RecordatorioWhatsApp key={`${c.id}:${c.fecha_hora}:${c.nombre}:${c.telefono_wpp ?? ''}:${c.nombre_contacto ?? ''}:${c.adelanto_google ?? ''}`} nombre={c.origen === 'google' ? '' : c.nombre} nombreContacto={c.nombre_contacto} adelanto={c.adelanto_google} telefono={c.telefono_wpp} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google={c.origen === 'google'} />}
   </article>;
 }
 
