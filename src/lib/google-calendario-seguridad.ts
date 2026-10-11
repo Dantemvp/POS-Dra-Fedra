@@ -41,7 +41,7 @@ export function validarEstado(texto: string, secreto: string, uid: string, estad
 }
 
 export type EventoGoogle = { id: string; titulo: string; inicio: string; diaCompleto: boolean; fin?: string; descripcion?: string; ubicacion?: string; url?: string;
-  invitados?: { nombre?: string; correo?: string; comentario?: string; respuesta?: string }[];
+  invitados?: { nombre?: string; correo?: string; comentario?: string; respuesta?: string; organizador?: boolean; propio?: boolean; recurso?: boolean }[];
   campos?: { origen: string; clave: string; valor: string }[];
 };
 // Solo GET, mes acotado y todas las páginas. Un error no se disfraza de agenda vacía.
@@ -78,11 +78,14 @@ export async function eventosDelMes(accessToken: string, mes: string, calendario
           ...(typeof item.description === 'string' ? { descripcion: item.description } : {}),
           ...(typeof item.location === 'string' ? { ubicacion: item.location } : {}),
           ...(url ? { url } : {}),
-          ...(Array.isArray(item.attendees) ? { invitados: item.attendees.filter((a: { organizer?: boolean; self?: boolean; resource?: boolean }) => !a.organizer && !a.self && !a.resource).map((a: Record<string, unknown>) => ({
+          ...(Array.isArray(item.attendees) ? { invitados: item.attendees.filter((a: unknown) => a !== null && typeof a === 'object').map((a: Record<string, unknown>) => ({
             ...(typeof a.displayName === 'string' ? { nombre: a.displayName } : {}),
             ...(typeof a.email === 'string' ? { correo: a.email } : {}),
             ...(typeof a.comment === 'string' ? { comentario: a.comment } : {}),
             ...(typeof a.responseStatus === 'string' ? { respuesta: a.responseStatus } : {}),
+            ...(typeof a.organizer === 'boolean' ? { organizador: a.organizer } : {}),
+            ...(typeof a.self === 'boolean' ? { propio: a.self } : {}),
+            ...(typeof a.resource === 'boolean' ? { recurso: a.resource } : {}),
           })) } : {}),
           ...(item.extendedProperties ? { campos: ['private', 'shared'].flatMap(origen =>
             Object.entries(item.extendedProperties[origen] ?? {}).filter(([, valor]) => typeof valor === 'string')

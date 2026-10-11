@@ -58,3 +58,18 @@ test('Google: demasiadas páginas fallan en lugar de mostrar un mes incompleto',
   }), /Demasiados eventos/);
   assert.equal(llamadas, 20);
 });
+
+test('Google conserva los datos de invitados y campos adicionales sin perder notas', async () => {
+  const [evento] = await eventosDelMes('token-ficticio', '2026-10', 'primary', async () => Response.json({items:[{
+    id:'ficticio', summary:'Persona Inventada $500 (P) S', start:{dateTime:'2026-10-15T14:30:00-07:00'},
+    description:'Tel: 6681234567', location:'Consultorio ficticio', attendees:[null,
+      {displayName:'Organizador ficticio', organizer:true, self:true, email:'organizador@example.com'},
+      {displayName:'Persona Inventada', email:'persona@example.com', comment:'Nota ficticia', responseStatus:'accepted'}],
+    extendedProperties:{private:{telefono:'6681234567', anticipo:'$500'}, shared:{observacion:'Información ficticia'}}
+  }]}));
+  assert.equal(evento.descripcion, 'Tel: 6681234567');
+  assert.equal(evento.invitados.length, 2);
+  assert.equal(evento.invitados[0].organizador, true);
+  assert.equal(evento.invitados[1].correo, 'persona@example.com');
+  assert.equal(evento.campos.length, 3);
+});
