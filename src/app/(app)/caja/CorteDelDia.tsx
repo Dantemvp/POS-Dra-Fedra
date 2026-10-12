@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { registrarCorte } from "./actions";
+import CorteComprobante from '@/components/CorteComprobante';
+import type { ComprobanteCorte } from '@/lib/corte-resumen';
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -22,6 +24,8 @@ export default function CorteDelDia({
   efectivoEsperado,
   desglose,
   fecha,
+  responsable,
+  ultimoCorte,
 }: {
   numVentas: number;
   totalVentas: number;
@@ -31,18 +35,28 @@ export default function CorteDelDia({
   efectivoEsperado: number;
   desglose: Record<string, number>;
   fecha: string;
+  responsable: string;
+  ultimoCorte?: ComprobanteCorte | null;
 }) {
   const [contado, setContado] = useState("");
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
+  const [guardado, setGuardado] = useState<ComprobanteCorte | null>(null);
+  const cerrando = useRef(false);
+  const [resultadoIncierto, setResultadoIncierto] = useState(false);
+  const [mostrarAnterior, setMostrarAnterior] = useState(false);
 
   const contadoNum = contado === "" ? null : Number(contado) || 0;
   const diferencia = contadoNum === null ? null : contadoNum - efectivoEsperado;
   const metodos = Object.entries(desglose).filter(([, v]) => v > 0);
 
   function cerrarCorte() {
+    if (pending || guardado || cerrando.current || mostrarAnterior) return;
+    if (contadoNum === null || !Number.isFinite(contadoNum) || contadoNum < 0) { setMsg('Captura el efectivo contado antes de cerrar.'); return; }
     setMsg(null);
+    cerrando.current = true;
     startTransition(async () => {
+      try {
       const res = await registrarCorte({
         totalVentas,
         totalCobros,
@@ -54,11 +68,22 @@ export default function CorteDelDia({
         desglose,
       });
       setMsg(res.ok ? "Corte guardado." : (res.error ?? "Error al guardar."));
+      if (res.ok && res.corte) setGuardado(res.corte);
+      if (!res.ok) cerrando.current = false;
+      } catch {
+        // Resultado incierto: no permitir otro cierre sin revisar el historial.
+        setMsg('No se pudo confirmar el cierre. Revisa el historial antes de recargar o reintentar.');
+        setResultadoIncierto(true);
+      }
     });
   }
 
   return (
-    <div className="doc-imprimible rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+    <section>
+    {ultimoCorte && <div className="corte-screen mb-3"><button type="button" disabled={pending || Boolean(guardado)} onClick={() => setMostrarAnterior(!mostrarAnterior)} className="min-h-11 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 disabled:opacity-50">{mostrarAnterior ? 'Volver a la vista previa del día' : 'Recuperar mi último corte guardado'}</button></div>}
+    <CorteComprobante automatico={Boolean(guardado)} corte={mostrarAnterior && ultimoCorte ? ultimoCorte : guardado ?? { fecha, responsable, totalVentas, totalCobros, efectivoEsperado,
+      efectivoContado: contadoNum, diferencia, productos: productosSalidos, pacientes: pacientesAtendidos, desglose, numVentas }} />
+    <div className="corte-screen mt-4 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">
@@ -68,17 +93,11 @@ export default function CorteDelDia({
         </div>
         <div className="flex gap-2 print:hidden">
           <button
-            onClick={() => window.print()}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-          >
-            Imprimir
-          </button>
-          <button
             onClick={cerrarCorte}
-            disabled={pending}
+            disabled={pending || Boolean(guardado) || resultadoIncierto || mostrarAnterior || contadoNum === null}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
           >
-            {pending ? "Guardando…" : "Cerrar corte"}
+            {pending ? "Guardando…" : guardado ? "Corte guardado" : "Cerrar corte e imprimir"}
           </button>
         </div>
       </div>
@@ -131,6 +150,7 @@ export default function CorteDelDia({
             min="0"
             step="0.01"
             value={contado}
+            disabled={pending || Boolean(guardado)}
             onChange={(e) => setContado(e.target.value)}
             placeholder="0.00"
             className="w-32 rounded-lg border border-zinc-300 px-3 py-1.5 text-right text-sm tabular-nums outline-none focus:border-zinc-900 print:border-none"
@@ -164,6 +184,7 @@ export default function CorteDelDia({
         <p className="mt-3 text-sm text-zinc-500 print:hidden">{msg}</p>
       )}
     </div>
+    </section>
   );
 }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import CorteComprobante from '@/components/CorteComprobante';
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -13,6 +14,7 @@ const hora = (iso: string) =>
   }).format(new Date(iso));
 
 type Corte = {
+  desglose: Record<string, number> | null;
   apertura: string | null;
   cierre: string;
   usuarios: { nombre: string } | null;
@@ -52,7 +54,7 @@ export default async function DetalleCortePage({
   const { data: corteData } = await supabase
     .from("cortes_caja")
     .select(
-      "apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, usuarios(nombre)",
+      "apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, desglose, usuarios(nombre)",
     )
     .eq("id", id)
     .single();
@@ -79,6 +81,7 @@ export default async function DetalleCortePage({
       "id, folio, fecha, total, metodo_pago, pacientes(nombre, apellidos), venta_items(cantidad, productos(nombre)), pagos(metodo, monto)",
     )
     .eq("estado", "pagada")
+    .eq('es_historico', false)
     .gte("fecha", desde)
     .lte("fecha", cierre)
     .order("folio", { ascending: true });
@@ -87,6 +90,7 @@ export default async function DetalleCortePage({
   const { data: cobrosData } = await supabase
     .from("cobros")
     .select("id, fecha, total, pacientes(nombre, apellidos)")
+    .eq('estado', 'activo')
     .gte("fecha", desde)
     .lte("fecha", cierre)
     .order("fecha", { ascending: true });
@@ -102,6 +106,11 @@ export default async function DetalleCortePage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <CorteComprobante corte={{ id, fecha: fechaTitulo, apertura: corte.apertura, cierre, responsable: corte.usuarios?.nombre ?? 'No registrado',
+        totalVentas: Number(corte.total_ventas ?? 0), totalCobros: Number(corte.total_cobros ?? 0), efectivoEsperado: Number(corte.total_efectivo ?? 0),
+        efectivoContado: corte.efectivo_contado === null ? null : Number(corte.efectivo_contado), diferencia: corte.diferencia === null ? null : Number(corte.diferencia),
+        productos: corte.total_productos, pacientes: corte.pacientes_atendidos, desglose: corte.desglose ?? {} }} />
+      <div className="corte-screen space-y-6">
       <div>
         <Link
           href="/cortes"
@@ -147,7 +156,7 @@ export default async function DetalleCortePage({
         <h2 className="mb-2 text-lg font-medium text-zinc-900">
           Ventas de farmacia ({ventas.length})
         </h2>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+        <div className="overflow-x-auto rounded-xl bg-white ring-1 ring-zinc-200">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
               <tr>
@@ -202,7 +211,7 @@ export default async function DetalleCortePage({
         <h2 className="mb-2 text-lg font-medium text-zinc-900">
           Cobros de consultorio ({cobros.length})
         </h2>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+        <div className="overflow-x-auto rounded-xl bg-white ring-1 ring-zinc-200">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
               <tr>
@@ -235,6 +244,7 @@ export default async function DetalleCortePage({
           </table>
         </div>
       </section>
+      </div>
     </div>
   );
 }

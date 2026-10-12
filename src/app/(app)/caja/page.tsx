@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { inicioDiaSinaloa, horaSinaloa, fechaSinaloa } from "@/lib/tz";
+import { horaSinaloa, fechaSinaloa } from "@/lib/tz";
 import CorteDelDia from "./CorteDelDia";
 import ExportLibro, { type FilaLibro } from "./ExportLibro";
 import VentasDelDia, { type VentaDetalle } from "./VentasDelDia";
+import { leerCajaDia, leerUltimoCortePropio } from '@/lib/caja-lectura';
+import { getUsuarioActual } from '@/lib/auth';
 
 type VentaRow = {
   id: string;
@@ -17,12 +19,6 @@ type VentaRow = {
   }[];
   pagos: { metodo: string; monto: number }[];
 };
-type CobroRow = {
-  id: string;
-  total: number;
-  paciente_id: string | null;
-  cobro_pagos: { metodo: string; monto: number }[];
-};
 type Mov = {
   tipo: string;
   cantidad: number;
@@ -31,81 +27,15 @@ type Mov = {
 
 export default async function CajaPage() {
   const supabase = await createClient();
+  const usuario = await getUsuarioActual();
+  const ultimoCorte = await leerUltimoCortePropio(usuario?.nombre ?? 'Usuario');
 
-  // Inicio del día EN SINALOA (no en UTC del servidor) para el corte correcto.
-  const desde = inicioDiaSinaloa().toISOString();
-
-  const { data: ventasData } = await supabase
-    .from("ventas")
-    .select(
-      "id, folio, fecha, total, metodo_pago, venta_items(cantidad, precio_unit, productos(nombre)), pagos(metodo, monto)",
-    )
-    .gte("fecha", desde)
-    .eq("estado", "pagada")
-    .eq("es_historico", false)
-    .order("fecha", { ascending: false });
-
-  const ventas = (ventasData ?? []) as unknown as VentaRow[];
-  const totalDia = ventas.reduce((s, v) => s + Number(v.total), 0);
-  // Efectivo del corte: se suma desde la tabla `pagos` (monto por método), para
-  // que una venta con pago mixto (efectivo + tarjeta) aporte solo su parte en
-  // efectivo y la caja cuadre. Ventas viejas sin filas en `pagos` caen al
-  // metodo_pago de la cabecera.
-  const efectivo = ventas.reduce((s, v) => {
-    const pagos = v.pagos ?? [];
-    if (pagos.length === 0) {
-      return s + (v.metodo_pago === "efectivo" ? Number(v.total) : 0);
-    }
-    return (
-      s +
-      pagos
-        .filter((p) => p.metodo === "efectivo")
-        .reduce((a, p) => a + Number(p.monto), 0)
-    );
-  }, 0);
-
-  // Unidades de producto que salieron por ventas en el día.
-  const productosSalidos = ventas.reduce(
-    (s, v) =>
-      s + (v.venta_items ?? []).reduce((a, it) => a + Number(it.cantidad), 0),
-    0,
-  );
-
-  // Cobros del consultorio del día: ingresos + pacientes atendidos + efectivo.
-  const { data: cobrosData } = await supabase
-    .from("cobros")
-    .select("id, total, paciente_id, cobro_pagos(metodo, monto)")
-    .gte("fecha", desde);
-  const cobros = (cobrosData ?? []) as unknown as CobroRow[];
-  const totalCobros = cobros.reduce((s, c) => s + Number(c.total), 0);
-  const pacientesAtendidos = cobros.filter((c) => c.paciente_id).length;
-  const efectivoCobros = cobros.reduce(
-    (s, c) =>
-      s +
-      (c.cobro_pagos ?? [])
-        .filter((p) => p.metodo === "efectivo")
-        .reduce((a, p) => a + Number(p.monto), 0),
-    0,
-  );
-  // Efectivo esperado en el cajón = ventas en efectivo + cobros en efectivo.
-  const efectivoEsperado = efectivo + efectivoCobros;
-
-  // Desglose por método de todo el día (ventas + cobros).
-  const desglose: Record<string, number> = {};
-  for (const v of ventas) {
-    const pgs = v.pagos ?? [];
-    if (pgs.length === 0) {
-      const m = v.metodo_pago ?? "otro";
-      desglose[m] = (desglose[m] ?? 0) + Number(v.total);
-    } else {
-      for (const p of pgs)
-        desglose[p.metodo] = (desglose[p.metodo] ?? 0) + Number(p.monto);
-    }
+  let resumen;
+  try { resumen = await leerCajaDia(); } catch (e) {
+    return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-900">{e instanceof Error ? e.message : 'No se pudo comprobar la caja.'}</p>;
   }
-  for (const c of cobros) {
-    for (const p of c.cobro_pagos ?? [])
-      desglose[p.metodo] = (desglose[p.metodo] ?? 0) + Number(p.monto);
-  }
+  const ventas = resumen.ventas as unknown as VentaRow[];
+  const { totalVentas: totalDia, totalCobros, productosSalidos, pacientesAtendidos, efectivoEsperado, desglose } = resumen;
 
   // Ventas traídas del AppSheet viejo. Van por separado a propósito: se listan
   // para poder consultarlas, pero no tocan el corte ni el desglose del día.
@@ -178,7 +108,8 @@ export default async function CajaPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <h1 className="text-2xl font-semibold text-zinc-900">Caja y reportes</h1>
+      <h1 className="print:hidden text-2xl font-semibold text-zinc-900">Caja y reportes</h1>
+      {resumen.diferenciaPagos !== 0 && <p role="alert" className="print:hidden rounded-lg bg-red-50 p-3 text-red-900">El desglose de pagos no cuadra con los ingresos. Revisa antes de cerrar.</p>}
 
       {/* Corte / resumen del día */}
       <section>
@@ -191,11 +122,13 @@ export default async function CajaPage() {
           efectivoEsperado={efectivoEsperado}
           desglose={desglose}
           fecha={fechaCorte}
+          responsable={usuario?.nombre ?? 'Usuario'}
+          ultimoCorte={ultimoCorte}
         />
       </section>
 
       {/* Ventas recientes */}
-      <section>
+      <section className="print:hidden">
         <h2 className="mb-3 text-lg font-medium text-zinc-900">
           Ventas de hoy
         </h2>
@@ -206,7 +139,7 @@ export default async function CajaPage() {
       </section>
 
       {/* Libro de Control COFEPRIS */}
-      <section>
+      <section className="print:hidden">
         <div className="mb-3 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-medium text-zinc-900">
