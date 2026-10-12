@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## [0.1.35] - 2026-10-12
+
+- Inicio muestra la agenda cerrada por defecto, con contador y enlace a la agenda completa visibles. Abrir y cerrar conserva el borrador de WhatsApp.
+- Las opciones y grupos de los desplegables usan el fondo y el texto del mismo tema, tanto claro como oscuro.
+- Revisión independiente del PR #50 sobre abc8555. Sin cambios a permisos, datos, sincronización ni migraciones.
+
 ## [0.1.34] - 2026-10-12
 
 - Mejora claro y oscuro, contraste de botones y documentos imprimibles siempre blancos.
