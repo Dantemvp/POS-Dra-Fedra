@@ -3,9 +3,9 @@
 import { useId, useState } from 'react';
 import { enlacesWhatsApp, fechaMensajeCita, mensajeCita, numeroWhatsApp, type TipoMensajeCita } from '@/lib/agenda-whatsapp';
 
-type Props = { nombre?: string; telefono?: string | null; fecha: string; diaCompleto?: boolean; google?: boolean; nombreContacto?: string; adelanto?: string };
+type Props = { nombre?: string; telefono?: string | null; fecha: string; diaCompleto?: boolean; google?: boolean; nombreContacto?: string; adelanto?: string; motivo?: string };
 
-export function FormularioWhatsApp({ nombre = '', telefono = '', fecha, diaCompleto = false, google = false, nombreContacto = '', adelanto = '' }: Props) {
+export function FormularioWhatsApp({ nombre = '', telefono = '', fecha, diaCompleto = false, google = false, nombreContacto = '', adelanto = '', motivo = '' }: Props) {
   const id = useId();
   const [numero, setNumero] = useState(telefono ?? '');
   const [editarTelefono, setEditarTelefono] = useState(false);
@@ -14,13 +14,8 @@ export function FormularioWhatsApp({ nombre = '', telefono = '', fecha, diaCompl
   const [politicas, setPoliticas] = useState('');
   const [editado, setEditado] = useState<string | null>(null);
   // El nombre interpretado personaliza el saludo; no vincula un expediente clínico.
-  const base = mensajeCita({ nombre: google ? nombreContacto || ' ' : nombre.trim() ? nombre : ' ', fecha, tipo, politicas, diaCompleto });
-  const generico = fechaMensajeCita(fecha, diaCompleto)
-    ? ['Hola.', tipo === 'agendamiento' ? 'Gracias por agendar su cita con la Dra. Fedra Aldama.' : 'Le recordamos su cita con la Dra. Fedra Aldama.',
-      `Le esperamos el ${fechaMensajeCita(fecha, diaCompleto)}.`,
-      'Por favor, responda a este mensaje para confirmar su asistencia.', politicas.trim(), '¡Gracias!'].filter(Boolean).join('\n\n')
-    : '';
-  const mensaje = editado ?? [base || generico, adelanto && (base || generico) ? `Anticipo anotado en la agenda: ${adelanto}.` : ''].filter(Boolean).join('\n\n');
+  const base = mensajeCita({ nombre: google ? nombreContacto : nombre, fecha, tipo, politicas, diaCompleto, motivo, generico: true });
+  const mensaje = editado ?? [base, adelanto && base ? `Anticipo anotado en la agenda: ${adelanto}.` : ''].filter(Boolean).join('\n\n');
   const enlaces = fechaMensajeCita(fecha, diaCompleto) ? enlacesWhatsApp(numero, mensaje) : null;
   const pedirNumero = !numeroWhatsApp(telefono ?? '') || editarTelefono;
   const campo = 'mt-1 min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900';

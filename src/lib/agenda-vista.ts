@@ -1,7 +1,7 @@
 import type { EventoGoogle } from './google-calendario-seguridad';
 
 export const ZONA_AGENDA = 'America/Mazatlan';
-export type ContactoAgendaGoogle = { nombre: string; telefono: string | null; adelanto?: string; ambiguo?: boolean };
+export type ContactoAgendaGoogle = { nombre: string; telefono: string | null; adelanto?: string; ambiguo?: boolean; motivo?: string };
 const formatoDia = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA_AGENDA, year: 'numeric', month: '2-digit', day: '2-digit' });
 const formatoHora = new Intl.DateTimeFormat('es-MX', { timeZone: ZONA_AGENDA, hour: 'numeric', minute: '2-digit' });
 export type CitaCalendario = {
@@ -19,7 +19,7 @@ function textoCita(valor: string) {
     .replace(/<br\s*\/?\s*>|<\/(?:p|div|li)>/gi, '\n').replace(/<[^>]*>/g, '')
     .replace(/&nbsp;|&#160;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"');
 }
-const etiquetasContacto = 'nombre(?: completo)?|paciente|tel[eé]fono|tel|celular|cel|whatsapp|wpp|phone|anticipo|adelanto|abono|dep[oó]sito';
+const etiquetasContacto = 'nombre(?: completo)?|paciente|tel[eé]fono|tel|celular|cel|whatsapp|wpp|phone|anticipo|adelanto|abono|dep[oó]sito|motivo|servicio|tratamiento';
 function valoresCita(texto: string, etiquetas: string) {
   return Array.from(texto.matchAll(new RegExp(`(?:^|[\\n;,]|\\s)\\s*(?:${etiquetas})\\s*[:=]\\s*([^\\n]*?)(?=\\s+(?:${etiquetasContacto})\\s*[:=]|[\\n;]|$)`, 'gi')), m => m[1].trim());
 }
@@ -72,7 +72,8 @@ export function contactosGoogle(e: EventoGoogle): ContactoAgendaGoogle[] {
     const telefonos = telefonosCita(`${parte}\n${nota}`);
     const importes = [...new Set([...valoresCita(nota, 'anticipo|adelanto|abono|dep[oó]sito'),
       ...Array.from(parte.matchAll(/\$\s*\d[\d,]*(?:\.\d{1,2})?/g), m => m[0])])];
-    return { nombre, telefono: telefonos.length === 1 ? telefonos[0] : null,
+    const motivo = valoresCita(nota, 'motivo|servicio|tratamiento')[0] ?? parte.match(/\b(facial|xeomeen|xeomin|botox|inbody|valoraci[oó]n|l[aá]ser)\b/i)?.[0];
+    return { nombre, telefono: telefonos.length === 1 ? telefonos[0] : null, motivo,
       adelanto: importes.length === 1 ? importes[0] : undefined, ambiguo: telefonos.length > 1 || importes.length > 1 };
   });
 }

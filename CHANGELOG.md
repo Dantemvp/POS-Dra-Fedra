@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## [0.1.32] - 2026-10-11
+
+- Usa el mensaje aprobado: "Hola, buen día, [nombre]", fecha y hora de Sinaloa, y solicitud de confirmación.
+- Incluye el motivo cuando Google lo declara en las notas o en el título; no interpreta códigos como tratamientos.
+- Conserva un borrador por persona, su anticipo, el teléfono solo cuando falta y la edición opcional. Sin envíos ni confirmaciones automáticas.
+
 ## [0.1.31] - 2026-10-11
 
 - Reconoce nombres y anticipos con los códigos y sufijos que Fer usa en Google.
