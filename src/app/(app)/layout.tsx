@@ -5,6 +5,7 @@ import MobileTopBar from "@/components/MobileTopBar";
 import LogoutButton from "@/components/LogoutButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import { APP_VERSION } from "@/lib/version";
+import { PanelOperativoProvider, CampanaNotificaciones } from '@/components/PanelOperativo';
 
 export default async function AppLayout({
   children,
@@ -15,6 +16,7 @@ export default async function AppLayout({
   if (!usuario) redirect("/login");
 
   return (
+    <PanelOperativoProvider key={usuario.authUid} rol={usuario.rol} sesion={usuario.authUid}>
     <div className="fedra-shell flex min-h-screen bg-[#f8f6f2]">
       <Sidebar rol={usuario.rol} />
       <div className="relative z-[1] flex min-w-0 flex-1 flex-col">
@@ -30,11 +32,13 @@ export default async function AppLayout({
             </span>
             <span className="text-sm text-zinc-700">{usuario.nombre}</span>
             <ThemeToggle />
+            <CampanaNotificaciones />
             <LogoutButton />
           </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
+    </PanelOperativoProvider>
   );
 }

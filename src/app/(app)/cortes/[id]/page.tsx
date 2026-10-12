@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import CorteComprobante from '@/components/CorteComprobante';
+import { leerDesgloseCorte } from '@/lib/corte-resumen';
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -13,6 +15,7 @@ const hora = (iso: string) =>
   }).format(new Date(iso));
 
 type Corte = {
+  desglose: Record<string, number> | null;
   apertura: string | null;
   cierre: string;
   usuarios: { nombre: string } | null;
@@ -52,12 +55,13 @@ export default async function DetalleCortePage({
   const { data: corteData } = await supabase
     .from("cortes_caja")
     .select(
-      "apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, usuarios(nombre)",
+      "apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, desglose, usuarios(nombre)",
     )
     .eq("id", id)
     .single();
   if (!corteData) notFound();
   const corte = corteData as unknown as Corte;
+  const alcance = leerDesgloseCorte(corte.desglose);
 
   // Rango del corte. Si es un corte viejo sin `apertura`, se usa el inicio del
   // día (Sinaloa, UTC-7) del cierre.
@@ -79,14 +83,16 @@ export default async function DetalleCortePage({
       "id, folio, fecha, total, metodo_pago, pacientes(nombre, apellidos), venta_items(cantidad, productos(nombre)), pagos(metodo, monto)",
     )
     .eq("estado", "pagada")
+    .eq('es_historico', false)
     .gte("fecha", desde)
     .lte("fecha", cierre)
     .order("folio", { ascending: true });
   const ventas = (ventasData ?? []) as unknown as Venta[];
 
-  const { data: cobrosData } = await supabase
+  const { data: cobrosData } = alcance.consultorioIncluido === false ? { data: [] } : await supabase
     .from("cobros")
     .select("id, fecha, total, pacientes(nombre, apellidos)")
+    .eq('estado', 'activo')
     .gte("fecha", desde)
     .lte("fecha", cierre)
     .order("fecha", { ascending: true });
@@ -102,6 +108,11 @@ export default async function DetalleCortePage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <CorteComprobante corte={{ id, fecha: fechaTitulo, apertura: corte.apertura, cierre, responsable: corte.usuarios?.nombre ?? 'No registrado',
+        totalVentas: Number(corte.total_ventas ?? 0), totalCobros: Number(corte.total_cobros ?? 0), efectivoEsperado: Number(corte.total_efectivo ?? 0),
+        efectivoContado: corte.efectivo_contado === null ? null : Number(corte.efectivo_contado), diferencia: corte.diferencia === null ? null : Number(corte.diferencia),
+        productos: corte.total_productos, pacientes: corte.pacientes_atendidos, ...alcance }} />
+      <div className="corte-screen space-y-6">
       <div>
         <Link
           href="/cortes"
@@ -121,13 +132,13 @@ export default async function DetalleCortePage({
       {/* Resumen guardado */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Dato label="Ventas (farmacia)" valor={money(Number(corte.total_ventas ?? 0))} />
-        <Dato label="Cobros (consultorio)" valor={money(Number(corte.total_cobros ?? 0))} />
+        <Dato label="Cobros (consultorio)" valor={alcance.consultorioIncluido === false ? 'No incluido en este corte' : money(Number(corte.total_cobros ?? 0))} />
         <Dato
           label="Total"
           valor={money(Number(corte.total_ventas ?? 0) + Number(corte.total_cobros ?? 0))}
         />
         <Dato label="Productos salidos" valor={String(corte.total_productos ?? "—")} />
-        <Dato label="Pacientes atendidos" valor={String(corte.pacientes_atendidos ?? "—")} />
+        {alcance.consultorioIncluido !== false && <Dato label="Pacientes atendidos" valor={String(corte.pacientes_atendidos ?? "—")} />}
         <Dato
           label="Efectivo esperado"
           valor={money(Number(corte.total_efectivo ?? 0))}
@@ -147,7 +158,7 @@ export default async function DetalleCortePage({
         <h2 className="mb-2 text-lg font-medium text-zinc-900">
           Ventas de farmacia ({ventas.length})
         </h2>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+        <div className="overflow-x-auto rounded-xl bg-white ring-1 ring-zinc-200">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
               <tr>
@@ -197,12 +208,12 @@ export default async function DetalleCortePage({
         </div>
       </section>
 
-      {/* Cobros del corte */}
-      <section>
+      {/* Cobros del corte, solo cuando el alcance los incluye. */}
+      {alcance.consultorioIncluido !== false && <section>
         <h2 className="mb-2 text-lg font-medium text-zinc-900">
           Cobros de consultorio ({cobros.length})
         </h2>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+        <div className="overflow-x-auto rounded-xl bg-white ring-1 ring-zinc-200">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
               <tr>
@@ -234,7 +245,8 @@ export default async function DetalleCortePage({
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
+      </div>
     </div>
   );
 }

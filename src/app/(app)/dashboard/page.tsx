@@ -15,6 +15,8 @@ import {
   necesitaConfirmar,
 } from "../agenda/confirmacion";
 import { areaInicialParaRol, areasParaRol, type AreaTrabajo } from "@/components/nav";
+import { AgendaInicio } from '@/components/PanelOperativo';
+import { centavosCorte } from '@/lib/corte-resumen';
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -64,7 +66,7 @@ export default async function DashboardPage({
 
     const { data: ventas } = await supabase
       .from("ventas")
-      .select("fecha, total, metodo_pago")
+      .select("fecha, total, metodo_pago, pagos(metodo, monto)")
       .gte("fecha", desde14.toISOString())
       .eq("estado", "pagada");
 
@@ -78,8 +80,8 @@ export default async function DashboardPage({
       const f = new Date(v.fecha as string);
       const key = etiquetaDiaCorta(f);
       if (dias.has(key)) dias.set(key, dias.get(key)! + Number(v.total));
-      const m = (v.metodo_pago as string) ?? "otro";
-      metodoMap.set(m, (metodoMap.get(m) ?? 0) + Number(v.total));
+      const pagos = v.pagos?.length ? v.pagos : [{ metodo: v.metodo_pago ?? 'otro', monto: v.total }];
+      for (const pago of pagos) metodoMap.set(pago.metodo, (metodoMap.get(pago.metodo) ?? 0) + Number(pago.monto));
       if (f >= inicioHoy) {
         totalDia += Number(v.total);
         ventasDiaCount += 1;
@@ -149,6 +151,7 @@ export default async function DashboardPage({
   let pacientesNuevosMes = 0;
   let citasPorConfirmar = 0;
   let citasVencidas = 0;
+  let ingresosHoy: number | null = null;
   let citasHoy: {
     id: string;
     fecha_hora: string;
@@ -163,6 +166,13 @@ export default async function DashboardPage({
   let porMes: { mes: string; recetas: number; citas: number }[] = [];
   let ingresosMes: { mes: string; total: number }[] = [];
   if (verClinica && areaActiva === "consultorio") {
+    if (rol !== 'asistente') {
+      const desdeHoy = inicioDiaSinaloa().toISOString();
+      const hastaHoy = new Date().toISOString();
+      const { data, error, count } = await supabase.from('cobros').select('total', { count: 'exact' })
+        .eq('estado', 'activo').gte('fecha', desdeHoy).lte('fecha', hastaHoy).limit(1001);
+      if (!error && (count ?? 0) <= 1000) ingresosHoy = (data ?? []).reduce((n, c) => n + centavosCorte(c.total), 0) / 100;
+    }
     const { count } = await supabase
       .from("pacientes")
       .select("*", { count: "exact", head: true });
@@ -430,6 +440,8 @@ export default async function DashboardPage({
 
       {verClinica && areaActiva === "consultorio" && (
         <div className="order-2 space-y-4">
+          <AgendaInicio />
+          {rol !== 'asistente' && <Kpi label="Ingresos del consultorio hoy" value={ingresosHoy === null ? 'No disponible' : money(ingresosHoy)} />}
           {citasPorConfirmar > 0 && (
             <Link
               href="/agenda"
@@ -461,7 +473,7 @@ export default async function DashboardPage({
           <div className="rounded-xl bg-white p-5 ring-1 ring-zinc-200">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium text-zinc-900">
-                Pacientes de hoy
+              Pacientes de hoy (citas del POS)
               </h2>
               <Link
                 href="/agenda"
@@ -531,7 +543,7 @@ export default async function DashboardPage({
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Kpi label="Pacientes totales" value={String(totalPacientes)} />
             <Kpi label="Nuevos este mes" value={String(pacientesNuevosMes)} />
-            <Kpi label="Citas de hoy" value={String(citasHoy.length)} />
+            <Kpi label="Citas de hoy (POS)" value={String(citasHoy.length)} />
             <Kpi
               label="Citas por confirmar"
               value={String(citasPorConfirmar)}

@@ -5,9 +5,11 @@ import type { EventoGoogle } from '@/lib/google-calendario-seguridad';
 import { agruparAgenda, diaAgenda, proximasAgenda, unirAgenda, type CitaCalendario } from '@/lib/agenda-vista';
 import { iniciarRefrescoAgenda } from '@/lib/agenda-refresco';
 import CalendarioAgenda, { DetalleCitaAgenda } from './CalendarioAgenda';
+import { useLecturaGoogle } from '@/components/PanelOperativo';
 
 type Resultado = { conectado: boolean; eventos: EventoGoogle[]; actualizado?: string };
 export default function GoogleCalendario({ citas, puedeConectar, estadoOAuth }: { citas: CitaCalendario[]; puedeConectar: boolean; estadoOAuth?: string }) {
+  const consultarGoogle = useLecturaGoogle();
   const [mes, setMes] = useState(() => diaAgenda(new Date().toISOString()).slice(0, 7));
   const [resultado, setResultado] = useState<(Resultado & { mes: string }) | null>(null);
   const [error, setError] = useState('');
@@ -16,19 +18,13 @@ export default function GoogleCalendario({ citas, puedeConectar, estadoOAuth }: 
   useEffect(() => {
     const ciclo = iniciarRefrescoAgenda<Resultado>({
       documento: document, ventana: window, cargando: setCargando,
-      consultar: async signal => {
-        const res = await fetch(`/api/google-calendario/eventos?mes=${encodeURIComponent(mes)}`, { cache: 'no-store', signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]) });
-        if (res.redirected || res.status === 403) throw new Error('Tu sesión no permite consultar Google. Recarga e inicia sesión.');
-        const datos = await res.json();
-        if (!res.ok) throw new Error(datos.error || 'No se pudo consultar Google.');
-        return datos;
-      },
+      consultar: async () => consultarGoogle(mes),
       recibir: datos => { setResultado({ ...datos, mes }); setError(''); },
       fallar: e => setError(e instanceof Error ? e.message : 'No se pudo actualizar Google.'),
     });
     refresco.current = ciclo;
     return () => { ciclo.detener(); refresco.current = null; };
-  }, [mes]);
+  }, [mes, consultarGoogle]);
   const actual = resultado?.mes === mes ? resultado : null;
   const unificadas = useMemo(() => unirAgenda(citas, actual?.eventos ?? []), [citas, actual]);
   const idsMes = useMemo(() => new Set([...agruparAgenda(unificadas, mes).values()].flat().map(c => c.id)), [unificadas, mes]);
