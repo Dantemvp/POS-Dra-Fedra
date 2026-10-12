@@ -103,10 +103,18 @@ export function AgendaInicio() {
   const deHoy = citas.filter(c => diaAgenda(c.fecha_hora) === hoy);
   return <section className="rounded-xl bg-white p-5 ring-1 ring-zinc-200" aria-label="Agenda unificada de Inicio">
     <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold text-zinc-900">Agenda de la doctora</h2><Link href="/agenda" className="min-h-11 content-center text-sm underline text-zinc-700">Ver agenda completa</Link></div>
-    <p className="mb-3 text-sm text-zinc-600">{estado.datos ? `${deHoy.length} ${deHoy.length === 1 ? 'cita próxima' : 'citas próximas'} hoy · ${citas.length} en los próximos 7 días` : 'Consultando las citas…'} · Google y POS</p>
     {(estado.error || estado.errorGoogle) && <p role="alert" className="mb-3 rounded-lg border border-amber-300 p-3 text-sm text-zinc-800">{estado.error || estado.errorGoogle}</p>}
-    <div className="max-h-[32rem] space-y-2 overflow-y-auto">{citas.slice(0, 8).map(c => <DetalleCitaAgenda key={c.id} cita={c} mostrarFecha />)}</div>
-    {estado.datos && !citas.length && !estado.error && !estado.errorGoogle && <p className="text-sm text-zinc-600">Sin citas próximas en esta ventana.</p>}
-    {citas.length > 8 && <p className="mt-3 text-xs text-zinc-600">Mostrando las primeras 8 citas. El resto está en Agenda.</p>}
+    <details className="group">
+      <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm text-zinc-700 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
+        <span>{estado.datos ? `${deHoy.length} ${deHoy.length === 1 ? 'cita próxima' : 'citas próximas'} hoy · ${citas.length} en los próximos 7 días` : 'Consultando las citas…'} · Google y POS</span>
+        <span className="inline-flex items-center gap-2 font-semibold text-zinc-900">
+          <span className="group-open:hidden">Ver citas</span><span className="hidden group-open:inline">Ocultar citas</span>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180"><path d="m6 9 6 6 6-6" /></svg>
+        </span>
+      </summary>
+      <div className="mt-3 max-h-[32rem] space-y-2 overflow-y-auto">{citas.slice(0, 8).map(c => <DetalleCitaAgenda key={c.id} cita={c} mostrarFecha />)}</div>
+      {estado.datos && !citas.length && !estado.error && !estado.errorGoogle && <p className="mt-3 text-sm text-zinc-600">Sin citas próximas en esta ventana.</p>}
+      {citas.length > 8 && <p className="mt-3 text-xs text-zinc-600">Mostrando las primeras 8 citas. El resto está en Agenda.</p>}
+    </details>
   </section>;
 }

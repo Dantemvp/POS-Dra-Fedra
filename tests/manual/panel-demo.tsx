@@ -7,5 +7,7 @@ const corte = { id: 'CORTE-FICTICIO-001', fecha: '11/10/2026', responsable: 'Res
 window.print = () => { throw new Error('Esta demostración no imprime en hardware. Usa la captura PDF de DevTools.'); };
 createRoot(document.getElementById('root')!).render(<PanelOperativoProvider rol="admin" sesion="ficticia">
   <header className="print:hidden flex items-center justify-between bg-white p-3 text-zinc-900"><span>Fedra · Prueba ficticia</span><div className="flex items-center"><CampanaNotificaciones /><button className="min-h-11 px-3" onClick={() => document.documentElement.classList.toggle('dark')}>Tema</button></div></header>
-  <main className="mx-auto max-w-4xl space-y-5 p-4"><p className="corte-screen text-sm text-zinc-600">Datos inventados. No conectado a Supabase. No registra cierres ni envía mensajes.</p><div className="corte-screen"><AgendaInicio /></div><CorteComprobante corte={corte} /></main>
+  <main className="mx-auto max-w-4xl space-y-5 p-4"><p className="corte-screen text-sm text-zinc-600">Datos inventados. No conectado a Supabase. No registra cierres ni envía mensajes.</p>
+    <label className="corte-screen block text-sm text-zinc-900">Método de pago (prueba visual)<select className="mt-2 block min-h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-zinc-900"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option><option>Otro</option></select></label>
+    <div className="corte-screen"><AgendaInicio /></div><CorteComprobante corte={corte} /></main>
 </PanelOperativoProvider>);
