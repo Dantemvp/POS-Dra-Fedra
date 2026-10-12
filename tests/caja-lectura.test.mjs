@@ -27,3 +27,15 @@ test('recuperar corte farmacia conserva exclusión clínica y separa el metadato
   const a=await lectura(t,{soloFarmacia:true});const c=await a.modulo.leerUltimoCortePropio('Ficticio');
   assert.equal(c.consultorioIncluido,false);assert.deepEqual(c.desglose,{efectivo:100});
 });
+test('lectura por área ni siquiera consulta las operaciones de la otra área',async t=>{
+  for(const [area,tabla,opuesta] of [['farmacia','ventas','cobros'],['consultorio','cobros','ventas']]){
+    const a=await lectura(t,{falla:opuesta});const r=await a.modulo.leerCajaDia(new Date(),area);
+    assert.ok(a.consultas.some(c=>c.tabla===tabla));assert.ok(!a.consultas.some(c=>c.tabla===opuesta));assert.equal(r.totalVentas+r.totalCobros,0);
+  }
+});
+test('recuperación por área filtra el metadato guardado además del autor',async t=>{
+  for(const [area,codigo] of [['farmacia','1'],['consultorio','2']]){
+    const a=await lectura(t);await a.modulo.leerUltimoCortePropio('Ficticio',area);
+    assert.ok(a.consultas.find(c=>c.tabla==='cortes_caja').filtros.some(f=>f[1]==='desglose->>__area_corte'&&f[2]===codigo));
+  }
+});

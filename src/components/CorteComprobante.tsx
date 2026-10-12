@@ -1,7 +1,7 @@
 'use client';
 
 import AutoPrint from './AutoPrint';
-import { csvCorte, METODOS_CORTE, type ComprobanteCorte } from '@/lib/corte-resumen';
+import { csvCorte, etiquetaAreaCorte, METODOS_CORTE, type ComprobanteCorte } from '@/lib/corte-resumen';
 import { fechaSinaloa, horaSinaloa } from '@/lib/tz';
 
 const dinero = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
@@ -33,17 +33,18 @@ export default function CorteComprobante({ corte, automatico = false }: { corte:
       <button type="button" onClick={exportar} className="min-h-11 rounded-lg border border-zinc-300 bg-white px-4 py-2 font-semibold text-zinc-800">Exportar resumen CSV</button>
     </div>
     {automatico && corte.id && <AutoPrint />}
-    <div className="print-area ticket-print ticket-thermal-strong ticket-corte mx-auto max-w-sm rounded-xl bg-white p-5 text-sm text-zinc-900 ring-1 ring-zinc-200">
+    <div className="print-area ticket-print ticket-thermal-strong ticket-corte doc-imprimible mx-auto max-w-sm rounded-xl bg-white p-5 text-sm text-zinc-900 ring-1 ring-zinc-200">
       {/* Archivo local, sin datos clínicos ni imágenes externas. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.png" alt="Dra. Fedra Aldama" className="ticket-logo mx-auto mb-3 h-auto w-44" />
       <h2 className="text-center text-base font-bold">{corte.id ? 'CORTE DE CAJA' : 'VISTA PREVIA, SIN GUARDAR'}</h2>
+      <p className="text-center font-bold">{etiquetaAreaCorte(corte)}</p>
       <p className="my-2 text-center font-semibold">{corte.fecha}</p>
       {corte.id && <p className="break-all text-xs">Folio: {corte.id}</p>}
       <p className="break-words">Responsable: {corte.responsable}</p>
       {corte.cierre && <p className="text-xs">{corte.apertura ? `Desde ${fechaSinaloa(corte.apertura)} ${horaSinaloa(corte.apertura)}. ` : ''}Cierre: {horaSinaloa(corte.cierre)} (Sinaloa)</p>}
       <div className="my-3 space-y-1 border-y border-dashed py-3">
-        {dato('Farmacia', dinero(corte.totalVentas))}
+        {corte.farmaciaIncluida === false ? <p className="font-bold">Farmacia: no incluida en este corte.</p> : dato('Farmacia', dinero(corte.totalVentas))}
         {corte.consultorioIncluido === false ? <p className="font-bold">Consultorio: no incluido en este corte.</p> : dato('Consultorio', dinero(corte.totalCobros))}
         <div className="pt-2 text-base">{dato('Total registrado', dinero(corte.totalVentas + corte.totalCobros))}</div>
       </div>
@@ -55,8 +56,8 @@ export default function CorteComprobante({ corte, automatico = false }: { corte:
         {dato('Efectivo contado', corte.efectivoContado === null ? 'Sin capturar' : dinero(corte.efectivoContado))}
         {dato(corte.diferencia === null ? 'Diferencia' : corte.diferencia === 0 ? 'Caja cuadrada' : corte.diferencia > 0 ? 'Sobrante' : 'Faltante', corte.diferencia === null ? 'Sin determinar' : dinero(Math.abs(corte.diferencia)))}
       </div>
-      {corte.numVentas !== undefined && dato('Ventas', String(corte.numVentas))}
-      {dato('Productos salidos', corte.productos === null ? 'No registrado' : String(corte.productos))}
+      {corte.farmaciaIncluida !== false && corte.numVentas !== undefined && dato('Ventas', String(corte.numVentas))}
+      {corte.farmaciaIncluida !== false && dato('Productos salidos', corte.productos === null ? 'No registrado' : String(corte.productos))}
       {corte.consultorioIncluido !== false && dato('Pacientes atendidos', corte.pacientes === null ? 'No registrado' : String(corte.pacientes))}
       {corte.consultorioIncluido === undefined && <p className="mt-3 text-xs">Este corte anterior no registró si incluía consultorio.</p>}
       <p className="mt-3 text-xs">Resumen diario de ingresos registrados. No incluye fondo inicial ni retiros de efectivo.</p>

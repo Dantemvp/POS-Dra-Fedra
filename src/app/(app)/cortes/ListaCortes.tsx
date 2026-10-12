@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { etiquetaAreaCorte, type AreaCorte } from '@/lib/corte-resumen';
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -13,6 +14,7 @@ const MESES = [
 ];
 
 export type CorteLista = {
+  area?: AreaCorte;
   id: string;
   cierre: string;
   hechoPor: string | null;
@@ -49,12 +51,14 @@ function partes(iso: string) {
 
 export default function ListaCortes({ cortes }: { cortes: CorteLista[] }) {
   const [q, setQ] = useState("");
+  const [area, setArea] = useState('todos');
 
   // Agrupar año → mes, ya filtrado por el buscador.
   const grupos = useMemo(() => {
     const s = q.trim().toLowerCase();
     const porAnio = new Map<number, Map<number, (CorteLista & { p: ReturnType<typeof partes> })[]>>();
     for (const c of cortes) {
+      if (area !== 'todos' && (c.area ?? 'anteriores') !== area) continue;
       const p = partes(c.cierre);
       const buscable = `${p.d} ${MESES[p.m]} ${p.y} ${p.dia}`.toLowerCase();
       if (s && !buscable.includes(s)) continue;
@@ -64,12 +68,17 @@ export default function ListaCortes({ cortes }: { cortes: CorteLista[] }) {
       meses.get(p.m)!.push({ ...c, p });
     }
     return porAnio;
-  }, [cortes, q]);
+  }, [cortes, q, area]);
 
   const anios = Array.from(grupos.keys()).sort((a, b) => b - a);
 
   return (
     <div>
+      <label className="mb-4 block text-sm text-zinc-700">Área del corte
+        <select value={area} onChange={e => setArea(e.target.value)} className="ml-3 rounded-lg border border-zinc-300 bg-white p-2">
+          <option value="todos">Todas</option><option value="farmacia">Farmacia</option><option value="consultorio">Consultorio</option><option value="anteriores">Anteriores sin separación</option>
+        </select>
+      </label>
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -96,13 +105,14 @@ export default function ListaCortes({ cortes }: { cortes: CorteLista[] }) {
                         <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
                           {MESES[mes]}
                         </h3>
-                        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+                        <div className="overflow-x-auto rounded-xl bg-white ring-1 ring-zinc-200">
                           <table className="w-full text-left text-sm">
                             <tbody className="divide-y divide-zinc-100">
                               {lista.map((c) => (
                                 <tr key={c.id} className="hover:bg-zinc-50">
                                   <td className="px-4 py-3 text-zinc-800">
                                     <span className="capitalize">{c.p.dia}</span>{" "}
+                                    <span className="block text-xs font-semibold text-zinc-700">{etiquetaAreaCorte(c)}</span>
                                     <span className="text-xs text-zinc-400">
                                       {c.p.hora}
                                     </span>

@@ -77,7 +77,7 @@ export default async function DetalleCortePage({
     desde = `${ymd}T00:00:00-07:00`;
   }
 
-  const { data: ventasData } = await supabase
+  const { data: ventasData } = alcance.farmaciaIncluida === false ? { data: [] } : await supabase
     .from("ventas")
     .select(
       "id, folio, fecha, total, metodo_pago, pacientes(nombre, apellidos), venta_items(cantidad, productos(nombre)), pagos(metodo, monto)",
@@ -131,13 +131,13 @@ export default async function DetalleCortePage({
 
       {/* Resumen guardado */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Dato label="Ventas (farmacia)" valor={money(Number(corte.total_ventas ?? 0))} />
+        <Dato label="Ventas (farmacia)" valor={alcance.farmaciaIncluida === false ? 'No incluida en este corte' : money(Number(corte.total_ventas ?? 0))} />
         <Dato label="Cobros (consultorio)" valor={alcance.consultorioIncluido === false ? 'No incluido en este corte' : money(Number(corte.total_cobros ?? 0))} />
         <Dato
           label="Total"
           valor={money(Number(corte.total_ventas ?? 0) + Number(corte.total_cobros ?? 0))}
         />
-        <Dato label="Productos salidos" valor={String(corte.total_productos ?? "—")} />
+        {alcance.farmaciaIncluida !== false && <Dato label="Productos salidos" valor={String(corte.total_productos ?? "—")} />}
         {alcance.consultorioIncluido !== false && <Dato label="Pacientes atendidos" valor={String(corte.pacientes_atendidos ?? "—")} />}
         <Dato
           label="Efectivo esperado"
@@ -154,7 +154,7 @@ export default async function DetalleCortePage({
       </div>
 
       {/* Ventas del corte */}
-      <section>
+      {alcance.farmaciaIncluida !== false && <section>
         <h2 className="mb-2 text-lg font-medium text-zinc-900">
           Ventas de farmacia ({ventas.length})
         </h2>
@@ -206,7 +206,7 @@ export default async function DetalleCortePage({
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
 
       {/* Cobros del corte, solo cuando el alcance los incluye. */}
       {alcance.consultorioIncluido !== false && <section>

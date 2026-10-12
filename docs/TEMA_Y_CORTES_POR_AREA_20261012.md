@@ -1,0 +1,44 @@
+# Tema y cortes por área
+
+Base: main 303e77c, producción 0.1.33. Autor: Codex. Revisión independiente pendiente de Claude. No hay migraciones, dependencias nuevas ni cambios de datos.
+
+## Tema
+
+El shell y la cabecera usan superficies propias en claro y oscuro. El menú activo y los botones principales conservan blanco sobre verde; el logo de navegación cambia a blanco en oscuro. La selección de área y sus textos siguen el tema. Los botones de tema de escritorio y celular observan la misma clase del documento.
+
+El membrete permanece tenue. El logo del ticket no recibe el filtro de navegación. Los comprobantes de corte ahora usan `doc-imprimible`, con su paleta clara, incluso al verlos en pantalla oscura. Se conserva el ancho útil de 72 mm y la impresión automática después de guardar un corte.
+
+## Cajas
+
+- `/caja`: Farmacia. Solo ventas pagadas no históricas y sus pagos. Ni siquiera consulta cobros clínicos.
+- `/cobros/corte`: Consultorio. Solo cobros activos y sus pagos. Ni siquiera consulta ventas de productos.
+- `/cortes/resumen`: administración, gerencia y doctora consultan ambas áreas. Suma operaciones, no cortes guardados. No tiene cierre ni efectivo contado.
+
+Los permisos no se amplían. Farmacia puede cerrar su área; administración y gerencia pueden cerrar ambas, por separado. Doctora y asistente consultan la caja clínica sin botón de cierre. La doctora conserva acceso al historial y al resumen. No se concede a Farmacia acceso a la ruta clínica ni a expedientes.
+
+El servidor valida el área y vuelve a calcular los importes; no acepta un cierre combinado. El contado sigue siendo el único importe capturado por la persona. Cada corte guarda su área en `desglose.__area_corte`: 1 Farmacia, 2 Consultorio. Es metadato, nunca dinero ni método de pago. La marca anterior `__solo_farmacia` se mantiene por compatibilidad.
+
+El historial filtra por área. Reimpresión y CSV usan el alcance guardado, no el rol actual del autor. Recuperar el último corte propio filtra autor y área; solo recupera los cortes con la nueva marca. Los anteriores siguen disponibles en el historial, sin reescribir sus cifras ni atribuirlos a una nueva área.
+
+La campana consulta el último cierre de cada área por separado. Un cierre de Farmacia no adelanta la frontera de Consultorio. Los cortes antiguos que declararon incluir ambas áreas sirven como frontera para ambas; los que no declararon alcance no acreditan ese cierre. La lectura falla si supera el límite, no muestra una lista incompleta como comprobada.
+
+## Límites y reversa
+
+Separar los ingresos no implica que existan dos cajones físicos. Antes de capturar contado, separar el efectivo atribuible a cada área. El sistema no incluye fondo inicial ni retiros. Sigue sin garantizar un único corte por turno ni una transacción atómica entre lectura y guardado; los resúmenes diarios pueden solaparse. Esta ronda no cambia ese contrato.
+
+La reversa es revertir el commit de esta rama. Un código anterior no conoce la marca de Consultorio: no usarlo para reimprimir cortes clínicos nuevos sin conservar el lector de alcance. Los datos nuevos no se borran al revertir. No usar `db push` ni ejecutar migraciones para esta entrega.
+
+## Verificación de Codex
+
+152 pruebas Node pasan, tipos, lint y build limpios. Las nuevas pruebas cubren lecturas separadas, rechazo del área indebida, snapshots, recuperación por autor/área, CSV, render del ticket clínico, permisos de consulta, resumen sin cierre y campana con fronteras independientes.
+
+Harness aislado: `node tests/manual/panel-demo-server.mjs --tema`, puerto 3034. Usa React, navegación y comprobante reales, pero datos inventados, enlaces locales y logout simulado. No conecta Supabase; bloquea `window.print`. No acredita una sesión real por rol ni impresión física.
+
+En el navegador se comprobó claro/oscuro, sincronización de controles, logo visible, papel blanco y menú móvil. A 320 y 390 px no hubo desbordamiento horizontal. En los 21 elementos medidos en oscuro, el contraste mínimo fue 6.66:1. No es una auditoría de todas las pantallas ni de todos los estados de hover. Los números del tema claro no se certificaron porque el navegador devuelve colores OKLCH y el medidor inicial solo convertía RGB.
+
+## Prueba supervisada con Fer después de publicar
+
+1. Revisar menú, botones, logo y campos en ambos temas desde PC y celular. Comprobar que el ticket sigue negro sobre blanco.
+2. Cotejar ventas y cobros de un día: cada área debe excluir la otra, y el resumen conjunto debe sumar exactamente una vez cada operación.
+3. Reimprimir primero un corte existente. Después cerrar un corte de cada área con administración o gerencia, usando contado atribuible al área. Comprobar folio, pagos mixtos, CSV y exclusión explícita de la otra caja.
+4. Confirmar con Dante si Fer debe cerrar Consultorio y si usan uno o dos cajones. Cambiar permisos o incorporar fondos/retiros requiere una entrega propia, no un cambio visual.

@@ -5,6 +5,9 @@
   color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
+  --surface-shell: #f8f6f2;
+  --surface-muted: #eee9e1;
+  --accent-text: #3f5148;
 
   /* Paleta de marca Dra. Fedra (taupe/crema/arena) — para gráficas y acentos */
   --brand-taupe: #b19b7d;
@@ -37,6 +40,9 @@
   color-scheme: dark;
   --background: #141312;
   --foreground: #f2eeec;
+  --surface-shell: #141917;
+  --surface-muted: #2a332e;
+  --accent-text: #c4d8cc;
 
   --color-white: #1d1b18; /* superficie de tarjeta */
   --color-zinc-50: #1d1b18;
@@ -49,6 +55,24 @@
   --color-zinc-700: #d8cec1;
   --color-zinc-800: #e8e0d5;
   --color-zinc-900: #f2eeec; /* texto principal / títulos */
+  --color-zinc-950: #f8f5f0;
+}
+
+/* El papel y el blanco de los botones no son superficies intercambiables. */
+.fedra-shell { background-color: var(--surface-shell); }
+.fedra-header { background-color: var(--surface-shell); }
+.fedra-nav-active, .fedra-primary { background: #3f5148; color: #fff; }
+.fedra-nav-active:hover, .fedra-primary:hover { background: #33463c; }
+.fedra-area-switch { background: var(--surface-muted); }
+.fedra-area-selected { background: var(--color-white, #fff); color: var(--accent-text); }
+.fedra-accent { color: var(--accent-text); }
+.dark .fedra-brand-logo { filter: brightness(0) invert(1); }
+@media screen {
+  .dark .fedra-shell .text-white:not(.doc-imprimible *) { color: #fff; }
+  .dark .fedra-shell .bg-zinc-900:not(.doc-imprimible *) { background-color: #3f5148; }
+  .dark .fedra-shell .hover\:bg-zinc-800:hover:not(.doc-imprimible *) { background-color: #33463c; }
+  .dark .fedra-shell .hover\:bg-\[\#f2eeec\]:hover { background-color: var(--surface-muted); }
+  .dark .fedra-shell .hover\:bg-\[\#f8f6f2\]:hover { background-color: var(--surface-muted); }
 }
 
 body {
@@ -86,6 +110,7 @@ body {
     background-position: 38% center;
     opacity: 0.1;
   }
+  .dark .fedra-shell::before { opacity: 0.035; }
 }
 
 @media print {
@@ -115,6 +140,7 @@ body {
   --color-zinc-700: #3f3f46;
   --color-zinc-800: #27272a;
   --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
 }
 
 /* Impresión: mostrar solo el área marcada (recetas, tickets) */

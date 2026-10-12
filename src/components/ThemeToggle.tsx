@@ -6,9 +6,11 @@ export default function ThemeToggle() {
   const [oscuro, setOscuro] = useState(false);
 
   useEffect(() => {
-    // Sincroniza el icono con el tema que el script anti-parpadeo ya aplicó.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOscuro(document.documentElement.classList.contains("dark"));
+    const sincronizar = () => setOscuro(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(sincronizar);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    const frame = requestAnimationFrame(sincronizar);
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); };
   }, []);
 
   function alternar() {
@@ -22,6 +24,7 @@ export default function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={alternar}
       aria-label={oscuro ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
       title={oscuro ? "Tema claro" : "Tema oscuro"}

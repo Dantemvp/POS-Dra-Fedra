@@ -3,6 +3,7 @@ import { getUsuarioActual } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { stockPanel, type PanelDatos } from '@/lib/panel-operativo';
 import { inicioDiaSinaloa } from '@/lib/tz';
+import { leerDesgloseCorte } from '@/lib/corte-resumen';
 
 export async function GET() {
   const headers = { 'Cache-Control': 'private, no-store' };
@@ -32,20 +33,23 @@ export async function GET() {
       datos.stock = stockPanel(res.data ?? [], ahora);
     }
     if (['admin', 'gerente', 'farmacia', 'doctora'].includes(u.rol)) {
-      const corte = await db.from('cortes_caja').select('id, cierre, diferencia').gte('cierre', desde).order('cierre', { ascending: false }).limit(1).maybeSingle();
-      if (corte.error) throw new Error('cortes');
-      const frontera = corte.data?.cierre ?? desde;
-      let operaciones = 0;
-      if (u.rol !== 'doctora') {
-        const res = await db.from('ventas').select('id', { count: 'exact', head: true }).eq('estado', 'pagada').eq('es_historico', false).gt('fecha', frontera).lte('fecha', ahora.toISOString());
-        if (res.error) throw new Error('ventas'); operaciones += res.count ?? 0;
+      const cortes = await db.from('cortes_caja').select('id, cierre, diferencia, desglose', { count: 'exact' }).gte('cierre', desde).order('cierre', { ascending: false }).limit(1001);
+      if (cortes.error || (cortes.count ?? cortes.data?.length ?? 0) > 1000) throw new Error('cortes');
+      const areas = u.rol === 'farmacia' ? ['farmacia'] as const : u.rol === 'doctora' ? ['consultorio'] as const : ['farmacia', 'consultorio'] as const;
+      datos.cajas = [];
+      for (const area of areas) {
+        const corte = (cortes.data ?? []).find(c => {
+          const alcance = leerDesgloseCorte(c.desglose);
+          return alcance.area === area || (!alcance.area && alcance.consultorioIncluido === true);
+        });
+        const tabla = area === 'farmacia' ? 'ventas' : 'cobros';
+        let consulta = db.from(tabla).select('id', { count: 'exact', head: true }).eq('estado', area === 'farmacia' ? 'pagada' : 'activo')
+          .gt('fecha', corte?.cierre ?? desde).lte('fecha', ahora.toISOString());
+        if (area === 'farmacia') consulta = consulta.eq('es_historico', false);
+        const res = await consulta;
+        if (res.error) throw new Error(tabla);
+        datos.cajas.push({ area, sinCorte: res.count ?? 0, ultimaDiferencia: corte?.diferencia == null ? null : Number(corte.diferencia), href: area === 'farmacia' ? '/caja' : '/cobros/corte' });
       }
-      if (u.rol !== 'farmacia') {
-        const res = await db.from('cobros').select('id', { count: 'exact', head: true }).eq('estado', 'activo').gt('fecha', frontera).lte('fecha', ahora.toISOString());
-        if (res.error) throw new Error('cobros'); operaciones += res.count ?? 0;
-      }
-      datos.caja = { sinCorte: operaciones, ultimaDiferencia: corte.data?.diferencia == null ? null : Number(corte.data.diferencia),
-        href: u.rol === 'doctora' ? '/cortes' : '/caja' };
     }
     return NextResponse.json(datos, { headers });
   } catch {

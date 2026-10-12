@@ -13,6 +13,10 @@ test('ticket de corte: papel del driver, área de 72 mm, negro, folio, métodos,
   assert.match(html,/@page \{ size: auto; margin: 0; \}/);assert.match(html,/width: 72mm/);assert.match(html,/color: #000 !important/);assert.match(html,/margin: 0 auto !important/);
   assert.doesNotMatch(html,/data-impresion-automatica/);
 });
+test('ticket clínico omite farmacia y productos, conserva desglose y papel claro',()=>{
+  const html=renderToStaticMarkup(React.createElement(modulo.default,{corte:{...corte,area:'consultorio',farmaciaIncluida:false,consultorioIncluido:true,totalVentas:0,productos:0}}));
+  assert.match(html,/Farmacia: no incluida/);assert.match(html,/Pacientes atendidos/);assert.doesNotMatch(html,/Productos salidos/);assert.match(html,/doc-imprimible/);assert.match(html,/Consultorio/);
+});
 test('ticket previo no se identifica como guardado ni imprime automáticamente',()=>{
   const html=renderToStaticMarkup(React.createElement(modulo.default,{corte:{...corte,id:undefined},automatico:true}));
   assert.match(html,/VISTA PREVIA, SIN GUARDAR/);assert.doesNotMatch(html,/data-impresion-automatica/);assert.match(html,/Imprimir vista previa/);

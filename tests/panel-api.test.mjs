@@ -10,7 +10,7 @@ async function api(t, rol, opciones={}) {
     const devolver=()=>{
       if(tabla==='usuarios')return {data:opciones.sinPerfil?null:{rol,activo:!opciones.inactivo},error:null};
       if(opciones.falla===tabla)return {error:{message:'error ficticio'},data:null};
-      if(tabla==='cortes_caja')return {data:{id:'corte-ficticio',cierre:new Date().toISOString(),diferencia:-5},error:null};
+      if(tabla==='cortes_caja')return {data:[{id:'corte-ficticio',cierre:'2026-10-12T10:00:00Z',diferencia:-5,desglose:{__area_corte:1,__solo_farmacia:1}},{id:'clinico-ficticio',cierre:'2026-10-12T09:00:00Z',diferencia:0,desglose:{__area_corte:2}}],count:2,error:null};
       const data=tabla==='citas'?[{id:'cita-ficticia',tipo:'cita_paciente',estado:'agendada',fecha_hora:new Date(Date.now()+10000).toISOString(),paciente:{id:'paciente-ficticio',nombre:'Persona ficticia',apellidos:null,telefono_wpp:null}}]:[];
       return {data,error:null,count:opciones.exceso===tabla?2000:data.length};
     };
@@ -38,7 +38,13 @@ test('panel API: asistente recibe agenda, nunca inventario, ventas o cortes',asy
   assert.ok(a.consultas.every(c=>['usuarios','citas'].includes(c.tabla)));
 });
 test('panel API: doctora conserva ruta autorizada a cortes y no recibe inventario',async t=>{
-  const a=await api(t,'doctora');const d=await(await a.GET()).json();assert.equal(d.caja.href,'/cortes');assert.equal(d.stock,undefined);assert.ok(!a.consultas.some(c=>['productos','ventas'].includes(c.tabla)));
+  const a=await api(t,'doctora');const d=await(await a.GET()).json();assert.equal(d.cajas[0].href,'/cobros/corte');assert.equal(d.stock,undefined);assert.ok(!a.consultas.some(c=>['productos','ventas'].includes(c.tabla)));
+});
+test('corte de Farmacia no adelanta la frontera de los avisos de Consultorio',async t=>{
+  const a=await api(t,'admin');const d=await(await a.GET()).json();
+  assert.deepEqual(d.cajas.map(c=>c.area),['farmacia','consultorio']);
+  assert.ok(a.consultas.find(c=>c.tabla==='ventas').filtros.some(f=>f[0]==='gt'&&f[2]==='2026-10-12T10:00:00Z'));
+  assert.ok(a.consultas.find(c=>c.tabla==='cobros').filtros.some(f=>f[0]==='gt'&&f[2]==='2026-10-12T09:00:00Z'));
 });
 test('panel API: error o truncamiento devuelve 503, no falsos contadores cero',async t=>{
   for(const opciones of [{falla:'citas'},{exceso:'citas'},{falla:'productos'},{exceso:'productos'}]){

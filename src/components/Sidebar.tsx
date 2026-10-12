@@ -35,7 +35,7 @@ export default function Sidebar({ rol }: { rol: Rol }) {
         onClick={alternar}
         aria-label={plegado ? "Mostrar menú lateral" : "Guardar menú lateral"}
         aria-expanded={!plegado}
-        className="absolute -right-3 top-7 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-black/10 bg-white text-sm font-semibold text-[#3f5148] shadow-sm transition hover:scale-105 hover:bg-[#f2eeec] focus:outline-none focus:ring-2 focus:ring-[#8c7a63]"
+        className="fedra-accent absolute -right-3 top-7 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-zinc-300 bg-white text-sm font-semibold shadow-sm transition hover:scale-105 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-[#8c7a63]"
         title={plegado ? "Mostrar menú" : "Guardar menú"}
       >
         {plegado ? "›" : "‹"}
@@ -55,7 +55,7 @@ export default function Sidebar({ rol }: { rol: Rol }) {
       ) : (
         <>
           <div className="px-6 pb-5 pt-6">
-            <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="h-auto w-full max-w-[190px]" />
+            <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="fedra-brand-logo h-auto w-full max-w-[190px]" />
             <p className="mt-0.5 text-xs capitalize text-zinc-500">{rol}</p>
           </div>
           <AreaNavigation rol={rol} />
