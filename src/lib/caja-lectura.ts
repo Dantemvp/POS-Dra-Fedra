@@ -28,6 +28,9 @@ export async function leerUltimoCortePropio(responsable: string): Promise<Compro
   const { data: c, error } = await db.from('cortes_caja').select('id, apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, desglose')
     .eq('usuario_id', perfil.data.id).not('cierre', 'is', null).order('cierre', { ascending: false }).limit(1).maybeSingle();
   if (error || !c) return null;
+  // La caja anterior no tiene vista clínica. No recuperar allí un corte nuevo
+  // de Consultorio como si fuese combinado: sigue disponible en /cortes.
+  if (leerDesgloseCorte(c.desglose).area === 'consultorio') return null;
   return { id: c.id, apertura: c.apertura, cierre: c.cierre, fecha: fechaSinaloa(c.cierre), responsable,
     totalVentas: Number(c.total_ventas ?? 0), totalCobros: Number(c.total_cobros ?? 0), efectivoEsperado: Number(c.total_efectivo ?? 0),
     efectivoContado: c.efectivo_contado === null ? null : Number(c.efectivo_contado), diferencia: c.diferencia === null ? null : Number(c.diferencia),

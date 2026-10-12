@@ -20,9 +20,15 @@ test('CSV del corte conserva resumen guardado, métodos, Sinaloa y contado sin i
 test('alcance guardado sobrevive reimpresión sin convertirse en método ni dinero',()=>{
   for(const incluido of [true,false]){
     const guardado=guardarDesgloseCorte({efectivo:100,tarjeta:50},incluido);
-    assert.deepEqual(leerDesgloseCorte(JSON.parse(JSON.stringify(guardado))),{desglose:{efectivo:100,tarjeta:50},consultorioIncluido:incluido});
+    const leido=leerDesgloseCorte(JSON.parse(JSON.stringify(guardado)));
+    assert.deepEqual(leido.desglose,{efectivo:100,tarjeta:50});
+    assert.equal(leido.consultorioIncluido,incluido);
+    assert.equal(leido.area,incluido ? undefined : 'farmacia');
   }
-  assert.deepEqual(leerDesgloseCorte({efectivo:100}),{desglose:{efectivo:100},consultorioIncluido:undefined});
+  const anterior=leerDesgloseCorte({efectivo:100});
+  assert.deepEqual(anterior.desglose,{efectivo:100});
+  assert.equal(anterior.consultorioIncluido,undefined);
+  assert.equal(anterior.area,undefined);
 });
 test('CSV de farmacia dice no incluido, no inventa pacientes ni exporta metadatos como pagos',()=>{
   const csv=csvCorte({fecha:'11/10/2026',responsable:'Ficticio',totalVentas:100,totalCobros:0,efectivoEsperado:100,efectivoContado:100,diferencia:0,productos:2,pacientes:0,...leerDesgloseCorte(guardarDesgloseCorte({efectivo:100},false))});
