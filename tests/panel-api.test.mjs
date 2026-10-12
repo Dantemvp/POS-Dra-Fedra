@@ -30,7 +30,7 @@ test('panel API: sin sesión, rol desconocido, perfil ausente o inactivo se rech
 });
 test('panel API: Farmacia no consulta expedientes, citas ni cobros del consultorio',async t=>{
   const a=await api(t,'farmacia');const res=await a.GET();const d=await res.json();
-  assert.equal(res.status,200);assert.deepEqual(d.citas,[]);assert.ok(d.stock);assert.ok(!a.consultas.some(c=>['citas','cobros','pacientes'].includes(c.tabla)));
+  assert.equal(res.status,200);assert.equal(d.rol,'farmacia');assert.equal(d.sesion,'usuario-ficticio');assert.deepEqual(d.citas,[]);assert.ok(d.stock);assert.ok(!a.consultas.some(c=>['citas','cobros','pacientes'].includes(c.tabla)));
   assert.match(res.headers.get('cache-control'),/private, no-store/);
 });
 test('panel API: asistente recibe agenda, nunca inventario, ventas o cortes',async t=>{

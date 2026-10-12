@@ -14,7 +14,7 @@ export async function GET() {
   const ahora = new Date();
   const desde = inicioDiaSinaloa(ahora).toISOString();
   const hasta = new Date(inicioDiaSinaloa(ahora).getTime() + 7 * 86400000).toISOString();
-  const datos: PanelDatos = { actualizado: ahora.toISOString(), sesion: u.authUid, citas: [] };
+  const datos: PanelDatos = { actualizado: ahora.toISOString(), sesion: u.authUid, rol: u.rol, citas: [] };
   try {
     if (u.rol !== 'farmacia') {
       const res = await db.from('citas').select('id, fecha_hora, estado, tipo, titulo, notas, paciente:pacientes(id, nombre, apellidos, telefono_wpp)', { count: 'exact' })

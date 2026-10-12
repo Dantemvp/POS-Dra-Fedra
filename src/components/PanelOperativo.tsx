@@ -35,7 +35,7 @@ export function PanelOperativoProvider({ rol, sesion, children }: { rol: Rol; se
         if (res.redirected || res.status === 403) { setDatos(null); ultimaGoogle.current = []; throw new Error('Recarga e inicia sesión para ver tus avisos.'); }
         if (!res.ok) throw new Error('No se pudo actualizar el panel. Los datos visibles son de la última lectura.');
         const base: PanelDatos = await res.json();
-        if (base.sesion !== sesion) { setDatos(null); ultimaGoogle.current = []; throw new Error('La sesión cambió. Recarga el POS antes de continuar.'); }
+        if (base.sesion !== sesion || base.rol !== rol) { setDatos(null); ultimaGoogle.current = []; throw new Error('La sesión o los permisos cambiaron. Recarga el POS antes de continuar.'); }
         let fallo = '';
         if (rol !== 'farmacia') {
           const hoy = diaAgenda(new Date().toISOString());

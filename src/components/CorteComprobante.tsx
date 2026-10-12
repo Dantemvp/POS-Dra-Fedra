@@ -22,6 +22,8 @@ export default function CorteComprobante({ corte, automatico = false }: { corte:
       @page { size: auto; margin: 0; }
       html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
       main { padding: 0 !important; }
+      .fedra-shell, .fedra-shell > div { min-height: 0 !important; }
+      .fedra-shell { display: block !important; }
       .corte-screen { display: none !important; }
       .print-area.ticket-corte { width: 72mm; max-width: 72mm; margin: 0 auto !important; padding: 2mm !important; font: 700 12px Arial, sans-serif; background: #fff !important; box-shadow: none !important; border: 0 !important; }
       .ticket-corte, .ticket-corte * { color: #000 !important; opacity: 1 !important; text-shadow: none !important; border-color: #000 !important; }

@@ -4,7 +4,7 @@ import { numeroWhatsApp } from './agenda-whatsapp';
 export type AvisoPanel = { id: string; area: 'consultorio' | 'farmacia' | 'sistema'; nivel: 'urgente' | 'pendiente' | 'info'; titulo: string; detalle: string; href: string; cantidad: number };
 export type StockPanel = { bajo: number; vencido: number; porCaducar: number; sinCodigo: number; sinPrecio: number };
 export type PanelDatos = {
-  actualizado: string; citas: CitaCalendario[]; sesion?: string;
+  actualizado: string; citas: CitaCalendario[]; sesion?: string; rol?: string;
   stock?: StockPanel;
   caja?: { sinCorte: number; ultimaDiferencia: number | null; href: string };
 };

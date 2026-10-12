@@ -69,6 +69,7 @@ Esto no convierte el cierre en una transacción SQL atómica ni agrega idempoten
 3. Notificaciones fuera de la app: los crons existentes siguen leyendo solo citas del POS, no Google. Además, el envío puede devolver cero si faltan VAPID o suscripciones. No activé ni probé push real. La campana nueva no necesita ese permiso y no promete avisos con la app cerrada.
 4. Continuidad de caja: Fedra no tiene fondo inicial, retiros ni un cierre único por turno como Bianca. Los resúmenes diarios pueden solaparse. Los tickets nuevos lo declaran; no cambian esa política sin autorización.
 5. Dispositivos: el lector Bluetooth del celular y la impresora de Windows son conexiones distintas. El perfil de Chrome de tickets debe conservar la POS y papel de 80 mm; recetas/HC usan otro perfil. No instalé drivers ni puente de impresión.
+6. Plantillas de fases: comprobé que el PR #37 continúa abierto. Producción conserva 54 plantillas activas y la migración 046 no está registrada. La sustitución por las carpetas nuevas sigue pendiente; no doy ese trabajo por integrado ni lo aplico dentro de esta ronda de campana/cortes.
 
 No hice un dictamen fiscal, sanitario o de protección de datos. Las siete tablas examinadas mantienen RLS y el núcleo privado de cobro no permite ejecución directa a anon ni authenticated, comprobado en producción. Eso no prueba la corrección de todas las políticas por fila ni todas las funciones históricas. Referencia técnica: [Supabase, seguridad por fila](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
