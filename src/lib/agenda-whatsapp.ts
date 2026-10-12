@@ -19,11 +19,12 @@ export function fechaMensajeCita(fecha: string, diaCompleto = false): string | n
   return `${dia} a las ${hora} (hora de Sinaloa)`;
 }
 
-export function mensajeCita({ nombre, fecha, tipo, politicas = '', diaCompleto = false }: { nombre: string; fecha: string; tipo: TipoMensajeCita; politicas?: string; diaCompleto?: boolean }) {
+export function mensajeCita({ nombre, fecha, tipo, politicas = '', diaCompleto = false, motivo = '', generico = false }: { nombre: string; fecha: string; tipo: TipoMensajeCita; politicas?: string; diaCompleto?: boolean; motivo?: string; generico?: boolean }) {
   const cuando = fechaMensajeCita(fecha, diaCompleto);
-  if (!nombre.trim() || !cuando) return '';
-  const inicio = tipo === 'agendamiento' ? 'Gracias por agendar su cita con la Dra. Fedra Aldama.' : 'Le recordamos su cita con la Dra. Fedra Aldama.';
-  return [`Hola ${nombre.trim()}.`, inicio, `Le esperamos el ${cuando}.`, 'Por favor, responda a este mensaje para confirmar su asistencia.', politicas.trim(), '¡Gracias!'].filter(Boolean).join('\n\n');
+  if ((!nombre.trim() && !generico) || !cuando) return '';
+  const asunto = motivo.trim() ? ` de ${motivo.trim()}` : '';
+  const inicio = tipo === 'agendamiento' ? `Gracias por agendar tu cita${asunto} con la Dra. Fedra Aldama para el ${cuando}.` : `Te escribimos del consultorio de la Dra. Fedra Aldama para confirmar tu cita${asunto}, el ${cuando}.`;
+  return [nombre.trim() ? `Hola, buen día, ${nombre.trim()}.` : 'Hola, buen día.', inicio, '¿Nos confirmas si podrás asistir?', politicas.trim()].filter(Boolean).join('\n\n');
 }
 
 export function enlacesWhatsApp(telefono: string, mensaje: string) {

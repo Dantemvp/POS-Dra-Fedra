@@ -9,7 +9,7 @@ const fecha = '2026-10-11T18:00:00-07:00';
 
 test('WhatsApp render: paciente del POS tiene borrador y enlaces, no se envía automáticamente', () => {
   const html = renderToStaticMarkup(React.createElement(FormularioWhatsApp, { nombre: 'Persona ficticia', telefono: '6681234567', fecha }));
-  assert.match(html, /Hola%20Persona%20ficticia/);
+  assert.match(html, /Hola%2C%20buen%20d%C3%ADa%2C%20Persona%20ficticia/);
   assert.match(html, /https:\/\/wa.me\/526681234567/);
   assert.doesNotMatch(html, /https:\/\/web.whatsapp.com\/send/);
   assert.match(html, /Abrir el chat no envía el mensaje ni confirma la cita/);
@@ -28,7 +28,7 @@ test('WhatsApp render: Google pide solo teléfono y no crea enlaces sin número'
 test('WhatsApp render: Google con teléfono abre mensaje genérico sin usar el título como nombre', () => {
   const html = renderToStaticMarkup(React.createElement(FormularioWhatsApp, { fecha, google: true, nombre: 'Dos personas / nota privada', telefono: '6681234567' }));
   assert.match(html, /https:\/\/wa.me\/526681234567/);
-  assert.match(html, /Hola\./);
+  assert.match(html, /Hola%2C%20buen%20d%C3%ADa\./);
   assert.doesNotMatch(html, /Dos personas|nota privada|<input|<textarea/);
 });
 test('WhatsApp render: fecha inválida no ofrece enlace aunque tenga teléfono', () => {

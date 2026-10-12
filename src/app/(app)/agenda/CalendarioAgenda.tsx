@@ -36,7 +36,7 @@ export function DetalleCitaAgenda({ cita: c, mostrarFecha = false }: { cita: Cit
           {c.contactos_google!.length > 1 && contacto.adelanto && <p className="mt-1 text-xs text-zinc-700">Anticipo de esta persona: {contacto.adelanto}</p>}
           {contacto.ambiguo && <p className="mt-1 text-xs text-amber-800">Hay datos distintos para este contacto. Revise el número o anticipo en las notas originales.</p>}
           {!contacto.telefono && <p className="mt-1 text-xs text-zinc-600">Google no trae un número único para esta persona.</p>}
-          <RecordatorioWhatsApp nombreContacto={contacto.nombre} adelanto={contacto.adelanto} telefono={contacto.telefono} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google />
+          <RecordatorioWhatsApp nombreContacto={contacto.nombre} adelanto={contacto.adelanto} motivo={contacto.motivo} telefono={contacto.telefono} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google />
         </section>)}</div>
         : <RecordatorioWhatsApp key={`${c.id}:${c.fecha_hora}:${c.nombre}:${c.telefono_wpp ?? ''}`} nombre={c.origen === 'google' ? '' : c.nombre} telefono={c.telefono_wpp} fecha={c.fecha_hora} diaCompleto={c.dia_completo} google={c.origen === 'google'} />
     )}

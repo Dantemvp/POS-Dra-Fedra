@@ -22,10 +22,27 @@ test('WhatsApp: todo el día no inventa una hora; fecha inválida no genera mens
 });
 test('WhatsApp: incluye saludo y confirmación sin inventar políticas', () => {
   const mensaje = mensajeCita({ nombre: 'Persona ficticia', fecha: '2026-10-11T18:00:00-07:00', tipo: 'recordatorio' });
-  assert.match(mensaje, /Hola Persona ficticia\./);
-  assert.match(mensaje, /Le recordamos/);
-  assert.match(mensaje, /confirmar su asistencia/);
+  assert.match(mensaje, /^Hola, buen día, Persona ficticia\./);
+  assert.match(mensaje, /Te escribimos del consultorio de la Dra\. Fedra Aldama para confirmar tu cita, el/);
+  assert.match(mensaje, /¿Nos confirmas si podrás asistir\?/);
   assert.doesNotMatch(mensaje, /anticipo|cancelación|24 horas|48 horas|\$/);
+});
+test('WhatsApp: formato aprobado incluye motivo explícito, fecha y hora; no deja parámetros', () => {
+  const mensaje = mensajeCita({ nombre: 'Persona ficticia', fecha: '2026-10-12T01:30:00Z', tipo: 'recordatorio', motivo: 'valoración' });
+  assert.equal(mensaje, [
+    'Hola, buen día, Persona ficticia.',
+    `Te escribimos del consultorio de la Dra. Fedra Aldama para confirmar tu cita de valoración, el ${fechaMensajeCita('2026-10-12T01:30:00Z')}.`,
+    '¿Nos confirmas si podrás asistir?',
+  ].join('\n\n'));
+  assert.match(mensaje, /domingo, 11 de octubre de 2026 a las 6:30/);
+  assert.doesNotMatch(mensaje, /\[nombre\]|\[fecha\]|\[hora\]|\[motivo\]/);
+});
+test('WhatsApp: saludo genérico usa el mismo formato y no inventa motivo', () => {
+  const mensaje = mensajeCita({ nombre: '', fecha: '2026-10-11', tipo: 'recordatorio', generico: true, diaCompleto: true });
+  assert.match(mensaje, /^Hola, buen día\./);
+  assert.match(mensaje, /para confirmar tu cita, el/);
+  assert.match(mensaje, /horario por confirmar/);
+  assert.equal(mensajeCita({ nombre: '', fecha: 'inválida', tipo: 'recordatorio', generico: true }), '');
 });
 test('WhatsApp: gracias por agendar y políticas solo cuando el operador las aporta', () => {
   const mensaje = mensajeCita({ nombre: 'Persona ficticia', fecha: '2026-10-11', tipo: 'agendamiento', politicas: 'Texto autorizado de prueba.' });

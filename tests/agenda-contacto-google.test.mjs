@@ -4,6 +4,16 @@ import { contactosGoogle, datosContactoGoogle, unirAgenda } from '../src/lib/age
 
 const evento = (titulo, descripcion = '') => ({ id: 'sintetico', titulo, descripcion, inicio: '2026-10-20T10:00:00-07:00', diaCompleto: false });
 
+test('motivo: solo texto explícito y sin mezclar teléfono o anticipo de las notas', () => {
+  const [contacto] = contactosGoogle(evento('Persona Inventada $600', 'Nombre: Persona Inventada Servicio: valoración Tel: 6681234567 Anticipo: $600'));
+  assert.equal(contacto.nombre, 'Persona Inventada');
+  assert.equal(contacto.motivo, 'valoración');
+  assert.equal(contacto.telefono, '+526681234567');
+  assert.equal(contacto.adelanto, '$600');
+  assert.equal(contactosGoogle(evento('Persona Inventada (P) S $500'))[0].motivo, undefined);
+  assert.equal(contactosGoogle(evento('Persona Inventada $500 facial'))[0].motivo, 'facial');
+});
+
 test('convención de Fer: importe final es anticipo y el prefijo es contacto, no expediente', () => {
   const e = evento('Persona Inventada $600');
   const datos = datosContactoGoogle(e);
