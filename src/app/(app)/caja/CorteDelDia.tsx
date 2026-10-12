@@ -112,7 +112,7 @@ export default function CorteDelDia({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {!consultorioIncluido && <Dato label="Ventas (farmacia)" valor={money(totalVentas)} />}
         {consultorioIncluido && <Dato label="Cobros (consultorio)" valor={money(totalCobros)} />}
-        <Dato label="Total del día" valor={money(totalVentas + totalCobros)} />
+        <Dato label="Total del área" valor={money(totalVentas + totalCobros)} />
         {!consultorioIncluido && <Dato label="N.º de ventas" valor={String(numVentas)} />}
         {!consultorioIncluido && <Dato label="Productos salidos" valor={String(productosSalidos)} />}
         {consultorioIncluido && <Dato label="Pacientes atendidos" valor={String(pacientesAtendidos)} />}

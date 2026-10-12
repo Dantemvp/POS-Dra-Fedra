@@ -1,6 +1,6 @@
 # Tema y cortes por área
 
-Base: main 303e77c, producción 0.1.33. Autor: Codex. Revisión independiente pendiente de Claude. No hay migraciones, dependencias nuevas ni cambios de datos.
+Base: main 303e77c, producción anterior 0.1.33. Autor: Codex. Claude aprobó el SHA 624019d en el comentario 6131815178 del PR #49. Dante autorizó preparar reversa, corregir el rótulo y publicar la 0.1.34. El delta de publicación solo cambia ese rótulo, versión, prueba de render y documentos. No hay migraciones, dependencias nuevas ni cambios de datos.
 
 ## Tema
 
@@ -30,7 +30,7 @@ La campana consulta el último cierre de cada área por separado. Un cierre de F
 
 Separar los ingresos no implica que existan dos cajones físicos. Antes de capturar contado, separar el efectivo atribuible a cada área. El sistema no incluye fondo inicial ni retiros. Sigue sin garantizar un único corte por turno ni una transacción atómica entre lectura y guardado; los resúmenes diarios pueden solaparse. Esta ronda no cambia ese contrato.
 
-La reversa es revertir el commit de esta rama. Un código anterior no conoce la marca de Consultorio: no usarlo para reimprimir cortes clínicos nuevos sin conservar el lector de alcance. Los datos nuevos no se borran al revertir. No usar `db push` ni ejecutar migraciones para esta entrega.
+La reversa compatible quedó preparada en `codex/reversa-0.1.33-area-cortes`, commit `79819bf408f48d96a9d26c7a2ab60ee3ba6a07f6`, basada en main 303e77c. Conserva lector, CSV, comprobante y detalle de cortes del código aprobado; la caja anterior no recupera un corte clínico como combinado. Pasan 145 pruebas, tipos, lint y build con variables ficticias. Si ya existen cortes con `__area_corte`, desplegar esa referencia compatible, nunca promover la 0.1.33 original ni revertir el PR a secas. Los datos no se borran. No usar `db push` ni ejecutar migraciones para esta entrega.
 
 ## Verificación de Codex
 

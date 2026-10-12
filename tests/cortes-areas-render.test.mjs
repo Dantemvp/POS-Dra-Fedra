@@ -33,4 +33,5 @@ test('vista clínica sin permiso de cierre no ofrece contado, edición o cierre'
   });t.after(limpiar);
   const html=renderToStaticMarkup(React.createElement(modulo.default,{area:'consultorio',puedeCerrar:false,numVentas:0,totalVentas:0,totalCobros:50,productosSalidos:0,pacientesAtendidos:1,efectivoEsperado:50,desglose:{efectivo:50},fecha:'Ficticia',responsable:'Ficticio'}));
   assert.match(html,/Corte de Consultorio/);assert.match(html,/Administración o gerencia/);assert.doesNotMatch(html,/Cerrar corte|<input|Ventas \(farmacia\)|Productos salidos/);
+  assert.match(html,/Total del área/);assert.doesNotMatch(html,/Total del día/);
 });
