@@ -36,6 +36,8 @@ Consultorio: citas próximas de hoy de Google y POS, citas del POS por confirmar
 
 Farmacia: lotes vencidos con existencia, lotes por caducar en 30 días, stock bajo según mínimo configurado, productos con existencia sin código y productos con precio cero o vacío. Son avisos para revisar, no bloqueos nuevos de venta o cambios de inventario.
 
+Cada aviso de inventario abre la lista filtrada por su causa, no todo el catálogo sin contexto. Un producto con varios lotes puede contar varias veces en el aviso de lotes y una sola vez en la lista de productos. Abrir el producto permite cotejar sus lotes. Los formularios conservan el catálogo completo; el filtro solo afecta a la tabla y se puede quitar con Ver todo el inventario.
+
 Caja: actividad posterior al último corte de hoy y diferencia en el último cierre de hoy. Son recordatorios de revisión; no un cierre automático. Doctora recibe el enlace a Cortes; Farmacia, el de Caja. Asistente no recibe cortes, ventas ni inventario en este endpoint. La nueva API comprueba sesión, perfil activo y rol antes de leer cada dominio. Respeta RLS con el cliente de la sesión, sin `service_role`.
 
 Inicio del consultorio agrega próximas citas unificadas y el WhatsApp individual existente. Muestra ingresos del consultorio de hoy para doctora, admin y gerente; no agrega ese indicador a la asistente. El panel anterior de pacientes mantiene la etiqueta "citas del POS" para no confundirlo con Google. El gráfico de métodos de Farmacia ahora desglosa pagos mixtos desde `pagos`, en lugar de clasificarlos como "Otro" por la cabecera vacía.

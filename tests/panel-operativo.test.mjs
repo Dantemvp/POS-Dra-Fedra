@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cargarTS } from './helpers/modulo-ts.mjs';
 import { crearLecturaGoogle } from '../src/lib/google-lectura-compartida.ts';
-const { modulo: { avisosPanel, stockPanel }, limpiar } = await cargarTS(new URL('../src/lib/panel-operativo.ts', import.meta.url));
+const { modulo: { avisosPanel, stockPanel, claveAvisoInventario }, limpiar } = await cargarTS(new URL('../src/lib/panel-operativo.ts', import.meta.url));
 test.after(limpiar);
 const ahora = new Date('2026-10-12T01:30:00Z');
 const cita = { id:'pos1', tipo:'cita_paciente', estado:'agendada', origen:'pos', fecha_hora:'2026-10-12T02:30:00Z', nombre:'Persona ficticia', paciente_id:'ficticio', telefono_wpp:null };
@@ -24,7 +24,8 @@ test('stock: caducidad de hoy no está vencida por UTC; ignora lotes vacíos', (
   const a=avisosPanel({actualizado:ahora.toISOString(),citas:[],stock:s,caja:{sinCorte:3,ultimaDiferencia:-10,href:'/caja'}},ahora);
   assert.equal(a[0].nivel,'urgente');
   assert.equal(a.find(a=>a.id==='caja-diferencia').area,'sistema');
-  assert.ok(a.every(a=>a.href==='/inventario'||a.href==='/caja'));
+  assert.ok(a.every(a=>a.href.startsWith('/inventario?aviso=')||a.href==='/caja'));
+  assert.equal(claveAvisoInventario('vencido'),'vencido');assert.equal(claveAvisoInventario('__proto__'),null);assert.equal(claveAvisoInventario('desconocido'),null);
 });
 test('lectura compartida: dos consumidores hacen un solo request y caduca en memoria', async () => {
   let cuenta=0, reloj=0;
