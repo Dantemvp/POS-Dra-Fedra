@@ -6,6 +6,10 @@ Base: main 303e77c, producción 0.1.33. Autor: Codex. Revisión independiente pe
 
 El shell y la cabecera usan superficies propias en claro y oscuro. El menú activo y los botones principales conservan blanco sobre verde; el logo de navegación cambia a blanco en oscuro. La selección de área y sus textos siguen el tema. Los botones de tema de escritorio y celular observan la misma clase del documento.
 
+La selección de área ya no depende de un pequeño cambio de fondo: Farmacia tiene verde e icono de cápsula; Consultorio, rosa oscuro e icono de estetoscopio. El botón seleccionado dice `✓ Activa`; el otro, `Cambiar área`. Un indicador en la cabecera permanece visible al plegar la barra lateral y con el menú móvil cerrado. Las rutas de cada área mandan sobre parámetros antiguos; las rutas compartidas conservan el área en el enlace y se identifican como gestión compartida.
+
+Farmacia usa `/logo-farmacia.png` (Aldama Farmacéutica) y Consultorio `/logo.png` (Dra. Fedra Aldama), tanto en navegación de escritorio como en cabecera y menú móvil. El logo de farmacia conserva una pequeña superficie blanca en oscuro porque el PNG tiene fondo blanco. No se invierte ese archivo ni se alteran los originales. Los comprobantes de corte de Farmacia también llevan su logo; los clínicos conservan el de la doctora. Los cortes antiguos sin alcance comprobado conservan la marca general.
+
 El membrete permanece tenue. El logo del ticket no recibe el filtro de navegación. Los comprobantes de corte ahora usan `doc-imprimible`, con su paleta clara, incluso al verlos en pantalla oscura. Se conserva el ancho útil de 72 mm y la impresión automática después de guardar un corte.
 
 ## Cajas
@@ -30,11 +34,13 @@ La reversa es revertir el commit de esta rama. Un código anterior no conoce la 
 
 ## Verificación de Codex
 
-152 pruebas Node pasan, tipos, lint y build limpios. Las nuevas pruebas cubren lecturas separadas, rechazo del área indebida, snapshots, recuperación por autor/área, CSV, render del ticket clínico, permisos de consulta, resumen sin cierre y campana con fronteras independientes.
+158 pruebas Node pasan, tipos, lint y build limpios. Las nuevas pruebas cubren lecturas separadas, rechazo del área indebida, snapshots, recuperación por autor/área, CSV, render del ticket clínico, permisos de consulta, resumen sin cierre y campana con fronteras independientes. Se añaden seis pruebas de identidad por área: selección por ruta y rol, conservación en vistas compartidas, marcas, texto de selección y encabezado independiente del menú. Los renders de corte verifican el logo de cada área.
 
 Harness aislado: `node tests/manual/panel-demo-server.mjs --tema`, puerto 3034. Usa React, navegación y comprobante reales, pero datos inventados, enlaces locales y logout simulado. No conecta Supabase; bloquea `window.print`. No acredita una sesión real por rol ni impresión física.
 
 En el navegador se comprobó claro/oscuro, sincronización de controles, logo visible, papel blanco y menú móvil. A 320 y 390 px no hubo desbordamiento horizontal. En los 21 elementos medidos en oscuro, el contraste mínimo fue 6.66:1. No es una auditoría de todas las pantallas ni de todos los estados de hover. Los números del tema claro no se certificaron porque el navegador devuelve colores OKLCH y el medidor inicial solo convertía RGB.
+
+En el delta de identidad, las etiquetas seleccionadas sí devuelven RGB: Farmacia tiene 9.05:1 en claro y 10.42:1 en oscuro; Consultorio, 6.88:1 y 9.43:1. El botón inactivo tiene 8.94:1 en claro y 11.43:1 en oscuro. Son mediciones del estado quieto, no una certificación de toda la app. Se comprobó el indicador con barra plegada y los dos logos en celular. Al terminar, se cerró la pestaña del harness y se detuvo su servidor; no quedan formularios ni registros ficticios de este harness en producción.
 
 ## Prueba supervisada con Fer después de publicar
 

@@ -16,6 +16,7 @@ test('ticket de corte: papel del driver, área de 72 mm, negro, folio, métodos,
 test('ticket clínico omite farmacia y productos, conserva desglose y papel claro',()=>{
   const html=renderToStaticMarkup(React.createElement(modulo.default,{corte:{...corte,area:'consultorio',farmaciaIncluida:false,consultorioIncluido:true,totalVentas:0,productos:0}}));
   assert.match(html,/Farmacia: no incluida/);assert.match(html,/Pacientes atendidos/);assert.doesNotMatch(html,/Productos salidos/);assert.match(html,/doc-imprimible/);assert.match(html,/Consultorio/);
+  assert.match(html,/src="\/logo.png"/);assert.match(html,/alt="Dra. Fedra Aldama"/);
 });
 test('ticket previo no se identifica como guardado ni imprime automáticamente',()=>{
   const html=renderToStaticMarkup(React.createElement(modulo.default,{corte:{...corte,id:undefined},automatico:true}));
@@ -29,4 +30,5 @@ test('ticket farmacia con cobros invisibles declara consultorio excluido y omite
   const html=renderToStaticMarkup(React.createElement(modulo.default,{corte:{...corte,totalCobros:0,pacientes:0,consultorioIncluido:false}}));
   assert.match(html,/Consultorio: no incluido en este corte/);assert.doesNotMatch(html,/Pacientes atendidos|<span>Consultorio<\/span>/);
   assert.match(html,/Total registrado/);
+  assert.match(html,/src="\/logo-farmacia.png"/);assert.match(html,/alt="Aldama Farmacéutica"/);
 });

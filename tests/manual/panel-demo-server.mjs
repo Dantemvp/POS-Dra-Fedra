@@ -27,6 +27,7 @@ const server=http.createServer((req,res)=>{
   if(url.pathname==='/demo.js')return send('text/javascript',fs.readFileSync(path.join(scratch,'demo.js')));
   if(url.pathname==='/style.css')return send('text/css',css);
   if(url.pathname==='/logo.png')return send('image/png',fs.readFileSync(path.join(root,'public/logo.png')));
+  if(url.pathname==='/logo-farmacia.png')return send('image/png',fs.readFileSync(path.join(root,'public/logo-farmacia.png')));
   if(url.pathname==='/membrete-historia.png')return send('image/png',fs.readFileSync(path.join(root,'public/membrete-historia.png')));
   if(url.pathname==='/api/panel-operativo')return send('application/json',JSON.stringify({sesion:'ficticia',rol:'admin',actualizado:new Date().toISOString(),citas:[],stock:{bajo:2,vencido:1,porCaducar:3,sinCodigo:4,sinPrecio:2},caja:{sinCorte:2,ultimaDiferencia:-50,href:'/caja'}}));
   if(url.pathname==='/api/google-calendario/eventos')return send('application/json',JSON.stringify({conectado:true,actualizado:new Date().toISOString(),eventos:[{id:'google-ficticio',titulo:'Persona Ficticia $600 facial',inicio:new Date(Date.now()+3600000).toISOString(),diaCompleto:false,descripcion:'Tel: +1 202 555 0123'}]}));

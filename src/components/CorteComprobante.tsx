@@ -17,6 +17,7 @@ export default function CorteComprobante({ corte, automatico = false }: { corte:
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const dato = (etiqueta: string, valor: string) => <div className="flex justify-between gap-3"><span>{etiqueta}</span><strong className="shrink-0 tabular-nums">{valor}</strong></div>;
+  const farmacia = corte.area === 'farmacia' || (corte.farmaciaIncluida !== false && corte.consultorioIncluido === false);
   return <section aria-label="Comprobante de corte">
     <style>{`@media print {
       @page { size: auto; margin: 0; }
@@ -36,7 +37,7 @@ export default function CorteComprobante({ corte, automatico = false }: { corte:
     <div className="print-area ticket-print ticket-thermal-strong ticket-corte doc-imprimible mx-auto max-w-sm rounded-xl bg-white p-5 text-sm text-zinc-900 ring-1 ring-zinc-200">
       {/* Archivo local, sin datos clínicos ni imágenes externas. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo.png" alt="Dra. Fedra Aldama" className="ticket-logo mx-auto mb-3 h-auto w-44" />
+      <img src={farmacia ? '/logo-farmacia.png' : '/logo.png'} alt={farmacia ? 'Aldama Farmacéutica' : 'Dra. Fedra Aldama'} className="ticket-logo mx-auto mb-3 h-auto w-44" />
       <h2 className="text-center text-base font-bold">{corte.id ? 'CORTE DE CAJA' : 'VISTA PREVIA, SIN GUARDAR'}</h2>
       <p className="text-center font-bold">{etiquetaAreaCorte(corte)}</p>
       <p className="my-2 text-center font-semibold">{corte.fecha}</p>

@@ -8,6 +8,11 @@
   --surface-shell: #f8f6f2;
   --surface-muted: #eee9e1;
   --accent-text: #3f5148;
+  --area-farmacia: #354e42;
+  --area-consultorio: #76514d;
+  --area-on-active: #fff;
+  --area-idle: #fff;
+  --area-idle-text: #51483f;
 
   /* Paleta de marca Dra. Fedra (taupe/crema/arena) — para gráficas y acentos */
   --brand-taupe: #b19b7d;
@@ -43,6 +48,11 @@
   --surface-shell: #141917;
   --surface-muted: #2a332e;
   --accent-text: #c4d8cc;
+  --area-farmacia: #bdd5c7;
+  --area-consultorio: #e0beb8;
+  --area-on-active: #18231c;
+  --area-idle: #211e1a;
+  --area-idle-text: #ded5c8;
 
   --color-white: #1d1b18; /* superficie de tarjeta */
   --color-zinc-50: #1d1b18;
@@ -64,7 +74,12 @@
 .fedra-nav-active, .fedra-primary { background: #3f5148; color: #fff; }
 .fedra-nav-active:hover, .fedra-primary:hover { background: #33463c; }
 .fedra-area-switch { background: var(--surface-muted); }
-.fedra-area-selected { background: var(--color-white, #fff); color: var(--accent-text); }
+.fedra-area-option[data-area="farmacia"], .fedra-area-indicator[data-area="farmacia"] { --area-accent: var(--area-farmacia); }
+.fedra-area-option[data-area="consultorio"], .fedra-area-indicator[data-area="consultorio"] { --area-accent: var(--area-consultorio); }
+.fedra-area-selected, .fedra-area-indicator { background: var(--area-accent); color: var(--area-on-active); }
+.fedra-area-idle { background: var(--area-idle); color: var(--area-idle-text); box-shadow: inset 0 0 0 1px var(--area-idle-text); }
+.fedra-area-idle:hover { background: var(--surface-muted); }
+.fedra-area-option:focus-visible { outline-color: var(--area-accent); }
 .fedra-accent { color: var(--accent-text); }
 .dark .fedra-brand-logo { filter: brightness(0) invert(1); }
 @media screen {

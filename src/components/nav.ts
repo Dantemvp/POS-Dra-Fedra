@@ -45,3 +45,23 @@ export function areasParaRol(rol: Rol): AreaTrabajo[] {
 export function areaInicialParaRol(rol: Rol): AreaTrabajo {
   return rol === "farmacia" ? "farmacia" : "consultorio";
 }
+
+export const ETIQUETA_AREA: Record<AreaTrabajo, string> = {
+  farmacia: "Farmacia",
+  consultorio: "Consultorio",
+};
+
+export const MARCA_AREA = {
+  farmacia: { src: "/logo-farmacia.png", alt: "Aldama Farmacéutica", width: 4315, height: 2061 },
+  consultorio: { src: "/logo.png", alt: "Dra. Fedra Aldama", width: 760, height: 117 },
+} as const;
+
+export function areaParaVista(rol: Rol, pathname: string, solicitada: string | null): AreaTrabajo {
+  const areas = areasParaRol(rol);
+  const ruta = NAV.find((item) => item.grupo !== "general" && item.grupo !== "gestion"
+    && (pathname === item.href || pathname.startsWith(`${item.href}/`)));
+  const areaRuta = ruta?.grupo as AreaTrabajo | undefined;
+  if (areaRuta && areas.includes(areaRuta)) return areaRuta;
+  if (areas.includes(solicitada as AreaTrabajo)) return solicitada as AreaTrabajo;
+  return areaInicialParaRol(rol);
+}

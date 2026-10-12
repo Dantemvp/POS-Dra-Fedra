@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Rol } from "@/lib/auth";
 import AreaNavigation from "@/components/AreaNavigation";
 import { APP_VERSION } from "@/lib/version";
+import { AreaBrand } from "@/components/AreaIdentity";
 
 export default function Sidebar({ rol }: { rol: Rol }) {
   const [plegado, setPlegado] = useState(false);
@@ -55,7 +55,7 @@ export default function Sidebar({ rol }: { rol: Rol }) {
       ) : (
         <>
           <div className="px-6 pb-5 pt-6">
-            <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="fedra-brand-logo h-auto w-full max-w-[190px]" />
+            <AreaBrand rol={rol} />
             <p className="mt-0.5 text-xs capitalize text-zinc-500">{rol}</p>
           </div>
           <AreaNavigation rol={rol} />

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import type { Rol } from "@/lib/auth";
 import AreaNavigation from "@/components/AreaNavigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
 import { APP_VERSION } from "@/lib/version";
 import { CampanaNotificaciones } from './PanelOperativo';
+import { AreaBrand, AreaIndicator } from "@/components/AreaIdentity";
 
 export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string }) {
   const [abierto, setAbierto] = useState(false);
@@ -19,12 +19,15 @@ export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string
 
   return (
     <div className="md:hidden print:hidden">
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-2.5">
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white px-3 py-2.5">
+        <div className="flex items-center justify-between gap-2">
         <button onClick={() => setAbierto(true)} aria-label="Abrir menú" className="rounded-lg p-2 text-zinc-700 hover:bg-zinc-100">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
         </button>
-        <Image src="/logo.png" alt="Dra. Fedra Aldama" width={760} height={117} priority className="fedra-brand-logo h-auto w-32 sm:w-40" />
+        <AreaBrand rol={rol} compact />
         <div className="flex items-center"><CampanaNotificaciones /><ThemeToggle /></div>
+        </div>
+        <div className="mt-2"><AreaIndicator rol={rol} /></div>
       </header>
       {abierto && (
         <div className="fixed inset-0 z-40">
@@ -36,6 +39,7 @@ export default function MobileTopBar({ rol, nombre }: { rol: Rol; nombre: string
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
               </button>
             </div>
+            <div className="px-4 py-3"><AreaBrand rol={rol} /></div>
             <AreaNavigation rol={rol} onNavigate={() => setAbierto(false)} />
             <div className="mt-auto border-t border-zinc-200 px-3 py-3">
               <LogoutButton />
