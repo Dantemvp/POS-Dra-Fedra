@@ -26,4 +26,6 @@ El papel de 80 mm se selecciona en el driver y en el perfil Configurar. El corte
 
 El ticket registra farmacia, consultorio, métodos de pago, efectivo esperado y contado, faltante o sobrante, folio y responsable. Fedra todavía no registra fondo inicial o retiros de caja como Bianca; el ticket lo aclara. No confundir los ingresos registrados con el efectivo físico completo del cajón.
 
+Hay un mismo historial de cortes, no dos cajas independientes. Admin y gerente incluyen los ingresos visibles de Farmacia y Consultorio. Un cierre de rol Farmacia no incluye Consultorio: ticket, vista y CSV lo declaran, sin presentar su cero como comprobado. El alcance se guarda como metadato reservado `__solo_farmacia` en el JSON existente y se separa de los métodos al leerlo; no cambia ningún importe. Un corte anterior sin ese metadato advierte que no registró su alcance. No reconstruirlo a partir del rol actual del responsable.
+
 Los cortes anteriores sin desglose no muestran métodos reconstruidos o supuestos. Su comprobante conserva los valores guardados. La exportación CSV incluye fecha en Sinaloa y desglose cuando existe, sin nombres de pacientes.

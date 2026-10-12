@@ -124,6 +124,7 @@ export default async function CajaPage() {
           fecha={fechaCorte}
           responsable={usuario?.nombre ?? 'Usuario'}
           ultimoCorte={ultimoCorte}
+          consultorioIncluido={usuario?.rol !== 'farmacia'}
         />
       </section>
 

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { resumenCorte, type VentaCorte, type CobroCorte, type ComprobanteCorte } from './corte-resumen';
+import { resumenCorte, leerDesgloseCorte, type VentaCorte, type CobroCorte, type ComprobanteCorte } from './corte-resumen';
 import { inicioDiaSinaloa, fechaSinaloa } from './tz';
 
 // Solo lectura con el cliente de la sesión, nunca service_role.
@@ -31,5 +31,5 @@ export async function leerUltimoCortePropio(responsable: string): Promise<Compro
   return { id: c.id, apertura: c.apertura, cierre: c.cierre, fecha: fechaSinaloa(c.cierre), responsable,
     totalVentas: Number(c.total_ventas ?? 0), totalCobros: Number(c.total_cobros ?? 0), efectivoEsperado: Number(c.total_efectivo ?? 0),
     efectivoContado: c.efectivo_contado === null ? null : Number(c.efectivo_contado), diferencia: c.diferencia === null ? null : Number(c.diferencia),
-    productos: c.total_productos, pacientes: c.pacientes_atendidos, desglose: c.desglose ?? {} };
+    productos: c.total_productos, pacientes: c.pacientes_atendidos, ...leerDesgloseCorte(c.desglose) };
 }

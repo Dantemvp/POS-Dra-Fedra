@@ -43,7 +43,8 @@ export default function CorteComprobante({ corte, automatico = false }: { corte:
       <p className="break-words">Responsable: {corte.responsable}</p>
       {corte.cierre && <p className="text-xs">{corte.apertura ? `Desde ${fechaSinaloa(corte.apertura)} ${horaSinaloa(corte.apertura)}. ` : ''}Cierre: {horaSinaloa(corte.cierre)} (Sinaloa)</p>}
       <div className="my-3 space-y-1 border-y border-dashed py-3">
-        {dato('Farmacia', dinero(corte.totalVentas))}{dato('Consultorio', dinero(corte.totalCobros))}
+        {dato('Farmacia', dinero(corte.totalVentas))}
+        {corte.consultorioIncluido === false ? <p className="font-bold">Consultorio: no incluido en este corte.</p> : dato('Consultorio', dinero(corte.totalCobros))}
         <div className="pt-2 text-base">{dato('Total registrado', dinero(corte.totalVentas + corte.totalCobros))}</div>
       </div>
       <h3 className="mb-2 font-bold">Por método de pago</h3>
@@ -56,7 +57,8 @@ export default function CorteComprobante({ corte, automatico = false }: { corte:
       </div>
       {corte.numVentas !== undefined && dato('Ventas', String(corte.numVentas))}
       {dato('Productos salidos', corte.productos === null ? 'No registrado' : String(corte.productos))}
-      {dato('Pacientes atendidos', corte.pacientes === null ? 'No registrado' : String(corte.pacientes))}
+      {corte.consultorioIncluido !== false && dato('Pacientes atendidos', corte.pacientes === null ? 'No registrado' : String(corte.pacientes))}
+      {corte.consultorioIncluido === undefined && <p className="mt-3 text-xs">Este corte anterior no registró si incluía consultorio.</p>}
       <p className="mt-3 text-xs">Resumen diario de ingresos registrados. No incluye fondo inicial ni retiros de efectivo.</p>
       <p className="mt-6 border-t border-dashed pt-2 text-center">Firma de quien entrega</p>
       <p className="mt-6 border-t border-dashed pt-2 text-center">Firma de quien recibe</p>

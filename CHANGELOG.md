@@ -6,9 +6,10 @@
 - Inicio del consultorio muestra próximas citas de Google y POS, su WhatsApp preparado e ingresos del día para perfiles de gestión.
 - Comparte lecturas simultáneas de Google en memoria privada y mantiene avisos de error; refresca mientras el POS está visible.
 - Corte térmico con logo, folio, métodos, contado, diferencia y firmas. Imprime después de guardar y permite reimprimir o exportar el resumen histórico.
+- El ticket y CSV de un nuevo corte de Farmacia indican que Consultorio no está incluido; ese alcance se conserva al reimprimir, sin modificar importes ni permisos. Los cortes anteriores sin alcance guardado lo aclaran.
 - El servidor recalcula el corte con ventas actuales y cobros activos, evita falsos ceros por errores de lectura y exige contado válido.
 - Corrige el gráfico por método de pagos mixtos y desactiva autocorrección en la captura del lector.
-- Sin migraciones, dependencias nuevas ni modificaciones de datos durante la revisión. Versión preparada, no desplegada por esta rama.
+- Sin migraciones, dependencias nuevas ni modificaciones de datos durante la revisión.
 
 ## [0.1.32] - 2026-10-11
 

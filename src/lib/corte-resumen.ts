@@ -29,8 +29,18 @@ export type ComprobanteCorte = {
   id?: string; apertura?: string | null; cierre?: string; fecha: string; responsable: string;
   totalVentas: number; totalCobros: number; efectivoEsperado: number; efectivoContado: number | null;
   diferencia: number | null; productos: number | null; pacientes: number | null;
-  desglose: Record<string, number>; numVentas?: number;
+  desglose: Record<string, number>; numVentas?: number; consultorioIncluido?: boolean;
 };
+// Metadato en el JSON existente, no un método ni un importe. Conserva el alcance
+// del cierre aunque cambie después el rol de quien lo realizó. Sin migración.
+const CLAVE_SOLO_FARMACIA = '__solo_farmacia';
+export function guardarDesgloseCorte(desglose: Record<string, number>, consultorioIncluido: boolean) {
+  return { ...leerDesgloseCorte(desglose).desglose, [CLAVE_SOLO_FARMACIA]: consultorioIncluido ? 0 : 1 };
+}
+export function leerDesgloseCorte(valor: Record<string, number> | null) {
+  const { [CLAVE_SOLO_FARMACIA]: soloFarmacia, ...desglose } = valor ?? {};
+  return { desglose, consultorioIncluido: soloFarmacia === 1 ? false : soloFarmacia === 0 ? true : undefined };
+}
 export const METODOS_CORTE: Record<string, string> = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', otro: 'Otro' };
 const celdaCSV = (valor: unknown) => {
   let texto = String(valor ?? '');
@@ -39,10 +49,11 @@ const celdaCSV = (valor: unknown) => {
 };
 export function csvCorte(c: ComprobanteCorte) {
   const filas: unknown[][] = [['Concepto', 'Valor'], ['Tipo', c.id ? 'Corte guardado' : 'Vista previa'], ['Folio', c.id ?? 'Sin guardar'], ['Fecha (Sinaloa)', c.fecha],
-    ['Responsable', c.responsable], ['Farmacia', c.totalVentas.toFixed(2)], ['Consultorio', c.totalCobros.toFixed(2)],
+    ['Responsable', c.responsable], ['Farmacia', c.totalVentas.toFixed(2)], ['Consultorio', c.consultorioIncluido === false ? 'No incluido en este corte' : c.totalCobros.toFixed(2)],
     ['Total', ((centavosCorte(c.totalVentas) + centavosCorte(c.totalCobros)) / 100).toFixed(2)],
     ...Object.entries(c.desglose).map(([m, n]) => [`Pago: ${METODOS_CORTE[m] ?? m}`, n.toFixed(2)]),
     ['Efectivo recibido esperado', c.efectivoEsperado.toFixed(2)], ['Efectivo contado', c.efectivoContado?.toFixed(2) ?? 'Sin capturar'],
-    ['Diferencia', c.diferencia?.toFixed(2) ?? 'Sin determinar'], ['Productos salidos', c.productos ?? 'No registrado'], ['Pacientes atendidos', c.pacientes ?? 'No registrado']];
+    ['Diferencia', c.diferencia?.toFixed(2) ?? 'Sin determinar'], ['Productos salidos', c.productos ?? 'No registrado'], ['Pacientes atendidos', c.consultorioIncluido === false ? 'No incluido en este corte' : c.pacientes ?? 'No registrado']];
+  if (c.consultorioIncluido === undefined) filas.push(['Alcance', 'Este corte anterior no registró si incluía consultorio.']);
   return '\uFEFF' + filas.map(f => f.map(celdaCSV).join(',')).join('\r\n');
 }

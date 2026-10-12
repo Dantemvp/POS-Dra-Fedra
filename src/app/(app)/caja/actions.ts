@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fechaSinaloa } from '@/lib/tz';
 import { getUsuarioActual } from '@/lib/auth';
 import { leerCajaDia } from '@/lib/caja-lectura';
-import { centavosCorte, type ComprobanteCorte } from '@/lib/corte-resumen';
+import { centavosCorte, guardarDesgloseCorte, type ComprobanteCorte } from '@/lib/corte-resumen';
 
 export type CorteResult = { ok: boolean; error?: string; corte?: ComprobanteCorte };
 
@@ -72,7 +72,7 @@ export async function registrarCorte(datos: CorteDatos): Promise<CorteResult> {
     diferencia,
     total_productos: resumen.productosSalidos,
     pacientes_atendidos: resumen.pacientesAtendidos,
-    desglose: resumen.desglose,
+    desglose: guardarDesgloseCorte(resumen.desglose, perfil.rol !== 'farmacia'),
   }).select('id').single();
   if (error) return { ok: false, error: error.message };
   if (!guardado?.id) return { ok: false, error: 'No se pudo comprobar el folio guardado. Revisa el historial antes de reintentar.' };
@@ -81,5 +81,5 @@ export async function registrarCorte(datos: CorteDatos): Promise<CorteResult> {
   revalidatePath('/cortes');
   return { ok: true, corte: { id: guardado.id, apertura: resumen.apertura, cierre: resumen.cierre, fecha: fechaSinaloa(resumen.cierre), responsable: perfil.nombre,
     totalVentas: resumen.totalVentas, totalCobros: resumen.totalCobros, efectivoEsperado: resumen.efectivoEsperado, efectivoContado: contado, diferencia,
-    productos: resumen.productosSalidos, pacientes: resumen.pacientesAtendidos, desglose: resumen.desglose, numVentas: resumen.numVentas } };
+    productos: resumen.productosSalidos, pacientes: resumen.pacientesAtendidos, desglose: resumen.desglose, numVentas: resumen.numVentas, consultorioIncluido: perfil.rol !== 'farmacia' } };
 }

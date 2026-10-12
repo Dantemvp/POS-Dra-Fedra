@@ -4,7 +4,7 @@ import { cargarTS } from './helpers/modulo-ts.mjs';
 async function lectura(t,opciones={}){
   const consultas=[];
   const db={auth:{getUser:async()=>({data:{user:opciones.sinSesion?null:{id:'sesion-ficticia'}}})},from(tabla){const filtros=[];consultas.push({tabla,filtros});
-    const resultado=()=>{if(opciones.falla===tabla)return {data:null,error:{message:'ficticio'}};if(tabla==='usuarios')return {data:{id:'actor-ficticio'}};if(tabla==='cortes_caja')return {data:{id:'corte-ficticio',cierre:'2026-10-12T01:30:00Z',total_ventas:100,total_cobros:0,total_efectivo:100,efectivo_contado:90,diferencia:-10,desglose:{efectivo:100}},error:null};return {data:[],count:opciones.exceso?1001:0,error:null};};
+    const resultado=()=>{if(opciones.falla===tabla)return {data:null,error:{message:'ficticio'}};if(tabla==='usuarios')return {data:{id:'actor-ficticio'}};if(tabla==='cortes_caja')return {data:{id:'corte-ficticio',cierre:'2026-10-12T01:30:00Z',total_ventas:100,total_cobros:0,total_efectivo:100,efectivo_contado:90,diferencia:-10,desglose:{efectivo:100,...(opciones.soloFarmacia?{__solo_farmacia:1}:{})}},error:null};return {data:[],count:opciones.exceso?1001:0,error:null};};
     const q={select(){return q;},eq(...v){filtros.push(['eq',...v]);return q;},gte(...v){filtros.push(['gte',...v]);return q;},lte(...v){filtros.push(['lte',...v]);return q;},not(...v){filtros.push(['not',...v]);return q;},order(){return q;},limit(){return q;},single:async()=>resultado(),maybeSingle:async()=>resultado(),then(resolve,reject){return Promise.resolve(resultado()).then(resolve,reject);}};return q;
   }};
   const {modulo,limpiar}=await cargarTS(new URL('../src/lib/caja-lectura.ts',import.meta.url),{'@/lib/supabase/server':{createClient:async()=>db}});t.after(limpiar);return {modulo,consultas};
@@ -22,4 +22,8 @@ test('recuperación de corte aplica el usuario de sesión, no un ID enviado por 
   const a=await lectura(t);const c=await a.modulo.leerUltimoCortePropio('Responsable ficticio');assert.equal(c.id,'corte-ficticio');assert.equal(c.efectivoContado,90);
   assert.ok(a.consultas.find(c=>c.tabla==='cortes_caja').filtros.some(f=>f[1]==='usuario_id'&&f[2]==='actor-ficticio'));
   const b=await lectura(t,{sinSesion:true});assert.equal(await b.modulo.leerUltimoCortePropio('Ficticio'),null);assert.equal(b.consultas.length,0);
+});
+test('recuperar corte farmacia conserva exclusión clínica y separa el metadato de los pagos',async t=>{
+  const a=await lectura(t,{soloFarmacia:true});const c=await a.modulo.leerUltimoCortePropio('Ficticio');
+  assert.equal(c.consultorioIncluido,false);assert.deepEqual(c.desglose,{efectivo:100});
 });

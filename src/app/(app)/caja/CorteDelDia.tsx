@@ -26,6 +26,7 @@ export default function CorteDelDia({
   fecha,
   responsable,
   ultimoCorte,
+  consultorioIncluido = true,
 }: {
   numVentas: number;
   totalVentas: number;
@@ -37,6 +38,7 @@ export default function CorteDelDia({
   fecha: string;
   responsable: string;
   ultimoCorte?: ComprobanteCorte | null;
+  consultorioIncluido?: boolean;
 }) {
   const [contado, setContado] = useState("");
   const [pending, startTransition] = useTransition();
@@ -82,7 +84,7 @@ export default function CorteDelDia({
     <section>
     {ultimoCorte && <div className="corte-screen mb-3"><button type="button" disabled={pending || Boolean(guardado)} onClick={() => setMostrarAnterior(!mostrarAnterior)} className="min-h-11 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 disabled:opacity-50">{mostrarAnterior ? 'Volver a la vista previa del día' : 'Recuperar mi último corte guardado'}</button></div>}
     <CorteComprobante automatico={Boolean(guardado)} corte={mostrarAnterior && ultimoCorte ? ultimoCorte : guardado ?? { fecha, responsable, totalVentas, totalCobros, efectivoEsperado,
-      efectivoContado: contadoNum, diferencia, productos: productosSalidos, pacientes: pacientesAtendidos, desglose, numVentas }} />
+      efectivoContado: contadoNum, diferencia, productos: productosSalidos, pacientes: pacientesAtendidos, desglose, numVentas, consultorioIncluido }} />
     <div className="corte-screen mt-4 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
       <div className="mb-4 flex items-start justify-between">
         <div>
@@ -105,11 +107,11 @@ export default function CorteDelDia({
       {/* Resumen de actividad */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Dato label="Ventas (farmacia)" valor={money(totalVentas)} />
-        <Dato label="Cobros (consultorio)" valor={money(totalCobros)} />
+        <Dato label="Cobros (consultorio)" valor={consultorioIncluido ? money(totalCobros) : 'No incluido en este corte'} />
         <Dato label="Total del día" valor={money(totalVentas + totalCobros)} />
         <Dato label="N.º de ventas" valor={String(numVentas)} />
         <Dato label="Productos salidos" valor={String(productosSalidos)} />
-        <Dato label="Pacientes atendidos" valor={String(pacientesAtendidos)} />
+        {consultorioIncluido && <Dato label="Pacientes atendidos" valor={String(pacientesAtendidos)} />}
       </div>
 
       {/* Desglose por método */}

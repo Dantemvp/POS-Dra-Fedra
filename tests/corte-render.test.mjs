@@ -21,3 +21,8 @@ test('ticket guardado habilita impresión automática y reimprimir nunca llama c
   const html=renderToStaticMarkup(React.createElement(modulo.default,{corte,automatico:true}));
   assert.match(html,/data-impresion-automatica/);assert.match(html,/Reimprimir corte/);assert.doesNotMatch(html,/registrarCorte|Cerrar corte/);
 });
+test('ticket farmacia con cobros invisibles declara consultorio excluido y omite contador clínico',()=>{
+  const html=renderToStaticMarkup(React.createElement(modulo.default,{corte:{...corte,totalCobros:0,pacientes:0,consultorioIncluido:false}}));
+  assert.match(html,/Consultorio: no incluido en este corte/);assert.doesNotMatch(html,/Pacientes atendidos|<span>Consultorio<\/span>/);
+  assert.match(html,/Total registrado/);
+});

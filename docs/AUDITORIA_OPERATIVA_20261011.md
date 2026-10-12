@@ -1,6 +1,6 @@
 # Revisión operativa del POS, 11 de octubre de 2026
 
-Autor: Codex. Base: main `f68fba385143a71467dd3d4f44187a9061b113d8`, versión publicada 0.1.32. Rama de trabajo: `codex/panel-alertas-cortes`, candidata 0.1.33. La revisión independiente y el despliegue de los cambios todavía están pendientes.
+Autor: Codex. Base: main `f68fba385143a71467dd3d4f44187a9061b113d8`, versión base 0.1.32. Rama de trabajo: `codex/panel-alertas-cortes`, entrega 0.1.33. Claude aprobó `e065539` en el comentario del PR #48. Dante autorizó corregir la leyenda del alcance y publicar; el ajuste posterior conserva en el JSON del corte si Consultorio está incluido y lo refleja en ticket, vista y CSV, sin cambiar importes ni permisos. Validación del ajuste: 142/142 pruebas, lint, tipos y build. No atribuir esa revisión del delta a Claude.
 
 ## Alcance y límites
 
