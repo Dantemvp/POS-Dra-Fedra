@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## [0.1.34] - 2026-10-12
+
+- Mejora claro y oscuro, contraste de botones y documentos imprimibles siempre blancos.
+- Identifica Farmacia y Consultorio con sus logos, iconos, colores y selección activa; la cabecera mantiene el área visible con el menú cerrado en PC y celular.
+- Separa Caja de Farmacia y Caja de Consultorio; el resumen de ambas áreas es de consulta y cada corte conserva su alcance al recuperar, reimprimir o exportar.
+- La campana usa el último corte correspondiente a cada área. No cambia permisos de cierre: admin/gerente en ambas, farmacia solo en Farmacia.
+- Cambia el rótulo a "Total del área" y prepara una reversa a la interfaz 0.1.33 compatible con los cortes nuevos, sin convertir metadatos en pagos.
+- Sin migraciones, dependencias nuevas ni cambios a datos durante la publicación.
+
 ## [0.1.33] - 2026-10-11
 
 - Campana operativa en escritorio y celular, con pendientes separados por área y permisos. No solicita permisos push ni resuelve avisos al abrirlos.

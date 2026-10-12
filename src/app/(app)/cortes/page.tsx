@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import ListaCortes, { type CorteLista } from "./ListaCortes";
+import { leerDesgloseCorte } from '@/lib/corte-resumen';
+import Link from 'next/link';
 
 type RawCorte = {
+  desglose: Record<string, number> | null;
   id: string;
   cierre: string;
   total_ventas: number | null;
@@ -20,7 +23,7 @@ export default async function CortesPage() {
   const { data } = await supabase
     .from("cortes_caja")
     .select(
-      "id, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, usuarios(nombre)",
+      "id, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, desglose, usuarios(nombre)",
     )
     .not("cierre", "is", null)
     .order("cierre", { ascending: false })
@@ -28,6 +31,7 @@ export default async function CortesPage() {
 
   const cortes: CorteLista[] = ((data ?? []) as unknown as RawCorte[]).map((c) => ({
     id: c.id,
+    area: leerDesgloseCorte(c.desglose).area,
     cierre: c.cierre,
     hechoPor: c.usuarios?.nombre ?? null,
     totalVentas: Number(c.total_ventas ?? 0),
@@ -49,6 +53,7 @@ export default async function CortesPage() {
         movimientos.
       </p>
       <ListaCortes cortes={cortes} />
+      <Link href="/cortes/resumen" className="fedra-accent mt-5 inline-block underline">Resumen de ingresos de ambas áreas (solo consulta)</Link>
     </div>
   );
 }

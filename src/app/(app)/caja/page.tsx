@@ -28,10 +28,10 @@ type Mov = {
 export default async function CajaPage() {
   const supabase = await createClient();
   const usuario = await getUsuarioActual();
-  const ultimoCorte = await leerUltimoCortePropio(usuario?.nombre ?? 'Usuario');
+  const ultimoCorte = await leerUltimoCortePropio(usuario?.nombre ?? 'Usuario', 'farmacia');
 
   let resumen;
-  try { resumen = await leerCajaDia(); } catch (e) {
+  try { resumen = await leerCajaDia(new Date(), 'farmacia'); } catch (e) {
     return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-900">{e instanceof Error ? e.message : 'No se pudo comprobar la caja.'}</p>;
   }
   const ventas = resumen.ventas as unknown as VentaRow[];
@@ -108,7 +108,8 @@ export default async function CajaPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <h1 className="print:hidden text-2xl font-semibold text-zinc-900">Caja y reportes</h1>
+      <h1 className="print:hidden text-2xl font-semibold text-zinc-900">Caja de Farmacia</h1>
+      <p className="print:hidden text-sm text-zinc-600">Solo ventas de productos. Los cobros de Consultorio tienen su propio corte.</p>
       {resumen.diferenciaPagos !== 0 && <p role="alert" className="print:hidden rounded-lg bg-red-50 p-3 text-red-900">El desglose de pagos no cuadra con los ingresos. Revisa antes de cerrar.</p>}
 
       {/* Corte / resumen del día */}
@@ -124,7 +125,7 @@ export default async function CajaPage() {
           fecha={fechaCorte}
           responsable={usuario?.nombre ?? 'Usuario'}
           ultimoCorte={ultimoCorte}
-          consultorioIncluido={usuario?.rol !== 'farmacia'}
+          area="farmacia"
         />
       </section>
 

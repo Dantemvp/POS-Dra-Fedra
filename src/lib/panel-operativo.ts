@@ -7,6 +7,7 @@ export type PanelDatos = {
   actualizado: string; citas: CitaCalendario[]; sesion?: string; rol?: string;
   stock?: StockPanel;
   caja?: { sinCorte: number; ultimaDiferencia: number | null; href: string };
+  cajas?: { area: 'farmacia' | 'consultorio'; sinCorte: number; ultimaDiferencia: number | null; href: string }[];
 };
 export function avisosPanel(datos: PanelDatos, ahora = new Date()): AvisoPanel[] {
   const avisos: AvisoPanel[] = [];
@@ -29,7 +30,13 @@ export function avisosPanel(datos: PanelDatos, ahora = new Date()): AvisoPanel[]
     agregar('stock-codigo', 'farmacia', 'pendiente', 'Productos sin código', 'Con existencia, pero sin código para el lector.', '/inventario?aviso=sinCodigo', s.sinCodigo);
     agregar('stock-precio', 'farmacia', 'pendiente', 'Productos sin precio', 'Con existencia y precio de venta cero o vacío.', '/inventario?aviso=sinPrecio', s.sinPrecio);
   }
-  if (datos.caja) {
+  if (datos.cajas) {
+    for (const caja of datos.cajas) {
+      const nombre = caja.area === 'farmacia' ? 'Farmacia' : 'Consultorio';
+      agregar(`caja-abierta-${caja.area}`, caja.area, 'pendiente', `${nombre}: actividad después del corte`, 'Solo operaciones de esta área. Abrir este aviso no cierra la caja.', caja.href, caja.sinCorte);
+      agregar(`caja-diferencia-${caja.area}`, caja.area, 'urgente', `${nombre}: diferencia en el último corte`, 'Revisa el contado del área antes de terminar el día.', caja.href, caja.ultimaDiferencia ? 1 : 0);
+    }
+  } else if (datos.caja) {
     agregar('caja-abierta', 'sistema', 'pendiente', 'Actividad después del último corte', 'Revisa el cierre antes de terminar el día. Abrir este aviso no cierra la caja.', datos.caja.href, datos.caja.sinCorte);
     agregar('caja-diferencia', 'sistema', 'urgente', 'Diferencia en el último corte', 'El contado no coincide con el efectivo esperado registrado.', datos.caja.href, datos.caja.ultimaDiferencia ? 1 : 0);
   }

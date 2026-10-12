@@ -18,6 +18,10 @@ test('campana: no agrega citas pasadas ni confirmaciones de eventos administrati
   const avisos=avisosPanel({ actualizado:ahora.toISOString(), citas:[{...cita, fecha_hora:'2026-10-11T01:00:00Z'}, {...cita, tipo:'evento', telefono_wpp:'6681234567'}]},ahora);
   assert.equal(avisos.some(a=>a.id==='agenda-confirmar'||a.id==='agenda-telefono'),false);
 });
+test('campana separa cierres por área y no duplica el aviso general de compatibilidad',()=>{
+  const avisos=avisosPanel({actualizado:ahora.toISOString(),citas:[],caja:{sinCorte:99,ultimaDiferencia:10,href:'/caja'},cajas:[{area:'farmacia',sinCorte:0,ultimaDiferencia:0,href:'/caja'},{area:'consultorio',sinCorte:2,ultimaDiferencia:-5,href:'/cobros/corte'}]},ahora);
+  assert.equal(avisos.length,2);assert.ok(avisos.every(a=>a.area==='consultorio'&&a.href==='/cobros/corte'));assert.ok(!avisos.some(a=>a.id==='caja-abierta'));
+});
 test('stock: caducidad de hoy no está vencida por UTC; ignora lotes vacíos', () => {
   const s=stockPanel([{precio_venta:0,codigo_barras:null,stock_minimo:10,lotes:[{cantidad_actual:3,caducidad:'2026-10-10'},{cantidad_actual:1,caducidad:'2026-10-11'},{cantidad_actual:0,caducidad:'2020-01-01'}]}],ahora);
   assert.deepEqual(s,{bajo:1,vencido:1,porCaducar:1,sinCodigo:1,sinPrecio:1});

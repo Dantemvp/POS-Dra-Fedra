@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fechaSinaloa } from '@/lib/tz';
 import { getUsuarioActual } from '@/lib/auth';
 import { leerCajaDia } from '@/lib/caja-lectura';
-import { centavosCorte, guardarDesgloseCorte, type ComprobanteCorte } from '@/lib/corte-resumen';
+import { centavosCorte, guardarDesgloseCorte, puedeCerrarArea, type AreaCorte, type ComprobanteCorte } from '@/lib/corte-resumen';
 
 export type CorteResult = { ok: boolean; error?: string; corte?: ComprobanteCorte };
 
@@ -25,6 +25,7 @@ export async function cancelarVenta(
 }
 
 export type CorteDatos = {
+  area?: AreaCorte;
   totalVentas: number;
   totalCobros: number;
   efectivoEsperado: number;
@@ -37,7 +38,8 @@ export type CorteDatos = {
 
 export async function registrarCorte(datos: CorteDatos): Promise<CorteResult> {
   const perfil = await getUsuarioActual();
-  if (!perfil || !['admin', 'farmacia', 'gerente'].includes(perfil.rol)) return { ok: false, error: 'No tienes permiso para cerrar caja.' };
+  const area = datos.area ?? 'farmacia';
+  if (!['farmacia', 'consultorio'].includes(area) || !perfil || !puedeCerrarArea(perfil.rol, area)) return { ok: false, error: 'No tienes permiso para cerrar esta área.' };
   const contado = datos.efectivoContado;
   if (contado === null || !Number.isFinite(contado) || contado < 0 || Math.abs(contado * 100 - Math.round(contado * 100)) > 0.000001) {
     return { ok: false, error: 'Captura el efectivo contado, con máximo dos decimales.' };
@@ -55,7 +57,7 @@ export async function registrarCorte(datos: CorteDatos): Promise<CorteResult> {
     .single();
   if (!usuario || !usuario.activo || usuario.rol !== perfil.rol) return { ok: false, error: "Usuario sin permiso o desactivado." };
   let resumen;
-  try { resumen = await leerCajaDia(); } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'No se pudo comprobar la caja.' }; }
+  try { resumen = await leerCajaDia(new Date(), area); } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'No se pudo comprobar la caja.' }; }
   if (resumen.diferenciaPagos !== 0) return { ok: false, error: 'Los pagos no cuadran con los ingresos. Revisa el desglose antes de cerrar.' };
   const diferencia = (centavosCorte(contado) - centavosCorte(resumen.efectivoEsperado)) / 100;
 
@@ -72,14 +74,15 @@ export async function registrarCorte(datos: CorteDatos): Promise<CorteResult> {
     diferencia,
     total_productos: resumen.productosSalidos,
     pacientes_atendidos: resumen.pacientesAtendidos,
-    desglose: guardarDesgloseCorte(resumen.desglose, perfil.rol !== 'farmacia'),
+    desglose: guardarDesgloseCorte(resumen.desglose, area),
   }).select('id').single();
   if (error) return { ok: false, error: error.message };
   if (!guardado?.id) return { ok: false, error: 'No se pudo comprobar el folio guardado. Revisa el historial antes de reintentar.' };
 
   revalidatePath("/caja");
   revalidatePath('/cortes');
+  revalidatePath('/cobros/corte');
   return { ok: true, corte: { id: guardado.id, apertura: resumen.apertura, cierre: resumen.cierre, fecha: fechaSinaloa(resumen.cierre), responsable: perfil.nombre,
     totalVentas: resumen.totalVentas, totalCobros: resumen.totalCobros, efectivoEsperado: resumen.efectivoEsperado, efectivoContado: contado, diferencia,
-    productos: resumen.productosSalidos, pacientes: resumen.pacientesAtendidos, desglose: resumen.desglose, numVentas: resumen.numVentas, consultorioIncluido: perfil.rol !== 'farmacia' } };
+    productos: resumen.productosSalidos, pacientes: resumen.pacientesAtendidos, desglose: resumen.desglose, numVentas: resumen.numVentas, area, farmaciaIncluida: area === 'farmacia', consultorioIncluido: area === 'consultorio' } };
 }

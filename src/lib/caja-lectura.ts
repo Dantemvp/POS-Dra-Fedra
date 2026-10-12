@@ -1,15 +1,15 @@
 import { createClient } from '@/lib/supabase/server';
-import { resumenCorte, leerDesgloseCorte, type VentaCorte, type CobroCorte, type ComprobanteCorte } from './corte-resumen';
+import { resumenCorte, leerDesgloseCorte, type AreaCorte, type VentaCorte, type CobroCorte, type ComprobanteCorte } from './corte-resumen';
 import { inicioDiaSinaloa, fechaSinaloa } from './tz';
 
 // Solo lectura con el cliente de la sesión, nunca service_role.
-export async function leerCajaDia(hasta = new Date()) {
+export async function leerCajaDia(hasta = new Date(), area?: AreaCorte) {
   const supabase = await createClient();
   const desde = inicioDiaSinaloa(hasta).toISOString();
   const [ventas, cobros] = await Promise.all([
-    supabase.from('ventas').select('id, folio, fecha, total, metodo_pago, venta_items(cantidad, precio_unit, productos(nombre)), pagos(metodo, monto)', { count: 'exact' })
+    area === 'consultorio' ? Promise.resolve({ data: [], count: 0, error: null }) : supabase.from('ventas').select('id, folio, fecha, total, metodo_pago, venta_items(cantidad, precio_unit, productos(nombre)), pagos(metodo, monto)', { count: 'exact' })
       .gte('fecha', desde).lte('fecha', hasta.toISOString()).eq('estado', 'pagada').eq('es_historico', false).order('fecha', { ascending: false }).limit(1001),
-    supabase.from('cobros').select('id, total, paciente_id, cobro_pagos(metodo, monto)', { count: 'exact' })
+    area === 'farmacia' ? Promise.resolve({ data: [], count: 0, error: null }) : supabase.from('cobros').select('id, total, paciente_id, cobro_pagos(metodo, monto)', { count: 'exact' })
       .gte('fecha', desde).lte('fecha', hasta.toISOString()).eq('estado', 'activo').limit(1001),
   ]);
   if (ventas.error || cobros.error) throw new Error('No se pudo comprobar la caja. No cierres con datos incompletos.');
@@ -19,14 +19,16 @@ export async function leerCajaDia(hasta = new Date()) {
 }
 
 // Recuperación en Caja para el cajero, sin abrirle la ruta /cortes de gerencia.
-export async function leerUltimoCortePropio(responsable: string): Promise<ComprobanteCorte | null> {
+export async function leerUltimoCortePropio(responsable: string, area?: AreaCorte): Promise<ComprobanteCorte | null> {
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
   if (!user) return null;
   const perfil = await db.from('usuarios').select('id').eq('auth_uid', user.id).single();
   if (perfil.error || !perfil.data) return null;
-  const { data: c, error } = await db.from('cortes_caja').select('id, apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, desglose')
-    .eq('usuario_id', perfil.data.id).not('cierre', 'is', null).order('cierre', { ascending: false }).limit(1).maybeSingle();
+  let consulta = db.from('cortes_caja').select('id, apertura, cierre, total_ventas, total_cobros, total_efectivo, efectivo_contado, diferencia, total_productos, pacientes_atendidos, desglose')
+    .eq('usuario_id', perfil.data.id).not('cierre', 'is', null);
+  if (area) consulta = consulta.eq('desglose->>__area_corte', area === 'farmacia' ? '1' : '2');
+  const { data: c, error } = await consulta.order('cierre', { ascending: false }).limit(1).maybeSingle();
   if (error || !c) return null;
   return { id: c.id, apertura: c.apertura, cierre: c.cierre, fecha: fechaSinaloa(c.cierre), responsable,
     totalVentas: Number(c.total_ventas ?? 0), totalCobros: Number(c.total_cobros ?? 0), efectivoEsperado: Number(c.total_efectivo ?? 0),

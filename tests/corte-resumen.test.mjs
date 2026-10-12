@@ -20,9 +20,18 @@ test('CSV del corte conserva resumen guardado, métodos, Sinaloa y contado sin i
 test('alcance guardado sobrevive reimpresión sin convertirse en método ni dinero',()=>{
   for(const incluido of [true,false]){
     const guardado=guardarDesgloseCorte({efectivo:100,tarjeta:50},incluido);
-    assert.deepEqual(leerDesgloseCorte(JSON.parse(JSON.stringify(guardado))),{desglose:{efectivo:100,tarjeta:50},consultorioIncluido:incluido});
+    const recuperado=leerDesgloseCorte(JSON.parse(JSON.stringify(guardado)));
+    assert.deepEqual(recuperado.desglose,{efectivo:100,tarjeta:50});assert.equal(recuperado.consultorioIncluido,incluido);
   }
-  assert.deepEqual(leerDesgloseCorte({efectivo:100}),{desglose:{efectivo:100},consultorioIncluido:undefined});
+  assert.equal(leerDesgloseCorte({efectivo:100}).consultorioIncluido,undefined);
+});
+test('área clínica sobrevive JSON y no se exporta como pago; anteriores no se reclasifican',()=>{
+  const alcance=leerDesgloseCorte(JSON.parse(JSON.stringify(guardarDesgloseCorte({tarjeta:50},'consultorio'))));
+  assert.equal(alcance.area,'consultorio');assert.equal(alcance.farmaciaIncluida,false);assert.equal(alcance.consultorioIncluido,true);assert.deepEqual(alcance.desglose,{tarjeta:50});
+  const csv=csvCorte({fecha:'Ficticia',responsable:'Ficticio',totalVentas:0,totalCobros:50,efectivoEsperado:0,efectivoContado:0,diferencia:0,productos:0,pacientes:1,...alcance});
+  assert.match(csv,/"Área","Consultorio"/);assert.match(csv,/"Farmacia","No incluida en este corte"/);assert.doesNotMatch(csv,/__area_corte|__solo_farmacia/);
+  assert.equal(leerDesgloseCorte({__solo_farmacia:0,efectivo:100}).area,undefined);
+  assert.equal(leerDesgloseCorte(null).area,undefined);
 });
 test('CSV de farmacia dice no incluido, no inventa pacientes ni exporta metadatos como pagos',()=>{
   const csv=csvCorte({fecha:'11/10/2026',responsable:'Ficticio',totalVentas:100,totalCobros:0,efectivoEsperado:100,efectivoContado:100,diferencia:0,productos:2,pacientes:0,...leerDesgloseCorte(guardarDesgloseCorte({efectivo:100},false))});

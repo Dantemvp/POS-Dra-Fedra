@@ -339,7 +339,7 @@ export default async function DashboardPage({
     <div className="mx-auto flex max-w-6xl flex-col gap-8">
       <div className="order-1 space-y-5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8c7a63]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#75644f] dark:text-[#d9c7a7]">
             {areaActiva === "farmacia" ? "Farmacia" : "Consultorio"}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-[-0.02em] text-zinc-900">
@@ -584,8 +584,8 @@ function Accion({
       href={href}
       className={`rounded-lg px-4 py-2.5 text-sm font-medium transition ${
         principal
-          ? "bg-[#3f5148] text-white shadow-sm hover:bg-[#34433c]"
-          : "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-[#f2eeec] hover:text-zinc-950"
+          ? "fedra-nav-active shadow-sm"
+          : "bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
       }`}
     >
       {children}

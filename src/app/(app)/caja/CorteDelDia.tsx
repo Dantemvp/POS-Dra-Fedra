@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { registrarCorte } from "./actions";
 import CorteComprobante from '@/components/CorteComprobante';
-import type { ComprobanteCorte } from '@/lib/corte-resumen';
+import type { AreaCorte, ComprobanteCorte } from '@/lib/corte-resumen';
 
 const money = (n: number) =>
   n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -26,7 +26,8 @@ export default function CorteDelDia({
   fecha,
   responsable,
   ultimoCorte,
-  consultorioIncluido = true,
+  area = 'farmacia',
+  puedeCerrar = true,
 }: {
   numVentas: number;
   totalVentas: number;
@@ -38,8 +39,10 @@ export default function CorteDelDia({
   fecha: string;
   responsable: string;
   ultimoCorte?: ComprobanteCorte | null;
-  consultorioIncluido?: boolean;
+  area?: AreaCorte;
+  puedeCerrar?: boolean;
 }) {
+  const consultorioIncluido = area === 'consultorio';
   const [contado, setContado] = useState("");
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -53,13 +56,14 @@ export default function CorteDelDia({
   const metodos = Object.entries(desglose).filter(([, v]) => v > 0);
 
   function cerrarCorte() {
-    if (pending || guardado || cerrando.current || mostrarAnterior) return;
+    if (!puedeCerrar || pending || guardado || cerrando.current || mostrarAnterior) return;
     if (contadoNum === null || !Number.isFinite(contadoNum) || contadoNum < 0) { setMsg('Captura el efectivo contado antes de cerrar.'); return; }
     setMsg(null);
     cerrando.current = true;
     startTransition(async () => {
       try {
       const res = await registrarCorte({
+        area,
         totalVentas,
         totalCobros,
         efectivoEsperado,
@@ -84,16 +88,16 @@ export default function CorteDelDia({
     <section>
     {ultimoCorte && <div className="corte-screen mb-3"><button type="button" disabled={pending || Boolean(guardado)} onClick={() => setMostrarAnterior(!mostrarAnterior)} className="min-h-11 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-800 disabled:opacity-50">{mostrarAnterior ? 'Volver a la vista previa del día' : 'Recuperar mi último corte guardado'}</button></div>}
     <CorteComprobante automatico={Boolean(guardado)} corte={mostrarAnterior && ultimoCorte ? ultimoCorte : guardado ?? { fecha, responsable, totalVentas, totalCobros, efectivoEsperado,
-      efectivoContado: contadoNum, diferencia, productos: productosSalidos, pacientes: pacientesAtendidos, desglose, numVentas, consultorioIncluido }} />
+      efectivoContado: contadoNum, diferencia, productos: productosSalidos, pacientes: pacientesAtendidos, desglose, numVentas, area, farmaciaIncluida: area === 'farmacia', consultorioIncluido }} />
     <div className="corte-screen mt-4 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">
-            Corte del día
+            Corte de {area === 'farmacia' ? 'Farmacia' : 'Consultorio'}
           </h2>
           <p className="text-xs text-zinc-500">{fecha}</p>
         </div>
-        <div className="flex gap-2 print:hidden">
+        {puedeCerrar && <div className="flex gap-2 print:hidden">
           <button
             onClick={cerrarCorte}
             disabled={pending || Boolean(guardado) || resultadoIncierto || mostrarAnterior || contadoNum === null}
@@ -101,16 +105,16 @@ export default function CorteDelDia({
           >
             {pending ? "Guardando…" : guardado ? "Corte guardado" : "Cerrar corte e imprimir"}
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* Resumen de actividad */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Dato label="Ventas (farmacia)" valor={money(totalVentas)} />
-        <Dato label="Cobros (consultorio)" valor={consultorioIncluido ? money(totalCobros) : 'No incluido en este corte'} />
-        <Dato label="Total del día" valor={money(totalVentas + totalCobros)} />
-        <Dato label="N.º de ventas" valor={String(numVentas)} />
-        <Dato label="Productos salidos" valor={String(productosSalidos)} />
+        {!consultorioIncluido && <Dato label="Ventas (farmacia)" valor={money(totalVentas)} />}
+        {consultorioIncluido && <Dato label="Cobros (consultorio)" valor={money(totalCobros)} />}
+        <Dato label="Total del área" valor={money(totalVentas + totalCobros)} />
+        {!consultorioIncluido && <Dato label="N.º de ventas" valor={String(numVentas)} />}
+        {!consultorioIncluido && <Dato label="Productos salidos" valor={String(productosSalidos)} />}
         {consultorioIncluido && <Dato label="Pacientes atendidos" valor={String(pacientesAtendidos)} />}
       </div>
 
@@ -137,7 +141,7 @@ export default function CorteDelDia({
       </div>
 
       {/* Cuadre de efectivo */}
-      <div className="mt-4 border-t border-zinc-100 pt-3">
+      {puedeCerrar && <div className="mt-4 border-t border-zinc-100 pt-3">
         <p className="mb-2 text-xs font-medium uppercase text-zinc-500">
           Cuadre de efectivo
         </p>
@@ -180,7 +184,8 @@ export default function CorteDelDia({
             </span>
           </div>
         )}
-      </div>
+      </div>}
+      <p className="mt-3 text-sm text-zinc-600">{puedeCerrar ? 'Cuenta únicamente el efectivo de esta área. Si comparten cajón, separa los ingresos antes de capturar; este resumen no incluye fondo inicial ni retiros.' : 'Consulta de ingresos. Administración o gerencia realizan el cierre de Consultorio.'}</p>
 
       {msg && (
         <p className="mt-3 text-sm text-zinc-500 print:hidden">{msg}</p>
