@@ -33,6 +33,6 @@ const server=http.createServer((req,res)=>{
   if(url.pathname==='/api/google-calendario/eventos')return send('application/json',JSON.stringify({conectado:true,actualizado:new Date().toISOString(),eventos:[{id:'google-ficticio',titulo:'Persona Ficticia $600 facial',inicio:new Date(Date.now()+3600000).toISOString(),diaCompleto:false,descripcion:'Tel: +1 202 555 0123'}]}));
   return send('text/html','<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"><title>Fedra · Demostración ficticia</title><body><div id="root"></div><script src="/demo.js"></script></body></html>');
 });
-const puerto = tema ? 3034 : 3032;
+const puerto = Number(process.env.FEDRA_DEMO_PORT ?? (tema ? 3034 : 3032));
 server.listen(puerto,'127.0.0.1',()=>console.log(`Demostración: http://127.0.0.1:${puerto} · ${scratch}`));
 process.on('SIGINT',()=>server.close(()=>process.exit(0)));

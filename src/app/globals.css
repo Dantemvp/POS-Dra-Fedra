@@ -96,6 +96,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* El popup nativo puede usar blanco del sistema sin heredar el fondo del select. */
+select option,
+select optgroup {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
 /* El gesto orgánico del membrete identifica la aplicación sin competir con
    tablas o formularios. Vive en el shell, nunca en documentos imprimibles. */
 .fedra-shell {
