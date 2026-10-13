@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## [0.1.36] - 2026-10-12
+
+- Simplifica el cierre de Farmacia y Consultorio: cuenta el efectivo, consulta el faltante o sobrante y guarda e imprime.
+- Los ingresos detallados y la vista previa del ticket empiezan plegados; guardar abre el comprobante con la respuesta del servidor.
+- Plegar y abrir no repite el cierre ni la impresión. El ticket sigue disponible al imprimir aunque esté plegado.
+- Revisión independiente del PR #51 sobre 63d3889. Conserva permisos, validaciones y protección ante doble clic o resultado incierto; sin migraciones ni cambios a los cortes guardados.
+
 ## [0.1.35] - 2026-10-12
 
 - Inicio muestra la agenda cerrada por defecto, con contador y enlace a la agenda completa visibles. Abrir y cerrar conserva el borrador de WhatsApp.
