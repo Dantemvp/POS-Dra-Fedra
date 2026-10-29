@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarcodeInput from "@/components/BarcodeInput";
 import ComboBuscador from "@/components/ComboBuscador";
 import { crearCobro, type ItemCobro } from "./actions";
 import { totalCobro } from "@/lib/cobro-total";
+import VentanaCobro from '@/components/VentanaCobro';
+import OpcionesPago from '@/components/OpcionesPago';
+import { prepararPago, type PagoVentana } from '@/lib/pago-ventana';
+import { indexarCatalogo, buscarCatalogo } from '@/lib/catalogo-busqueda';
 import {
   COBRO_BORRADOR_KEY,
   borrarCobroBorrador,
@@ -46,6 +50,10 @@ export default function NuevoCobro({
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState("");
   const [borradorListo, setBorradorListo] = useState(false);
+  const [pagoAbierto, setPagoAbierto] = useState(false);
+  const [resultadoIncierto, setResultadoIncierto] = useState(false);
+  const enviando = useRef(false);
+  const indice = useMemo(() => indexarCatalogo(productos), [productos]);
 
   useEffect(() => {
     const tarea = window.setTimeout(() => {
@@ -113,12 +121,17 @@ export default function NuevoCobro({
 
   // --- Productos por código de barras (BIP) o búsqueda ---
   function agregarProducto(p: Producto) {
+    if (pagoAbierto || guardando || resultadoIncierto) return;
     setError("");
+    if (p.stock <= 0 || (items.find(it => it.producto_id === p.id)?.cantidad ?? 0) >= p.stock) {
+      setError(`No hay más existencia disponible de ${p.nombre}.`);
+      return;
+    }
     setItems((prev) => {
       const idx = prev.findIndex((it) => it.producto_id === p.id);
       if (idx >= 0) {
         return prev.map((it, i) =>
-          i === idx ? { ...it, cantidad: it.cantidad + 1 } : it,
+          i === idx ? { ...it, cantidad: Math.min(p.stock, it.cantidad + 1) } : it,
         );
       }
       return [
@@ -138,7 +151,8 @@ export default function NuevoCobro({
   }
 
   function onScan(code: string) {
-    const p = productos.find((x) => x.codigo_barras === code);
+    if (pagoAbierto || guardando || resultadoIncierto) return;
+    const p = indice.codigos.get(code.trim());
     if (!p) {
       setError(`Código ${code} no está ligado a ningún producto.`);
       return;
@@ -162,37 +176,52 @@ export default function NuevoCobro({
     });
   }
 
-  const sugerencias = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    if (!q) return [];
-    return productos
-      .filter((p) => p.nombre.toLowerCase().includes(q))
-      .slice(0, 6);
-  }, [busca, productos]);
+  const sugerencias = useMemo(() => buscarCatalogo(indice, busca), [busca, indice]);
+
+  function revisarConceptos() {
+    if (!pacientes.some(p => p.id === pacienteId)) return 'Selecciona el paciente de este cobro.';
+    if (!items.length) return 'Agrega al menos un concepto.';
+    if (items.some(it => !it.descripcion.trim() || !Number.isFinite(it.cantidad) || it.cantidad <= 0 || !Number.isFinite(it.precio_unit) || it.precio_unit < 0)) return 'Completa el concepto, la cantidad y el precio de cada renglón.';
+    if (items.some(it => it.tipo === 'producto' && (!productos.some(p => p.id === it.producto_id) || it.cantidad > (productos.find(p => p.id === it.producto_id)?.stock ?? 0)))) return 'Revisa la existencia de los productos antes de cobrar.';
+    return '';
+  }
+
+  const datosPago = { metodo, dividir, metodo2, monto1 };
+  function cambiarPago(cambio: Partial<PagoVentana>) {
+    if (cambio.metodo) setMetodo(cambio.metodo);
+    if (cambio.metodo2) setMetodo2(cambio.metodo2);
+    if (cambio.dividir !== undefined) setDividir(cambio.dividir);
+    if (cambio.monto1 !== undefined) setMonto1(cambio.monto1);
+    setError('');
+  }
 
   async function guardar() {
+    if (!pagoAbierto || guardando || enviando.current || resultadoIncierto) return;
     setError("");
-    if (items.length === 0) {
-      setError("Agrega al menos un concepto.");
-      return;
-    }
-    const primero = Math.round(Number(monto1) * 100) / 100;
-    if (dividir && (!Number.isFinite(primero) || primero <= 0 || primero >= total || metodo === metodo2)) {
-      setError("Elige dos métodos distintos y un primer monto mayor a cero y menor al total.");
-      return;
-    }
+    const problema = revisarConceptos();
+    if (problema) { setError(problema); return; }
+    const pago = prepararPago(total, datosPago);
+    if (pago.error) { setError(pago.error); return; }
+    enviando.current = true;
     setGuardando(true);
+    try {
     const r = await crearCobro({ paciente_id: pacienteId, items, metodo, nota,
-      pagos: dividir ? [{ metodo, monto: primero }, { metodo: metodo2, monto: Math.round((total - primero) * 100) / 100 }] : undefined,
+      pagos: pago.pagos,
     });
-    setGuardando(false);
     if (!r.ok) {
+      enviando.current = false;
+      setGuardando(false);
       setError(r.error ?? "Error al guardar.");
       return;
     }
     borrarCobroBorrador(() => window.sessionStorage);
     router.push(r.id ? `/cobros/${r.id}?imprimir=1` : "/cobros");
     router.refresh();
+    } catch {
+      setResultadoIncierto(true);
+      setGuardando(false);
+      setError('No se pudo confirmar el cobro. Revisa los cobros registrados antes de volver a cobrar al paciente.');
+    }
   }
 
   const fmt = (n: number) =>
@@ -202,6 +231,9 @@ export default function NuevoCobro({
     setPacienteId("");
     setItems([]);
     setMetodo("transferencia");
+    setDividir(false);
+    setMetodo2('tarjeta');
+    setMonto1('');
     setNota("");
     setError("");
     setAviso("");
@@ -209,12 +241,18 @@ export default function NuevoCobro({
   }
 
   return (
-    <div className="space-y-5 rounded-xl bg-white p-5 ring-1 ring-zinc-200">
+    <div className="fedra-workspace space-y-5 rounded-2xl bg-white p-4 ring-1 ring-zinc-200 sm:p-6">
+      {pagoAbierto && <VentanaCobro area="Consultorio" total={total} resumen={pacientes.find(p => p.id === pacienteId)?.nombre ?? 'Paciente sin seleccionar'}
+        ocupada={guardando} bloqueada={resultadoIncierto} error={error} onVolver={() => { if (!guardando) setPagoAbierto(false); }} onConfirmar={guardar}>
+        <OpcionesPago total={total} datos={datosPago} onChange={cambiarPago} />
+        <label>Nota del cobro (opcional)<textarea value={nota} rows={2} onChange={e => setNota(e.target.value)} placeholder="Referencia del pago o comentario interno" /></label>
+      </VentanaCobro>}
       {borradorListo && (pacienteId || items.length > 0 || nota.trim()) && (
         <div className="flex items-center justify-between gap-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
           <span>Cobro pendiente guardado mientras esta pestaña permanezca abierta.</span>
           <button
             type="button"
+            disabled={guardando || resultadoIncierto}
             onClick={descartarBorrador}
             className="shrink-0 font-semibold underline underline-offset-2"
           >
@@ -223,9 +261,10 @@ export default function NuevoCobro({
         </div>
       )}
       <div>
-        <label className="block text-xs text-zinc-500">Paciente</label>
+        <p className="block text-sm font-semibold text-zinc-800">1. Elige al paciente</p>
         <div className="mt-1">
           <ComboBuscador
+            etiqueta="Paciente del cobro"
             opciones={opcionesPaciente}
             value={pacienteId}
             onChange={setPacienteId}
@@ -235,7 +274,9 @@ export default function NuevoCobro({
       </div>
 
       {/* BIP — escanear producto del inventario */}
-      <div>
+      <details className="rounded-xl border border-zinc-200 p-3">
+        <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-zinc-800">Agregar productos del inventario</summary>
+        <div className="pt-3">
         <label className="block text-xs text-zinc-500">
           Escanear producto (BIP) o buscar
         </label>
@@ -243,6 +284,7 @@ export default function NuevoCobro({
           <BarcodeInput onScan={onScan} autoFocus={false} />
         </div>
         <input
+          aria-label="Buscar un producto del inventario"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="…o busca un producto por nombre"
@@ -257,7 +299,7 @@ export default function NuevoCobro({
                   agregarProducto(p);
                   setBusca("");
                 }}
-                disabled={p.stock <= 0}
+                disabled={p.stock <= 0 || (items.find(it => it.producto_id === p.id)?.cantidad ?? 0) >= p.stock}
                 className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-sm hover:bg-zinc-100 disabled:opacity-40"
               >
                 <span>{p.nombre}</span>
@@ -269,15 +311,16 @@ export default function NuevoCobro({
           </div>
         )}
         {aviso && <p className="mt-1 text-xs text-green-700">{aviso}</p>}
-      </div>
+        </div>
+      </details>
 
       {/* Conceptos (servicios + productos) */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-xs text-zinc-500">Conceptos</label>
+          <h2 className="text-sm font-semibold text-zinc-800">2. Agrega los conceptos</h2>
           <button
             onClick={agregarServicio}
-            className="text-sm text-zinc-600 hover:text-zinc-900"
+            className="fedra-action-secondary text-sm"
           >
             + Agregar servicio
           </button>
@@ -290,17 +333,18 @@ export default function NuevoCobro({
         )}
 
         {items.map((it, i) => (
-          <div key={i} className="flex flex-wrap items-center gap-2">
+          <div key={i} className="flex min-w-0 flex-wrap items-center gap-3 rounded-xl bg-zinc-50 p-3">
             {it.tipo === "producto" ? (
-              <span className="flex-1 truncate rounded-lg bg-[#f1ebe1] px-2 py-1.5 text-sm text-zinc-800">
-                📦 {it.descripcion}
+              <span className="basis-full break-words text-sm font-medium text-zinc-800">
+                {it.descripcion}
               </span>
             ) : (
               <>
                 <select
+                  aria-label={`Servicio del concepto ${i + 1}`}
                   value={it.servicio_id ?? ""}
                   onChange={(e) => elegirServicio(i, e.target.value)}
-                  className="min-w-[9rem] flex-1 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+                  className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
                 >
                   <option value="">— Servicio / libre —</option>
                   {servicios.map((s) => (
@@ -311,34 +355,37 @@ export default function NuevoCobro({
                 </select>
                 {!it.servicio_id && (
                   <input
+                    aria-label={`Descripción del concepto ${i + 1}`}
                     placeholder="Concepto"
                     value={it.descripcion}
                     onChange={(e) => setItem(i, { descripcion: e.target.value })}
-                    className="flex-1 rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
                   />
                 )}
               </>
             )}
-            <input
+            <label className="text-xs text-zinc-600">Cantidad<input
+              aria-label={`Cantidad del concepto ${i + 1}`}
               type="number"
               min={1}
               step="0.01"
               value={it.cantidad}
               onChange={(e) => setItem(i, { cantidad: Number(e.target.value) || 1 })}
-              className="w-14 rounded-lg border border-zinc-300 px-2 py-1.5 text-center text-sm"
-            />
-            <div className="flex items-center gap-1">
-              <span className="text-zinc-400">$</span>
+              className="mt-1 block w-20 rounded-lg border border-zinc-300 bg-white px-2 py-2 text-center text-sm"
+            /></label>
+            <label className="text-xs text-zinc-600">Precio unitario
               <input
+                aria-label={`Precio del concepto ${i + 1}`}
                 type="number"
                 value={it.precio_unit}
                 onChange={(e) => setItem(i, { precio_unit: Number(e.target.value) || 0 })}
-                className="w-24 rounded-lg border border-zinc-300 px-2 py-1.5 text-right text-sm"
+                className="mt-1 block w-28 rounded-lg border border-zinc-300 bg-white px-2 py-2 text-right text-sm"
               />
-            </div>
+            </label>
             <button
               onClick={() => quitar(i)}
-              className="text-zinc-400 hover:text-red-600"
+              aria-label={`Quitar concepto ${i + 1}`}
+              className="ml-auto h-11 w-11 rounded-lg text-zinc-600 hover:text-red-700"
               title="Quitar"
             >
               ✕
@@ -348,51 +395,16 @@ export default function NuevoCobro({
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-3 border-t border-zinc-100 pt-4">
-        <div>
-          <label className="block text-xs text-zinc-500">Método de pago</label>
-          <select
-            value={metodo}
-            onChange={(e) => setMetodo(e.target.value as MetodoCobro)}
-            className="mt-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-          >
-            <option value="transferencia">Transferencia</option>
-            <option value="efectivo">Efectivo</option>
-            <option value="tarjeta">Tarjeta</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-zinc-500">Total</p>
-          <p className="text-2xl font-semibold text-zinc-900">{fmt(total)}</p>
-        </div>
+        <p className="text-sm text-zinc-600">{items.length} {items.length === 1 ? 'concepto' : 'conceptos'} en este cobro</p>
+        <div className="text-right"><p className="text-xs text-zinc-600">Total</p><p className="text-3xl font-semibold tabular-nums tracking-tight text-zinc-900">{fmt(total)}</p></div>
       </div>
-
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={dividir} onChange={e => setDividir(e.target.checked)} />Pagar con dos métodos</label>
-        {dividir && <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <label className="text-sm">Monto en {metodo}<input type="number" min="0.01" step="0.01" value={monto1} onChange={e => setMonto1(e.target.value)} className="mt-1 w-full rounded-lg border border-zinc-300 p-2" /></label>
-          <label className="text-sm">Método para el resto<select value={metodo2} onChange={e => setMetodo2(e.target.value as MetodoCobro)} className="mt-1 w-full rounded-lg border border-zinc-300 p-2">
-            <option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option>
-          </select></label>
-          <p className="text-sm font-semibold sm:col-span-2">Resto: {fmt(Math.max(0, total - (Number(monto1) || 0)))}</p>
-        </div>}
-      </div>
-      <input
-        placeholder="Nota (opcional)"
-        value={nota}
-        onChange={(e) => setNota(e.target.value)}
-        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-      />
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      <button
-        onClick={guardar}
-        disabled={guardando}
-        className="w-full rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
-      >
-        {guardando ? "Guardando…" : "Registrar cobro"}
+      {error && !pagoAbierto && <p role="alert" className="fedra-checkout-error">{error}</p>}
+      <button type="button" onClick={e => { e.currentTarget?.focus(); const problema = revisarConceptos(); setError(problema); if (!problema) setPagoAbierto(true); }}
+        disabled={guardando || !borradorListo || !items.length || resultadoIncierto}
+        className="fedra-action-primary w-full text-base">
+        {guardando ? 'Registrando…' : `Continuar al cobro · ${fmt(total)}`}
       </button>
+      <p className="text-center text-xs text-zinc-600">Elige cómo paga en el siguiente paso. Puedes volver sin perder la captura.</p>
     </div>
   );
 }

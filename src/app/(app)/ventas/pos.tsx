@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { cobrar, cargarReceta } from "./actions";
 import BarcodeInput from "@/components/BarcodeInput";
 import AutoPrint from "@/components/AutoPrint";
+import VentanaCobro from '@/components/VentanaCobro';
+import OpcionesPago from '@/components/OpcionesPago';
+import { prepararPago, revisarRecibido, type MetodoPago, type PagoVentana } from '@/lib/pago-ventana';
+import { indexarCatalogo, buscarCatalogo } from '@/lib/catalogo-busqueda';
 import {
   FISCAL_FARMACIA,
   GOOGLE_REVIEW_URL,
@@ -45,10 +49,10 @@ export default function POS({
 }) {
   const [busqueda, setBusqueda] = useState("");
   const [carrito, setCarrito] = useState<Linea[]>([]);
-  const [metodo, setMetodo] = useState("efectivo");
+  const [metodo, setMetodo] = useState<MetodoPago>("efectivo");
   // Pago dividido: monto1 va al método principal y el resto al segundo método.
   const [dividir, setDividir] = useState(false);
-  const [metodo2, setMetodo2] = useState("tarjeta");
+  const [metodo2, setMetodo2] = useState<MetodoPago>("tarjeta");
   const [monto1, setMonto1] = useState("");
   // Efectivo recibido del cliente, para calcular el cambio a devolver.
   const [recibido, setRecibido] = useState("");
@@ -56,8 +60,13 @@ export default function POS({
   const [aviso, setAviso] = useState<string | null>(null);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [pending, startTransition] = useTransition();
+  const [pagoAbierto, setPagoAbierto] = useState(false);
+  const [resultadoIncierto, setResultadoIncierto] = useState(false);
+  const enviando = useRef(false);
+  const indice = useMemo(() => indexarCatalogo(productos), [productos]);
 
   function onScan(code: string) {
+    if (pagoAbierto || pending || resultadoIncierto) return;
     const c = code.trim();
     // Código de receta "REC<folio>": carga los medicamentos recetados.
     const rec = c.match(/^REC(\d+)$/i);
@@ -65,7 +74,7 @@ export default function POS({
       cargarRecetaAlCarrito(Number(rec[1]));
       return;
     }
-    const p = productos.find((x) => x.codigo_barras === c);
+    const p = indice.codigos.get(c);
     if (!p) {
       setError(`Código ${c} no está ligado a ningún producto.`);
       return;
@@ -86,7 +95,7 @@ export default function POS({
       let agregados = 0;
       const sinStock: string[] = [];
       for (const id of res.productoIds ?? []) {
-        const p = productos.find((x) => x.id === id);
+        const p = indice.ids.get(id);
         if (!p) continue; // producto inactivo o ya no existe
         if (p.stock <= 0) {
           sinStock.push(p.nombre);
@@ -99,7 +108,7 @@ export default function POS({
       if (sinStock.length) notas.push(`sin stock: ${sinStock.join(", ")}`);
       if ((res.sinLigar ?? []).length)
         notas.push(`no están en inventario: ${res.sinLigar!.join(", ")}`);
-      const sufijo = notas.length ? ` (revisar — ${notas.join("; ")})` : "";
+      const sufijo = notas.length ? ` (revisar: ${notas.join("; ")})` : "";
       if (agregados > 0) {
         setAviso(`Receta REC${folio}: ${agregados} producto(s) agregados${sufijo}.`);
       } else {
@@ -110,30 +119,20 @@ export default function POS({
     });
   }
 
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase();
-    if (!q) return [];
-    return productos
-      .filter((p) => p.nombre.toLowerCase().includes(q))
-      .slice(0, 6);
-  }, [busqueda, productos]);
+  const filtrados = useMemo(() => buscarCatalogo(indice, busqueda), [busqueda, indice]);
 
-  const total = carrito.reduce((s, l) => s + l.precio * l.cantidad, 0);
-
-  // Cuánto de esta venta se cobra en efectivo (para calcular el cambio).
-  const montoEfectivo = !dividir
-    ? metodo === "efectivo"
-      ? total
-      : 0
-    : metodo === "efectivo"
-      ? Number(monto1) || 0
-      : metodo2 === "efectivo"
-        ? Math.max(0, total - (Number(monto1) || 0))
-        : 0;
-  const recibidoNum = Number(recibido) || 0;
-  const cambio = recibidoNum - montoEfectivo;
+  const total = carrito.reduce((s, l) => s + Math.round(l.precio * l.cantidad * 100), 0) / 100;
+  const datosPago = { metodo, dividir, metodo2, monto1 };
+  function cambiarPago(cambio: Partial<PagoVentana>) {
+    if (cambio.metodo) setMetodo(cambio.metodo);
+    if (cambio.metodo2) setMetodo2(cambio.metodo2);
+    if (cambio.dividir !== undefined) setDividir(cambio.dividir);
+    if (cambio.monto1 !== undefined) setMonto1(cambio.monto1);
+    setError(null);
+  }
 
   function agregar(p: Producto) {
+    if (pagoAbierto || pending || resultadoIncierto) return;
     setError(null);
     if (p.stock <= 0) {
       setError(`"${p.nombre}" no tiene stock.`);
@@ -178,37 +177,20 @@ export default function POS({
   }
 
   function finalizar() {
+    if (!pagoAbierto || pending || enviando.current || resultadoIncierto) return;
     setError(null);
     if (carrito.length === 0) return;
-
-    // Pago dividido: validar montos y construir el desglose para la RPC.
-    let pagos: { metodo: string; monto: number }[] | null = null;
-    if (dividir) {
-      const m1 = Math.round(Number(monto1) * 100) / 100;
-      if (!m1 || m1 <= 0 || m1 >= total) {
-        setError(
-          `El monto en ${metodo} debe ser mayor a 0 y menor al total.`,
-        );
-        return;
-      }
-      if (metodo === metodo2) {
-        setError("Elige dos métodos distintos para dividir el pago.");
-        return;
-      }
-      const m2 = Math.round((total - m1) * 100) / 100;
-      pagos = [
-        { metodo, monto: m1 },
-        { metodo: metodo2, monto: m2 },
-      ];
-    }
+    const pago = prepararPago(total, datosPago);
+    if (pago.error) { setError(pago.error); return; }
+    const efectivo = revisarRecibido(recibido, pago.efectivo ?? 0);
+    if (efectivo.error) { setError(efectivo.error); return; }
 
     const snapshot = carrito;
     const metodoSel = metodo;
-    const pagosSel = pagos;
-    const recibidoSel = recibidoNum > 0 ? recibidoNum : undefined;
-    const cambioSel =
-      recibidoNum > 0 && montoEfectivo > 0 ? cambio : undefined;
+    const pagosSel = pago.pagos ?? null;
+    enviando.current = true;
     startTransition(async () => {
+      try {
       const res = await cobrar(
         snapshot.map((l) => ({
           producto_id: l.producto_id,
@@ -220,6 +202,7 @@ export default function POS({
         pagosSel,
       );
       if (!res.ok) {
+        enviando.current = false;
         setError(res.error ?? "No se pudo cobrar.");
         return;
       }
@@ -227,9 +210,9 @@ export default function POS({
         folio: res.folio,
         lineas: snapshot,
         pagos: pagosSel ?? undefined,
-        recibido: recibidoSel,
-        cambio: cambioSel,
-        total: snapshot.reduce((s, l) => s + l.precio * l.cantidad, 0),
+        recibido: efectivo.recibido,
+        cambio: efectivo.cambio,
+        total,
         metodo: pagosSel ? "mixto" : metodoSel,
         fecha: new Date().toLocaleString("es-MX"),
       });
@@ -237,6 +220,11 @@ export default function POS({
       setDividir(false);
       setMonto1("");
       setRecibido("");
+      setPagoAbierto(false);
+      } catch {
+        setResultadoIncierto(true);
+        setError('No se pudo confirmar el cobro. Revisa Caja y reportes antes de volver a cobrar esta venta.');
+      }
     });
   }
 
@@ -352,7 +340,7 @@ export default function POS({
             Reimprimir ticket
           </button>
           <button
-            onClick={() => setTicket(null)}
+            onClick={() => { setTicket(null); enviando.current = false; }}
             className="flex-1 rounded-lg bg-zinc-900 py-2 text-sm font-medium text-white hover:bg-zinc-800"
           >
             Nueva venta
@@ -363,11 +351,15 @@ export default function POS({
   }
 
   return (
-    <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)]">
+    <div className="fedra-workspace grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(17rem,0.72fr)_minmax(0,1.28fr)]">
+      {pagoAbierto && <VentanaCobro area="Farmacia" total={total} resumen={`${carrito.reduce((s, l) => s + l.cantidad, 0)} ${carrito.reduce((s, l) => s + l.cantidad, 0) === 1 ? 'artículo' : 'artículos'} en esta venta`}
+        ocupada={pending} bloqueada={resultadoIncierto} error={error} onVolver={() => { if (!pending) setPagoAbierto(false); }} onConfirmar={finalizar}>
+        <OpcionesPago total={total} datos={datosPago} onChange={cambiarPago} recibido={recibido} onRecibido={valor => { setRecibido(valor); setError(null); }} />
+      </VentanaCobro>}
       {/* Productos */}
       <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 lg:sticky lg:top-4">
         <div className="mb-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#756a5c] dark:text-[#d9c7a7]">Agregar productos</p>
+          <h2 className="text-base font-semibold text-zinc-900">Agregar productos</h2>
           <p className="mt-1 text-xs text-zinc-500">Escanea o escribe el nombre. La lista solo aparece mientras buscas.</p>
         </div>
         <div className="mb-2">
@@ -379,6 +371,7 @@ export default function POS({
           </p>
         )}
         <input
+          aria-label="Buscar producto por nombre"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="…o busca producto por nombre"
@@ -409,8 +402,8 @@ export default function POS({
       <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#756a5c] dark:text-[#d9c7a7]">Venta actual</p>
-            <h2 className="text-xl font-semibold text-zinc-900">Carrito</h2>
+            <p className="text-xs font-medium text-zinc-600">Venta actual</p>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-900">Carrito</h2>
           </div>
           <span className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-semibold text-zinc-700">{carrito.reduce((s, l) => s + l.cantidad, 0)} {carrito.reduce((s, l) => s + l.cantidad, 0) === 1 ? "artículo" : "artículos"}</span>
         </div>
@@ -423,18 +416,18 @@ export default function POS({
             {carrito.map((l) => (
               <div
                 key={l.producto_id}
-                className="flex items-center justify-between gap-3 rounded-xl bg-zinc-50 p-3 text-sm"
+                className="fedra-cart-line text-sm"
               >
-                <span className="flex-1 truncate text-zinc-900">{l.nombre}</span>
+                <div className="min-w-0"><p className="break-words font-medium text-zinc-900">{l.nombre}</p><p className="mt-1 text-xs text-zinc-600">{money(l.precio)} por unidad</p></div>
+                <button type="button" aria-label={`Quitar ${l.nombre}`} onClick={() => quitar(l.producto_id)} className="h-11 w-11 rounded-lg text-zinc-600 hover:text-red-700">✕</button>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => cambiarCantidad(l.producto_id, -1)} className="h-10 w-10 rounded-xl bg-white text-lg text-zinc-700 shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-100">−</button>
+                  <button aria-label={`Restar una unidad de ${l.nombre}`} onClick={() => cambiarCantidad(l.producto_id, -1)} className="h-11 w-11 rounded-xl bg-white text-lg text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-100">−</button>
                   <span className="w-8 text-center text-base font-semibold tabular-nums">{l.cantidad}</span>
-                  <button onClick={() => cambiarCantidad(l.producto_id, 1)} className="h-10 w-10 rounded-xl bg-white text-lg text-zinc-700 shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-100">+</button>
+                  <button aria-label={`Sumar una unidad de ${l.nombre}`} disabled={l.cantidad >= l.stock} onClick={() => cambiarCantidad(l.producto_id, 1)} className="h-11 w-11 rounded-xl bg-white text-lg text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-100 disabled:opacity-40">+</button>
                 </div>
                 <span className="w-20 text-right tabular-nums text-zinc-700">
                   {money(l.precio * l.cantidad)}
                 </span>
-                <button onClick={() => quitar(l.producto_id)} className="text-zinc-300 hover:text-red-500">✕</button>
               </div>
             ))}
           </div>
@@ -447,115 +440,13 @@ export default function POS({
               {money(total)}
             </span>
           </div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">
-            {dividir ? "Método 1" : "Método de pago"}
-          </label>
-          <select
-            value={metodo}
-            onChange={(e) => setMetodo(e.target.value)}
-            className="mb-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
-          >
-            <option value="efectivo">Efectivo</option>
-            <option value="tarjeta">Tarjeta</option>
-            <option value="transferencia">Transferencia</option>
-            <option value="otro">Otro</option>
-          </select>
-
-          <label className="mb-3 flex items-center gap-2 text-sm text-zinc-600">
-            <input
-              type="checkbox"
-              checked={dividir}
-              onChange={(e) => setDividir(e.target.checked)}
-            />
-            Dividir el pago en dos métodos
-          </label>
-
-          {dividir && (
-            <div className="mb-3 space-y-2 rounded-lg bg-zinc-50 p-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">
-                  Monto en {metodo}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={monto1}
-                  onChange={(e) => setMonto1(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">
-                  Resto en
-                </label>
-                <select
-                  value={metodo2}
-                  onChange={(e) => setMetodo2(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
-                >
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta">Tarjeta</option>
-                  <option value="transferencia">Transferencia</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </div>
-              <p className="text-sm text-zinc-600">
-                {metodo2}:{" "}
-                <span className="font-medium tabular-nums text-zinc-900">
-                  {money(Math.max(0, total - (Number(monto1) || 0)))}
-                </span>
-              </p>
-            </div>
-          )}
-
-          {montoEfectivo > 0 && (
-            <div className="mb-3 rounded-lg bg-zinc-50 p-3">
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
-                ¿Con cuánto paga? (efectivo {money(montoEfectivo)})
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={recibido}
-                onChange={(e) => setRecibido(e.target.value)}
-                placeholder="0.00"
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
-              />
-              {recibido !== "" &&
-                (cambio >= 0 ? (
-                  <p className="mt-2 flex justify-between text-sm">
-                    <span className="text-zinc-600">Cambio a devolver</span>
-                    <span className="font-semibold tabular-nums text-green-700">
-                      {money(cambio)}
-                    </span>
-                  </p>
-                ) : (
-                  <p className="mt-2 flex justify-between text-sm">
-                    <span className="text-zinc-600">Falta</span>
-                    <span className="font-semibold tabular-nums text-red-600">
-                      {money(-cambio)}
-                    </span>
-                  </p>
-                ))}
-            </div>
-          )}
-
-          {error && (
-            <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
-          )}
-
-          <button
-            onClick={finalizar}
-            disabled={carrito.length === 0 || pending}
-            className="w-full rounded-xl bg-[#3f5148] py-4 text-base font-semibold text-[#fff] shadow-sm transition hover:bg-[#34443c] disabled:opacity-50"
-          >
-            {pending ? "Cobrando…" : `Cobrar ${money(total)}`}
+          {error && !pagoAbierto && <p role="alert" className="fedra-checkout-error mb-3">{error}</p>}
+          <button type="button" onClick={e => { e.currentTarget?.focus(); setError(null); setPagoAbierto(true); }}
+            disabled={carrito.length === 0 || pending || resultadoIncierto}
+            className="fedra-action-primary w-full text-base">
+            {pending ? pagoAbierto ? 'Cobrando…' : 'Cargando receta…' : `Continuar al cobro · ${money(total)}`}
           </button>
+          <p className="mt-3 text-center text-xs text-zinc-600">Revisa el pago en el siguiente paso. Todavía no se registra la venta.</p>
         </div>
       </div>
     </div>
