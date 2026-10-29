@@ -72,13 +72,13 @@ export default async function CobrosPage() {
   const cobros = (cob ?? []) as unknown as CobroRow[];
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1fr_1.1fr]">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="mb-1 text-2xl font-semibold text-zinc-900">
-          Cobro rápido
+          Cobros de Consultorio
         </h1>
         <p className="mb-4 text-sm text-zinc-500">
-          Paciente, servicio (el precio se llena solo) y método. Listo.
+          Elige al paciente, agrega los servicios y continúa al pago.
         </p>
         <NuevoCobro
           pacientes={pacientes}
@@ -93,11 +93,9 @@ export default async function CobrosPage() {
         </Link>
       </div>
 
-      <div>
-        <h2 className="mb-3 text-lg font-medium text-zinc-900">
-          Cobros recientes
-        </h2>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+      <details className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200 sm:p-5">
+        <summary className="min-h-11 cursor-pointer content-center text-base font-semibold text-zinc-900">Ver cobros recientes ({cobros.length})</summary>
+        <div className="mt-3 overflow-x-auto rounded-xl">
           <table className="w-full text-sm">
             <tbody className="divide-y divide-zinc-100">
               {cobros.map((c) => {
@@ -108,7 +106,7 @@ export default async function CobrosPage() {
                       <p className="font-medium text-zinc-800">
                         {c.pacientes
                           ? `${c.pacientes.nombre} ${c.pacientes.apellidos ?? ""}`
-                          : "—"}
+                          : "Sin paciente"}
                         {cancelado && (
                           <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium uppercase text-red-600">
                             Cancelado
@@ -147,7 +145,7 @@ export default async function CobrosPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </details>
     </div>
   );
 }

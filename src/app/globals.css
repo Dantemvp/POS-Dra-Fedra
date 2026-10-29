@@ -96,6 +96,62 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Flujo de cobro: superficies y estados propios, sin alterar documentos. */
+.fedra-workspace, .fedra-checkout { font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; }
+.fedra-action-primary, .fedra-action-secondary {
+  display: inline-flex; min-height: 48px; align-items: center; justify-content: center;
+  gap: .65rem; border-radius: .8rem; padding: .8rem 1.15rem; font-weight: 600;
+  transition: background-color 150ms, box-shadow 150ms;
+}
+.fedra-action-primary { background: #3f5148; color: #fff; }
+.fedra-action-primary:hover { background: #33463c; }
+.fedra-action-secondary { background: var(--background); color: var(--foreground); border: 1px solid var(--color-zinc-300); }
+.fedra-action-secondary:hover { background: var(--color-zinc-100); }
+.fedra-action-primary:disabled, .fedra-action-secondary:disabled { opacity: .5; cursor: not-allowed; }
+.fedra-action-primary:focus-visible, .fedra-action-secondary:focus-visible, .fedra-payment-method:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 3px; }
+.fedra-checkout {
+  width: min(36rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); margin: auto;
+  padding: 0; border: 1px solid var(--color-zinc-200); border-radius: 1.4rem;
+  background: var(--color-white); color: var(--foreground); overflow: auto;
+  box-shadow: 0 24px 80px #171b1838; overscroll-behavior: contain;
+}
+.fedra-checkout::backdrop { background: #101b17a6; }
+.fedra-checkout[open] { display: flex; flex-direction: column; overflow: hidden; }
+.fedra-checkout-head, .fedra-checkout-footer { flex-shrink: 0; }
+.fedra-checkout-body { min-height: 0; overflow-y: auto; }
+.fedra-checkout-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.5rem; border-bottom: 1px solid var(--color-zinc-200); }
+.fedra-checkout-head h2 { margin-top: .4rem; font-size: 1.5rem; font-weight: 600; letter-spacing: -.035em; }
+.fedra-checkout-head p:not(.fedra-checkout-eyebrow) { margin-top: .35rem; color: var(--color-zinc-600); font-size: .875rem; overflow-wrap: anywhere; }
+.fedra-checkout-eyebrow { font-size: .75rem; font-weight: 600; color: var(--accent-text); }
+.fedra-checkout-body { display: grid; gap: 1.25rem; padding: 1.5rem; }
+.fedra-checkout-total { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: 1rem 1.15rem; border-radius: 1rem; background: var(--surface-shell); }
+.fedra-checkout-total span { color: var(--color-zinc-600); }
+.fedra-checkout-total strong { font-size: 2rem; font-weight: 600; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.fedra-payment-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.fedra-payment-method { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: .35rem; padding: .85rem; border-radius: .8rem; background: var(--background); border: 1px solid var(--color-zinc-300); font-size: .875rem; font-weight: 600; }
+.fedra-payment-method[aria-pressed="true"] { background: #3f5148; color: #fff; border-color: #3f5148; box-shadow: inset 0 0 0 1px #fff8; }
+.fedra-checkout-split { display: flex; align-items: center; gap: .75rem; min-height: 44px; font-size: .875rem; }
+.fedra-checkout-split input { width: 1.15rem; height: 1.15rem; accent-color: #3f5148; }
+.fedra-checkout-split-fields { display: grid; gap: .8rem; padding: 1rem; background: var(--surface-shell); border-radius: .8rem; }
+.fedra-checkout label:not(.fedra-checkout-split) { display: block; font-size: .875rem; font-weight: 500; }
+.fedra-checkout input:not([type="checkbox"]), .fedra-checkout select, .fedra-checkout textarea { display: block; width: 100%; min-height: 48px; margin-top: .4rem; padding: .7rem; border: 1px solid var(--color-zinc-300); border-radius: .7rem; background: var(--background); color: var(--foreground); font-size: 1rem; }
+.fedra-checkout input:focus-visible, .fedra-checkout textarea:focus-visible, .fedra-checkout select:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+.fedra-checkout-cash { display: grid; gap: .7rem; }
+.fedra-checkout-footer { display: grid; gap: .8rem; padding: 1rem 1.5rem 1.5rem; border-top: 1px solid var(--color-zinc-200); }
+.fedra-checkout-footer p { font-size: .75rem; color: var(--color-zinc-600); }
+.fedra-checkout-error { padding: .85rem; border: 1px solid currentColor; border-radius: .7rem; color: #a22626; font-size: .875rem; }
+.dark .fedra-checkout-error { color: #ffb4ac; }
+.fedra-cart-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; padding: 1rem; background: var(--color-zinc-50); border-radius: .9rem; }
+.fedra-workspace input, .fedra-workspace select { min-height: 44px; }
+@media (min-width: 640px) { .fedra-checkout-split-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 639px) {
+  .fedra-checkout { width: 100%; max-height: 94dvh; max-width: 100%; margin: auto 0 0; border-radius: 1.25rem 1.25rem 0 0; }
+  .fedra-checkout-head, .fedra-checkout-body { padding: 1.15rem; }
+  .fedra-checkout-footer { padding: 1rem 1.15rem max(1.15rem, env(safe-area-inset-bottom)); }
+  .fedra-checkout-total strong { font-size: 1.75rem; }
+}
+@media print { .fedra-checkout { display: none !important; } }
+
 /* El popup nativo puede usar blanco del sistema sin heredar el fondo del select. */
 select option,
 select optgroup {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 // Selector con búsqueda por texto. Reemplaza a los <select> largos (pacientes,
 // servicios, productos) donde desplazar la lista es tedioso. Funciona en dos
@@ -21,6 +21,7 @@ export default function ComboBuscador({
   placeholder = "Escribe para buscar…",
   requerido = false,
   disabled = false,
+  etiqueta,
 }: {
   opciones: OpcionCombo[];
   value: string;
@@ -29,17 +30,21 @@ export default function ComboBuscador({
   placeholder?: string;
   requerido?: boolean;
   disabled?: boolean;
+  etiqueta?: string;
 }) {
   const [q, setQ] = useState("");
   const [abierto, setAbierto] = useState(false);
+  const [activa, setActiva] = useState(0);
+  const listaId = useId();
   const cerrarRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const elegido = opciones.find((o) => o.value === value) ?? null;
 
   const filtradas = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    const normalizar = (texto: string) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const s = normalizar(q);
     const base = s
-      ? opciones.filter((o) => o.label.toLowerCase().includes(s))
+      ? opciones.filter((o) => normalizar(o.label).includes(s))
       : opciones;
     return base.slice(0, 8);
   }, [q, opciones]);
@@ -64,14 +69,34 @@ export default function ComboBuscador({
           // Cuando hay algo elegido y el campo no está activo, mostramos su
           // etiqueta; al enfocar se limpia para poder escribir y buscar.
           value={abierto ? q : (elegido?.label ?? "")}
+          role="combobox"
+          aria-label={etiqueta ?? placeholder}
+          aria-expanded={abierto}
+          aria-controls={listaId}
+          aria-autocomplete="list"
+          aria-activedescendant={abierto && filtradas[activa] ? `${listaId}-${activa}` : undefined}
           onChange={(e) => {
             setQ(e.target.value);
             setAbierto(true);
+            setActiva(0);
           }}
           onFocus={() => {
             if (cerrarRef.current) clearTimeout(cerrarRef.current);
             setAbierto(true);
             setQ("");
+            setActiva(0);
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Escape') { e.preventDefault(); setAbierto(false); return; }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              if (!abierto) { setAbierto(true); setActiva(0); }
+              else setActiva(n => Math.max(0, Math.min(filtradas.length - 1, n + (e.key === 'ArrowDown' ? 1 : -1))));
+            }
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (abierto && filtradas[activa]) elegir(filtradas[activa]);
+            }
           }}
           onBlur={() => {
             // Pequeño retraso para que el click en una opción alcance a registrarse.
@@ -108,17 +133,21 @@ export default function ComboBuscador({
       )}
 
       {abierto && (
-        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-lg">
+        <div id={listaId} role="listbox" aria-label={etiqueta ?? placeholder} className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-lg">
           {filtradas.length === 0 ? (
             <p className="px-3 py-2 text-sm text-zinc-400">Sin resultados.</p>
           ) : (
-            filtradas.map((o) => (
+            filtradas.map((o, i) => (
               <button
                 key={o.value}
+                id={`${listaId}-${i}`}
+                role="option"
+                aria-selected={i === activa}
+                tabIndex={-1}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()} // evita el blur antes del click
                 onClick={() => elegir(o)}
-                className="flex w-full items-center justify-between gap-2 rounded px-3 py-2 text-left text-sm hover:bg-zinc-100"
+                className={`flex min-h-11 w-full items-center justify-between gap-2 rounded px-3 py-2 text-left text-sm hover:bg-zinc-100 ${i === activa ? 'bg-zinc-100' : ''}`}
               >
                 <span className="truncate text-zinc-800">{o.label}</span>
                 {o.hint && (
