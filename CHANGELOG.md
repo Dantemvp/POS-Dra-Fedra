@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## [0.1.37] - 2026-11-13
+
+- Recetas con presentación breve del envase y fase con duración editable, conservando los vínculos de inventario y el texto de recetas anteriores.
+- Historia con antecedentes negados, etiquetas claras y detalle de medicamentos; conserva datos históricos al editar.
+- Cuestionario remoto por etapas: respuestas parciales devueltas por archivo o texto y carga como borrador con identidad confirmada.
+- Identificaciones mediante cámara o archivo en almacenamiento privado con acceso clínico. Migración 049 separada de las respuestas clínicas.
+- 185 pruebas aprobadas, revisión independiente y recorridos con datos ficticios en navegador móvil y escritorio. El PR #52 de cobro permanece separado.
+
 ## [0.1.36] - 2026-10-12
 
 - Simplifica el cierre de Farmacia y Consultorio: cuenta el efectivo, consulta el faltante o sobrante y guarda e imprime.

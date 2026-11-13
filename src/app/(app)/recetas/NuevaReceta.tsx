@@ -9,6 +9,8 @@ import type { PlantillaReceta } from "./plantillas";
 import { extraerInBody } from "../pacientes/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fechaSinaloa } from "@/lib/tz";
+import { nombreParaReceta, productosParaReceta } from "@/lib/receta-presentacion";
+import { MAX_TEXTO_FASE } from "./ajustes-impresion";
 
 // InBody guardado (claves legibles) -> métricas de la receta
 function mapInBodyGuardado(d: Record<string, unknown>): Record<string, string> {
@@ -73,6 +75,7 @@ export default function NuevaReceta({
   const productoPorNombre = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of productos) m.set(p.nombre.trim().toLowerCase(), p.id);
+    for (const p of productosParaReceta(productos)) m.set(p.nombre.trim().toLowerCase(), p.id);
     return m;
   }, [productos]);
   const [fase, setFase] = useState("");
@@ -138,7 +141,8 @@ export default function NuevaReceta({
 
   function aplicarPlantilla(plantilla: PlantillaReceta) {
     setItems(plantilla.items.map((item) => ({
-      medicamento: item.medicamento,
+      medicamento: nombreParaReceta(item.medicamento),
+      producto_id: productoPorNombre.get(item.medicamento.trim().toLowerCase()) ?? null,
       dosis: item.dosis,
       duracion_dias: item.duracion_dias,
       indicaciones: item.indicaciones,
@@ -150,6 +154,7 @@ export default function NuevaReceta({
   }
 
   function setItem(idx: number, patch: Partial<ItemReceta>) {
+    if (patch.medicamento !== undefined) patch.producto_id = productoPorNombre.get(patch.medicamento.trim().toLowerCase()) ?? null;
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
 
@@ -159,7 +164,7 @@ export default function NuevaReceta({
     const itemsLigados = items.map((it) => ({
       ...it,
       producto_id:
-        productoPorNombre.get(it.medicamento.trim().toLowerCase()) ?? null,
+        it.producto_id ?? productoPorNombre.get(it.medicamento.trim().toLowerCase()) ?? null,
     }));
     startTransition(async () => {
       const res = await crearReceta(
@@ -217,6 +222,13 @@ export default function NuevaReceta({
             ))}
           </select>
         </div>
+        <label className="sm:col-span-2 text-xs font-medium text-zinc-600">
+          Fase y duración que aparecerán en la receta
+          <input className={`${input} mt-1`} value={faseTexto ?? ""} maxLength={MAX_TEXTO_FASE}
+            placeholder={fase ? `FASE ${fase}: 21 días` : "FASE 2: 21 días"}
+            onChange={(e) => setFaseTexto(e.target.value)} />
+          <span className="mt-1 block font-normal">Escribe la duración indicada para esta fase. Los días de cada medicamento van por separado.</span>
+        </label>
       </div>
 
       <div className="mt-4">
@@ -266,7 +278,7 @@ export default function NuevaReceta({
         <p className="text-xs font-medium uppercase text-zinc-500">Medicamentos</p>
         {/* Sugerencias del inventario; el campo sigue aceptando texto libre. */}
         <datalist id="lista-medicamentos">
-          {productos.map((p) => (
+          {productosParaReceta(productos).map((p) => (
             <option key={p.id} value={p.nombre} />
           ))}
         </datalist>

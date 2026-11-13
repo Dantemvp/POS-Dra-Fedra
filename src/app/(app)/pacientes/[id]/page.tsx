@@ -11,6 +11,9 @@ import ProgresoPeso, { type PuntoProgreso } from "./ProgresoPeso";
 import ReviewGoogle from "./ReviewGoogle";
 import EditarPaciente from "./EditarPaciente";
 import { puedeEditarPaciente } from "@/lib/paciente-edicion";
+import { prepararCamposHistoria } from "@/lib/historia-campos";
+import IdentificacionesPaciente from "./IdentificacionesPaciente";
+import { puedeGestionarIdentificacion } from "@/lib/identificacion-paciente";
 
 // Edad en años a partir de la fecha de nacimiento.
 function edadDe(fnac: string | null): string | null {
@@ -112,7 +115,7 @@ export default async function PacienteDetalle({
 
   const tipos = ((tiposData ?? []) as Tipo[]).map((t) => ({
     ...t,
-    campos_historia: [...(t.campos_historia ?? [])].sort(
+    campos_historia: prepararCamposHistoria([...(t.campos_historia ?? [])]).sort(
       (a, b) => a.orden - b.orden,
     ),
   }));
@@ -240,6 +243,7 @@ export default async function PacienteDetalle({
       </div>
 
       {puedeEditarPaciente(usuario?.rol) && <div className="mb-6"><EditarPaciente key={`${p.nombre}|${p.apellidos}|${p.telefono_wpp}`} paciente={p} /></div>}
+      {puedeGestionarIdentificacion(usuario?.rol) && <IdentificacionesPaciente pacienteId={p.id} />}
       {puntos.length > 0 && <ProgresoPeso puntos={puntos} />}
 
       <div className="mb-6 space-y-3">
@@ -353,7 +357,7 @@ export default async function PacienteDetalle({
         inbodyTipoId={tipos.find((t) => t.nombre === "InBody")?.id ?? null}
       />
 
-      <NuevaHistoria pacienteId={p.id} sexo={p.sexo} tipos={tipos} />
+      <NuevaHistoria pacienteId={p.id} sexo={p.sexo} tipos={tipos} nombrePaciente={`${p.nombre} ${p.apellidos ?? ""}`.trim()} />
 
       <h2 className="mb-3 text-lg font-medium text-zinc-900">
         Historias clínicas
@@ -368,6 +372,8 @@ export default async function PacienteDetalle({
           <HistoriaCard
             key={h.id}
             historiaId={h.id}
+            campos={tipos.find(t => t.nombre === h.tipos_historia?.nombre)?.campos_historia ?? []}
+            sexo={p.sexo}
             pacienteId={p.id}
             titulo={h.tipos_historia?.nombre ?? "Historia"}
             fecha={`${fechaSinaloa(h.fecha)} ${horaSinaloa(h.fecha)}`}

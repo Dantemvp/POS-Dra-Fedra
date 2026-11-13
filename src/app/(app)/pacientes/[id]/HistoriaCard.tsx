@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { actualizarHistoria, eliminarHistoria } from "../actions";
+import CamposHistoria from "@/components/CamposHistoria";
+import { sexoNormalizado, valoresParaEditar, type CampoHistoria } from "@/lib/historia-campos";
 
 type Def = { tipo_dato: string; opciones: string[] | null };
 
@@ -16,6 +18,8 @@ export default function HistoriaCard({
   labels,
   defs = {},
   esAdmin,
+  campos = [],
+  sexo = null,
 }: {
   historiaId: string;
   pacienteId: string;
@@ -25,6 +29,8 @@ export default function HistoriaCard({
   labels: Record<string, string>;
   defs?: Record<string, Def>;
   esAdmin: boolean;
+  campos?: CampoHistoria[];
+  sexo?: string | null;
 }) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
@@ -51,7 +57,7 @@ export default function HistoriaCard({
   function guardar() {
     setError(null);
     startTransition(async () => {
-      const res = await actualizarHistoria(historiaId, valores, pacienteId);
+      const res = await actualizarHistoria(historiaId, campos.length ? valoresParaEditar(campos, valores, datos) : valores, pacienteId);
       if (!res.ok) {
         setError(res.error ?? "Error al guardar.");
         return;
@@ -161,6 +167,8 @@ export default function HistoriaCard({
             </div>
           ))}
         </dl>
+      ) : campos.length ? (
+        <CamposHistoria campos={campos} valores={valores} originales={datos} sexo={sexoNormalizado(sexo)} onChange={(id, v) => setValores(p => ({ ...p, [id]: v }))} prefijo={`editar-${historiaId}`} disabled={pending} />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {entradas.map(([k, v]) => {

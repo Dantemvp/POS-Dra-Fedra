@@ -11,6 +11,7 @@ async function accion(cliente, invalidaciones) {
   fuente = fuente.replace('import { revalidatePath } from "next/cache";', `const revalidatePath = p => globalThis.${llave}.invalidaciones.push(p);`)
     .replace('import { createClient } from "@/lib/supabase/server";', `const createClient = async () => globalThis.${llave}.cliente;`);
   // La URL ya normalizada de Node evita diferencias de Windows/macOS.
+  fuente = fuente.replace('"@/lib/historia-campos"', JSON.stringify(new URL('../src/lib/historia-campos.ts', import.meta.url).href));
   fuente = fuente.replace(/import \{ puedeEditarPaciente, validarEdicionPaciente \} from [^;]+;/, `import { puedeEditarPaciente, validarEdicionPaciente } from ${JSON.stringify(new URL('../src/lib/paciente-edicion.ts', import.meta.url).href)};`);
   const codigo = ts.transpileModule(fuente, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
   const modulo = await import(`data:text/javascript;base64,${Buffer.from(codigo).toString('base64')}`);

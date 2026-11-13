@@ -13,6 +13,7 @@ import SelectorPlantillas from "../SelectorPlantillas";
 import type { PlantillaReceta } from "../plantillas";
 import CodigoBarrasReceta from "./CodigoBarrasReceta";
 import PrintButton from "./PrintButton";
+import { nombreParaReceta } from "@/lib/receta-presentacion";
 
 export type ItemImprimible = {
   id: string | null;
@@ -222,7 +223,7 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
     setItems(plantilla.items.map((item, indice) => ({
       id: null,
       clave: `plantilla-${siguienteId + indice}`,
-      medicamento: item.medicamento,
+      medicamento: nombreParaReceta(item.medicamento),
       dosis: item.dosis,
       duracion_dias: item.duracion_dias,
       indicaciones: item.indicaciones,
@@ -342,8 +343,8 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
           </div>
 
           <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <label className="text-sm text-zinc-700">Fase
-              <input value={faseTexto} onChange={(e) => setFaseTexto(e.target.value)} maxLength={MAX_TEXTO_FASE} placeholder="FASE 1" className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2" />
+            <label className="text-sm text-zinc-700">Fase y duración
+              <input value={faseTexto} onChange={(e) => setFaseTexto(e.target.value)} maxLength={MAX_TEXTO_FASE} placeholder="FASE 2: 21 días" className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2" />
               <span className="mt-1 block text-xs text-zinc-500">
                 Texto libre, se imprime tal cual. {faseNumericaDe(faseTexto) === null
                   ? "Sin un número la receta deja de aparecer en el filtro por fase."
@@ -364,6 +365,9 @@ export default function AjustadorReceta({ recetaId, nombre, edad, fecha, folio, 
             </label>
           </div>
 
+          <button type="button" onClick={() => setItems((actuales) => actuales.map((item) => ({ ...item, medicamento: nombreParaReceta(item.medicamento) })))} className="mb-3 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+            Acortar nombres del envase
+          </button>
           <div className="space-y-3">
             {items.map((item, indice) => (
               <div key={item.clave} className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
