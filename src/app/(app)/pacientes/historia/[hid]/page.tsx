@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PrintButton from "./PrintButton";
+import { etiquetaHistoria } from "@/lib/historia-campos";
 
 type Campo = {
   id: string;
@@ -89,7 +90,7 @@ export default async function HistoriaPrint({
       grupo = { nombre: sec, filas: [] };
       secciones.push(grupo);
     }
-    grupo.filas.push([c.etiqueta, valorImpreso(v, c)]);
+    grupo.filas.push([etiquetaHistoria(c.etiqueta), valorImpreso(v, c)]);
   }
   const extra: [string, string][] = Object.entries(datos)
     .filter(([k, v]) => !usados.has(k) && valor(v) !== "")

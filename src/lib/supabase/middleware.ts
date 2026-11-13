@@ -24,6 +24,8 @@ const RUTAS_ROL: { prefijo: string; roles: string[] }[] = [
 // Refresca la sesión y protege rutas. Redirige a /login si no hay usuario.
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
+  // Cuestionario genérico: no lee ni escribe el expediente y funciona sin sesión.
+  if (request.nextUrl.pathname === "/formulario/historia") return supabaseResponse;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { prepararCamposHistoria, validarMultiplesHistoria } from "@/lib/historia-campos";
 import { puedeEditarPaciente, validarEdicionPaciente } from "@/lib/paciente-edicion";
 
 export type Result = { ok: boolean; error?: string; id?: string };
@@ -36,6 +37,10 @@ export async function editarPaciente(
 type CampoHistoria = {
   id: string;
   requerido: boolean;
+  etiqueta: string;
+  tipo_dato: string;
+  opciones: string[] | null;
+  seccion: string | null;
 };
 
 function estaVacio(valor: unknown): boolean {
@@ -51,14 +56,17 @@ async function validarDatosHistoria(
   supabase: Awaited<ReturnType<typeof createClient>>,
   tipoHistoriaId: string,
   datos: Record<string, unknown>,
+  previos: Record<string, unknown> = {},
 ): Promise<{ ok: true; datos: Record<string, unknown> } | { ok: false; error: string }> {
   const { data: campos, error } = await supabase
     .from("campos_historia")
-    .select("id, requerido")
+    .select("id, requerido, etiqueta, tipo_dato, opciones, seccion")
     .eq("tipo_historia_id", tipoHistoriaId);
   if (error) return { ok: false, error: "No se pudo validar la plantilla de historia." };
 
-  const definiciones = (campos ?? []) as CampoHistoria[];
+  const definiciones = prepararCamposHistoria((campos ?? []) as CampoHistoria[]);
+  const errorMultiples = validarMultiplesHistoria(definiciones, datos, previos);
+  if (errorMultiples) return { ok: false, error: errorMultiples };
   const permitidos = new Set(definiciones.map((campo) => campo.id));
   const faltante = definiciones.find(
     (campo) => campo.requerido && estaVacio(datos[campo.id]),
@@ -167,7 +175,7 @@ export async function actualizarHistoria(
   const supabase = await createClient();
   const { data: historia, error: historiaError } = await supabase
     .from("historias_clinicas")
-    .select("tipo_historia_id, paciente_id")
+    .select("tipo_historia_id, paciente_id, datos")
     .eq("id", historiaId)
     .single();
   if (historiaError || !historia)
@@ -177,6 +185,7 @@ export async function actualizarHistoria(
     supabase,
     historia.tipo_historia_id,
     datos,
+    historia.datos ?? {},
   );
   if (!validacion.ok) return validacion;
 
